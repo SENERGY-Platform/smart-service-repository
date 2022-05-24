@@ -1,0 +1,84 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Smart-Service-Repository API",
+        "contact": {},
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "0.1"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/": {
+            "get": {
+                "description": "checks health and reachability of the service",
+                "tags": [
+                    "health"
+                ],
+                "summary": "health check",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "checks health and reachability of the service",
+                "tags": [
+                    "health"
+                ],
+                "summary": "health check",
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances": {
+            "get": {
+                "description": "checks health and reachability of the service",
+                "tags": [
+                    "health"
+                ],
+                "summary": "returns a list of smart-service isntances",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceInstance"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.SmartServiceInstance": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

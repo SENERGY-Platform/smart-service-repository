@@ -1,0 +1,55 @@
+basePath: /
+definitions:
+  model.SmartServiceInstance:
+    properties:
+      id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Smart-Service-Repository API
+  version: "0.1"
+paths:
+  /:
+    get:
+      description: checks health and reachability of the service
+      responses:
+        "200":
+          description: ""
+      summary: health check
+      tags:
+      - health
+  /health:
+    get:
+      description: checks health and reachability of the service
+      responses:
+        "200":
+          description: ""
+      summary: health check
+      tags:
+      - health
+  /instances:
+    get:
+      description: checks health and reachability of the service
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceInstance'
+            type: array
+        "500":
+          description: ""
+      summary: returns a list of smart-service isntances
+      tags:
+      - health
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,5 @@
+{
+    "server_port": "8080",
+    "debug": false,
+    "use_swagger_endpoints": false
+}
