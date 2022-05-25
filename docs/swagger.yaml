@@ -34,7 +34,7 @@ paths:
       - health
   /instances:
     get:
-      description: checks health and reachability of the service
+      description: returns a list of smart-service instances
       responses:
         "200":
           description: OK
@@ -42,11 +42,36 @@ paths:
             items:
               $ref: '#/definitions/model.SmartServiceInstance'
             type: array
+        "401":
+          description: ""
         "500":
           description: ""
-      summary: returns a list of smart-service isntances
+      summary: returns a list of smart-service instances
       tags:
-      - health
+      - instances
+  /instances/{id}:
+    get:
+      description: returns a smart-service instance
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceInstance'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a smart-service instance
+      tags:
+      - instances
 securityDefinitions:
   Bearer:
     in: header

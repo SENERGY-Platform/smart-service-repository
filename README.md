@@ -9,7 +9,7 @@ go install github.com/swaggo/swag/cmd/swag@latest
 
 ### generating
 ```
-swag init -d ./pkg/api -g api.go
+swag init --parseDependency -d ./pkg/api -g api.go
 ```
 
 ### swagger ui

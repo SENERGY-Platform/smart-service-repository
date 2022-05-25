@@ -42,11 +42,11 @@
         },
         "/instances": {
             "get": {
-                "description": "checks health and reachability of the service",
+                "description": "returns a list of smart-service instances",
                 "tags": [
-                    "health"
+                    "instances"
                 ],
-                "summary": "returns a list of smart-service isntances",
+                "summary": "returns a list of smart-service instances",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -56,6 +56,44 @@
                                 "$ref": "#/definitions/model.SmartServiceInstance"
                             }
                         }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}": {
+            "get": {
+                "description": "returns a smart-service instance",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances"
+                ],
+                "summary": "returns a smart-service instance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceInstance"
+                        }
+                    },
+                    "401": {
+                        "description": ""
                     },
                     "500": {
                         "description": ""
