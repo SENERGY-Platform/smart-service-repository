@@ -35,7 +35,7 @@ type SmartServiceInstance struct {
 	Ready            bool                              `json:"ready"`
 	IncompleteDelete bool                              `json:"incomplete_delete"`
 	Parameter        []SmartServiceDeploymentParameter `json:"parameter"`
-	Modules          []SmartServiceModuleBase          `json:"modules"`
+	//Modules          []SmartServiceModuleBase          `json:"modules"`
 }
 
 type SmartServiceDeploymentParameters []SmartServiceDeploymentParameter

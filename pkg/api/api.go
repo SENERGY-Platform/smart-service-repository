@@ -76,7 +76,15 @@ func GetRouter(config configuration.Config, command Controller) http.Handler {
 			call(config, router, command)
 		}
 	}
-	return util.NewLogger(util.NewCors(router))
+
+	var handler http.Handler
+	handler = util.NewLogger(util.NewCors(router))
+	if config.EditForward != "" && config.EditForward != "-" {
+		handler = util.NewConditionalForward(handler, config.EditForward, func(r *http.Request) bool {
+			return r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete
+		})
+	}
+	return handler
 }
 
 func getEndpointMethods(e interface{}) map[string]func(config configuration.Config, router *httprouter.Router, ctrl Controller) {

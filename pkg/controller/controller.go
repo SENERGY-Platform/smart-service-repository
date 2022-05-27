@@ -19,10 +19,32 @@ package controller
 import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
-type Controller struct{}
+type Controller struct {
+	deploymentsProducer *kafka.Producer
+}
+
+type DeploymentCommand struct {
+	Command    string                        `json:"command"`
+	Id         string                        `json:"id"`
+	Owner      string                        `json:"owner"`
+	Deployment *model.SmartServiceDeployment `json:"deployment"`
+}
 
 func New(ctx context.Context, config configuration.Config) (ctrl *Controller, err error) {
-	return &Controller{}, nil
+	ctrl = &Controller{}
+	if config.EditForward == "" || config.EditForward == "-" {
+		ctrl.deploymentsProducer, err = kafka.NewProducer(ctx, config, config.KafkaSmartServiceDeploymentTopic)
+		if err != nil {
+			return ctrl, err
+		}
+		err = kafka.NewConsumer(ctx, config, config.KafkaSmartServiceDeploymentTopic, ctrl.HandleDeploymentMessage)
+		if err != nil {
+			return ctrl, err
+		}
+	}
+	return ctrl, nil
 }

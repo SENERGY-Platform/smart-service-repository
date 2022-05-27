@@ -1,5 +1,9 @@
 {
     "server_port": "8080",
     "debug": false,
-    "enable_swagger_ui": false
+    "enable_swagger_ui": false,
+    "kafka_url": "",
+    "consumer_group": "smart_service_repository",
+    "kafka_smart_service_deployment_topic": "smart_service_deployments",
+    "edit_forward": ""
 }
