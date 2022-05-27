@@ -1,8 +1,113 @@
 basePath: /
 definitions:
-  model.SmartServiceInstance:
+  model.ModuleDeleteInfo:
+    properties:
+      url:
+        description: url receives a DELETE request and responds with a status code
+          < 300 if ok; 404 is successful delete
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.SmartServiceDeployment:
     properties:
       id:
+        type: string
+      model_id:
+        type: string
+    type: object
+  model.SmartServiceDeploymentExtendedParameter:
+    properties:
+      default_value: {}
+      description:
+        type: string
+      is_json_encoded_array:
+        type: boolean
+      name:
+        type: string
+      options:
+        items: {}
+        type: array
+      type:
+        type: string
+      value: {}
+    type: object
+  model.SmartServiceDeploymentParameter:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      value: {}
+    type: object
+  model.SmartServiceInstance:
+    properties:
+      deployment_id:
+        type: string
+      id:
+        type: string
+      incomplete_delete:
+        type: boolean
+      model_id:
+        type: string
+      modules:
+        items:
+          $ref: '#/definitions/model.SmartServiceModuleBase'
+        type: array
+      parameter:
+        items:
+          $ref: '#/definitions/model.SmartServiceDeploymentParameter'
+        type: array
+      ready:
+        type: boolean
+      user_id:
+        type: string
+    type: object
+  model.SmartServiceModel:
+    properties:
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.SmartServiceModule:
+    properties:
+      delete_info:
+        $ref: '#/definitions/model.ModuleDeleteInfo'
+      deployment_id:
+        type: string
+      id:
+        type: string
+      instance_id:
+        type: string
+      model_id:
+        type: string
+      module_data:
+        additionalProperties: true
+        type: object
+      module_type:
+        description: '"process-deployment" | "analytics" ...'
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.SmartServiceModuleBase:
+    properties:
+      deployment_id:
+        type: string
+      id:
+        type: string
+      instance_id:
+        type: string
+      model_id:
+        type: string
+      module_data:
+        additionalProperties: true
+        type: object
+      module_type:
+        description: '"process-deployment" | "analytics" ...'
+        type: string
+      user_id:
         type: string
     type: object
 host: localhost:8080
@@ -23,6 +128,190 @@ paths:
       summary: health check
       tags:
       - health
+  /deployments:
+    get:
+      description: returns a list of smart-service deployments
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceDeployment'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a list of smart-service deployments
+      tags:
+      - deployments
+    post:
+      consumes:
+      - application/json
+      description: creates a smart-service deployment
+      parameters:
+      - description: Deployment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceDeployment
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceDeployment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceDeployment'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: create a smart-service deployment
+      tags:
+      - deployments
+  /deployments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: removes a smart-service deployment
+      parameters:
+      - description: Deployment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: removes a smart-service deployment
+      tags:
+      - deployments
+    get:
+      description: returns a smart-service deployment
+      parameters:
+      - description: Deployment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceDeployment'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a smart-service deployment
+      tags:
+      - deployments
+    put:
+      consumes:
+      - application/json
+      description: updates a smart-service deployment
+      parameters:
+      - description: Deployment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceDeployment
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceDeployment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceDeployment'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: updates a smart-service deployment
+      tags:
+      - deployments
+  /deployments/{id}/instances:
+    post:
+      consumes:
+      - application/json
+      description: creates a smart-service instance from the deployment
+      parameters:
+      - description: Deployment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceDeploymentParameter
+        in: body
+        name: message
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.SmartServiceDeploymentParameter'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceInstance'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: creates a smart-service instance from the deployment
+      tags:
+      - deployments
+      - instances
+  /deployments/{id}/parameters:
+    get:
+      description: returns parameters of a deployment
+      parameters:
+      - description: Deployment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceDeploymentExtendedParameter'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns parameters of a deployment
+      tags:
+      - deployments
+      - parameter
   /health:
     get:
       description: checks health and reachability of the service
@@ -35,6 +324,8 @@ paths:
   /instances:
     get:
       description: returns a list of smart-service instances
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
@@ -50,6 +341,24 @@ paths:
       tags:
       - instances
   /instances/{id}:
+    delete:
+      description: removes a smart-service instance with all modules
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: removes a smart-service instance with all modules
+      tags:
+      - instances
     get:
       description: returns a smart-service instance
       parameters:
@@ -72,6 +381,218 @@ paths:
       summary: returns a smart-service instance
       tags:
       - instances
+  /instances/{id}/parameter:
+    patch:
+      consumes:
+      - application/json
+      description: updates smart-service instance parameter
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceDeploymentParameter
+        in: body
+        name: message
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.SmartServiceDeploymentParameter'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceInstance'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: updates smart-service instance parameter
+      tags:
+      - instances
+      - parameter
+  /models:
+    get:
+      description: returns a list of smart-service models
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceModel'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a list of smart-service models
+      tags:
+      - models
+    post:
+      consumes:
+      - application/json
+      description: creates a smart-service model
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceModel
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceModel'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: creates a smart-service model
+      tags:
+      - models
+  /models/{id}:
+    delete:
+      description: removes a smart-service model
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: removes a smart-service model
+      tags:
+      - models
+    get:
+      description: returns a smart-service model
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceModel'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a smart-service model
+      tags:
+      - models
+    put:
+      consumes:
+      - application/json
+      description: updates a smart-service model
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceModel
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceModel'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: updates a smart-service model
+      tags:
+      - models
+  /modules:
+    get:
+      description: returns a list of smart-service models
+      parameters:
+      - description: filter by module type
+        in: query
+        name: module_type
+        type: string
+      - description: filter by instance id
+        in: query
+        name: instance_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceModule'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a list of smart-service models
+      tags:
+      - modules
+    post:
+      consumes:
+      - application/json
+      description: creates a smart-service module
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceModule
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceModule'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceModule'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: create a smart-service module
+      tags:
+      - modules
 securityDefinitions:
   Bearer:
     in: header

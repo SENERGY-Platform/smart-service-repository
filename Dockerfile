@@ -5,6 +5,8 @@ WORKDIR /go/src/app
 
 ENV GO111MODULE=on
 
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN swag init --parseDependency -d ./pkg/api -g api.go
 RUN CGO_ENABLED=0 GOOS=linux go build -o app
 
 RUN git log -1 --oneline > version.txt

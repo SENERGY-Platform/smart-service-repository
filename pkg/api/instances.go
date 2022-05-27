@@ -36,6 +36,7 @@ type Instances struct{}
 // @Summary      returns a list of smart-service instances
 // @Description  returns a list of smart-service instances
 // @Tags         instances
+// @Produce      json
 // @Success      200 {array}  model.SmartServiceInstance
 // @Failure      500
 // @Failure      401
@@ -75,5 +76,54 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 		//TODO: replace with real code
 		log.Println(token)
 		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
+	})
+}
+
+// Update godoc
+// @Summary      updates smart-service instance parameter
+// @Description  updates smart-service instance parameter
+// @Tags         instances, parameter
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Instance ID"
+// @Param        message body model.SmartServiceDeploymentParameters true "SmartServiceDeploymentParameter"
+// @Success      200 {object}  model.SmartServiceInstance
+// @Failure      500
+// @Failure      401
+// @Router       /instances/{id}/parameter [patch]
+func (this *Instances) Update(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PATCH("/instances/:id/parameter", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		//TODO: replace with real code
+		log.Println(token)
+		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
+	})
+}
+
+// Delete godoc
+// @Summary      removes a smart-service instance with all modules
+// @Description  removes a smart-service instance with all modules
+// @Tags         instances
+// @Param        id path string true "Instance ID"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /instances/{id} [delete]
+func (this *Instances) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.POST("/instances/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		//TODO: replace with real code
+		log.Println(token)
+		json.NewEncoder(writer).Encode(model.SmartServiceModel{})
 	})
 }
