@@ -22,8 +22,8 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
-	"log"
 	"net/http"
+	"strconv"
 )
 
 func init() {
@@ -39,6 +39,8 @@ type Modules struct{}
 // @Tags         modules
 // @Param        module_type query string false "filter by module type"
 // @Param        instance_id query string false "filter by instance id"
+// @Param        limit query integer false "limits size of result; 0 means unlimited"
+// @Param        offset query integer false "offset to be used in combination with limit"
 // @Success      200 {array} model.SmartServiceModule
 // @Failure      500
 // @Failure      401
@@ -51,9 +53,38 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode([]model.SmartServiceModule{})
+		query := model.ModuleQueryOptions{}
+		moduleTypeFilter := params.ByName("module_type")
+		if moduleTypeFilter != "" {
+			query.TypeFilter = &moduleTypeFilter
+		}
+		instanceIdFilter := params.ByName("instance_id")
+		if instanceIdFilter != "" {
+			query.InstanceIdFilter = &instanceIdFilter
+		}
+		limit := params.ByName("limit")
+		if limit != "" {
+			query.Limit, err = strconv.Atoi(limit)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		offset := params.ByName("offset")
+		if offset != "" {
+			query.Offset, err = strconv.Atoi(offset)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+
+		result, err, code := ctrl.ListModules(token, query)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 
@@ -67,6 +98,7 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 // @Param        message body model.SmartServiceModule true "SmartServiceModule"
 // @Success      200 {object} model.SmartServiceModule
 // @Failure      500
+// @Failure      400
 // @Failure      401
 // @Router       /modules [post]
 func (this *Modules) Create(config configuration.Config, router *httprouter.Router, ctrl Controller) {
@@ -77,8 +109,17 @@ func (this *Modules) Create(config configuration.Config, router *httprouter.Rout
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceModule{})
+		module := model.SmartServiceModule{}
+		err = json.NewDecoder(request.Body).Decode(&module)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+		result, err, code := ctrl.AddModule(token, module)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
 	})
 }

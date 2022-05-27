@@ -670,6 +670,18 @@ const docTemplate = `{
                         "description": "filter by instance id",
                         "name": "instance_id",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limits size of result; 0 means unlimited",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset to be used in combination with limit",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -726,6 +738,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.SmartServiceModule"
                         }
+                    },
+                    "400": {
+                        "description": ""
                     },
                     "401": {
                         "description": ""
@@ -811,12 +826,6 @@ const docTemplate = `{
                 "model_id": {
                     "type": "string"
                 },
-                "modules": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.SmartServiceModuleBase"
-                    }
-                },
                 "parameter": {
                     "type": "array",
                     "items": {
@@ -848,34 +857,6 @@ const docTemplate = `{
                 "delete_info": {
                     "$ref": "#/definitions/model.ModuleDeleteInfo"
                 },
-                "deployment_id": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "instance_id": {
-                    "type": "string"
-                },
-                "model_id": {
-                    "type": "string"
-                },
-                "module_data": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "module_type": {
-                    "description": "\"process-deployment\" | \"analytics\" ...",
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.SmartServiceModuleBase": {
-            "type": "object",
-            "properties": {
                 "deployment_id": {
                     "type": "string"
                 },

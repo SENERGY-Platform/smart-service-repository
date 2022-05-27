@@ -50,10 +50,6 @@ definitions:
         type: boolean
       model_id:
         type: string
-      modules:
-        items:
-          $ref: '#/definitions/model.SmartServiceModuleBase'
-        type: array
       parameter:
         items:
           $ref: '#/definitions/model.SmartServiceDeploymentParameter'
@@ -74,25 +70,6 @@ definitions:
     properties:
       delete_info:
         $ref: '#/definitions/model.ModuleDeleteInfo'
-      deployment_id:
-        type: string
-      id:
-        type: string
-      instance_id:
-        type: string
-      model_id:
-        type: string
-      module_data:
-        additionalProperties: true
-        type: object
-      module_type:
-        description: '"process-deployment" | "analytics" ...'
-        type: string
-      user_id:
-        type: string
-    type: object
-  model.SmartServiceModuleBase:
-    properties:
       deployment_id:
         type: string
       id:
@@ -547,6 +524,14 @@ paths:
         in: query
         name: instance_id
         type: string
+      - description: limits size of result; 0 means unlimited
+        in: query
+        name: limit
+        type: integer
+      - description: offset to be used in combination with limit
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
@@ -586,6 +571,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.SmartServiceModule'
+        "400":
+          description: ""
         "401":
           description: ""
         "500":
