@@ -21,6 +21,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/julienschmidt/httprouter"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"github.com/swaggo/swag"
 	"net/http"
 )
 
@@ -31,9 +32,19 @@ func init() {
 type SwaggerEndpoints struct{}
 
 func (this *SwaggerEndpoints) Swagger(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	if config.UseSwaggerEndpoints {
+	if config.EnableSwaggerUi {
 		router.GET("/swagger/:any", func(res http.ResponseWriter, req *http.Request, p httprouter.Params) {
 			httpSwagger.WrapHandler(res, req)
 		})
 	}
+
+	router.GET("/doc", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		doc, err := swag.ReadDoc()
+		if err != nil {
+			http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		_, _ = writer.Write([]byte(doc))
+	})
 }

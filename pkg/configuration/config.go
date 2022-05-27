@@ -27,9 +27,9 @@ import (
 )
 
 type Config struct {
-	ServerPort          string `json:"server_port"`
-	Debug               bool   `json:"debug"`
-	UseSwaggerEndpoints bool   `json:"use_swagger_endpoints"`
+	ServerPort      string `json:"server_port"`
+	Debug           bool   `json:"debug"`
+	EnableSwaggerUi bool   `json:"enable_swagger_ui"`
 }
 
 //loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)
