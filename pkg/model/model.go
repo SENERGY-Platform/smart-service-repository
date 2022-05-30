@@ -16,38 +16,38 @@
 
 package model
 
-type SmartServiceModel struct {
+type SmartServiceDesign struct {
 	Id     string `json:"id"`
 	UserId string `json:"user_id"`
 }
 
 //cqrs
-type SmartServiceDeployment struct {
+type SmartServiceRelease struct {
 	Id      string `json:"id"`
 	ModelId string `json:"model_id"`
 }
 
 type SmartServiceInstance struct {
-	Id               string                            `json:"id"`
-	UserId           string                            `json:"user_id"`
-	ModelId          string                            `json:"model_id"`
-	DeploymentId     string                            `json:"deployment_id"`
-	Ready            bool                              `json:"ready"`
-	IncompleteDelete bool                              `json:"incomplete_delete"`
-	Parameter        []SmartServiceDeploymentParameter `json:"parameter"`
+	Id               string                  `json:"id"`
+	UserId           string                  `json:"user_id"`
+	ModelId          string                  `json:"model_id"`
+	DeploymentId     string                  `json:"deployment_id"`
+	Ready            bool                    `json:"ready"`
+	IncompleteDelete bool                    `json:"incomplete_delete"`
+	Parameter        []SmartServiceParameter `json:"parameter"`
 	//Modules          []SmartServiceModuleBase          `json:"modules"`
 }
 
-type SmartServiceDeploymentParameters []SmartServiceDeploymentParameter
+type SmartServiceParameters []SmartServiceParameter
 
-type SmartServiceDeploymentParameter struct {
+type SmartServiceParameter struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
 	Value       interface{} `json:"value"`
 }
 
-type SmartServiceDeploymentExtendedParameter struct {
-	SmartServiceDeploymentParameter
+type SmartServiceExtendedParameter struct {
+	SmartServiceParameter
 	DefaultValue       interface{} `json:"default_value"`
 	Type               Type        `json:"type"`
 	Options            []Option    `json:"options"`

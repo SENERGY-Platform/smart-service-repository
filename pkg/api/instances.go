@@ -86,7 +86,7 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 // @Accept       json
 // @Produce      json
 // @Param        id path string true "Instance ID"
-// @Param        message body model.SmartServiceDeploymentParameters true "SmartServiceDeploymentParameter"
+// @Param        message body model.SmartServiceParameters true "SmartServiceParameter"
 // @Success      200 {object}  model.SmartServiceInstance
 // @Failure      500
 // @Failure      401
@@ -124,6 +124,6 @@ func (this *Instances) Delete(config configuration.Config, router *httprouter.Ro
 
 		//TODO: replace with real code
 		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceModel{})
+		json.NewEncoder(writer).Encode(model.SmartServiceDesign{})
 	})
 }

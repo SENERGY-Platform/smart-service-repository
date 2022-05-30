@@ -34,23 +34,23 @@ const docTemplate = `{
                 }
             }
         },
-        "/deployments": {
+        "/designs": {
             "get": {
-                "description": "returns a list of smart-service deployments",
+                "description": "returns a list of smart-service designs",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "deployments"
+                    "designs"
                 ],
-                "summary": "returns a list of smart-service deployments",
+                "summary": "returns a list of smart-service designs",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.SmartServiceDeployment"
+                                "$ref": "#/definitions/model.SmartServiceDesign"
                             }
                         }
                     },
@@ -63,7 +63,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "creates a smart-service deployment",
+                "description": "creates a smart-service designs",
                 "consumes": [
                     "application/json"
                 ],
@@ -71,24 +71,24 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "deployments"
+                    "designs"
                 ],
-                "summary": "create a smart-service deployment",
+                "summary": "creates a smart-service designs",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Deployment ID",
+                        "description": "Design ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "SmartServiceDeployment",
+                        "description": "SmartServiceDesign",
                         "name": "message",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.SmartServiceDeployment"
+                            "$ref": "#/definitions/model.SmartServiceDesign"
                         }
                     }
                 ],
@@ -96,7 +96,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.SmartServiceDeployment"
+                            "$ref": "#/definitions/model.SmartServiceDesign"
                         }
                     },
                     "401": {
@@ -108,20 +108,20 @@ const docTemplate = `{
                 }
             }
         },
-        "/deployments/{id}": {
+        "/designs/{id}": {
             "get": {
-                "description": "returns a smart-service deployment",
+                "description": "returns a smart-service designs",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "deployments"
+                    "designs"
                 ],
-                "summary": "returns a smart-service deployment",
+                "summary": "returns a smart-service designs",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Deployment ID",
+                        "description": "Design ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -131,7 +131,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.SmartServiceDeployment"
+                            "$ref": "#/definitions/model.SmartServiceDesign"
                         }
                     },
                     "401": {
@@ -143,7 +143,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "updates a smart-service deployment",
+                "description": "updates a smart-service designs",
                 "consumes": [
                     "application/json"
                 ],
@@ -151,24 +151,24 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "deployments"
+                    "designs"
                 ],
-                "summary": "updates a smart-service deployment",
+                "summary": "updates a smart-service designs",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Deployment ID",
+                        "description": "Design ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "SmartServiceDeployment",
+                        "description": "SmartServiceDesign",
                         "name": "message",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.SmartServiceDeployment"
+                            "$ref": "#/definitions/model.SmartServiceDesign"
                         }
                     }
                 ],
@@ -176,7 +176,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.SmartServiceDeployment"
+                            "$ref": "#/definitions/model.SmartServiceDesign"
                         }
                     },
                     "401": {
@@ -188,21 +188,15 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "removes a smart-service deployment",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+                "description": "removes a smart-service designs",
                 "tags": [
-                    "deployments"
+                    "designs"
                 ],
-                "summary": "removes a smart-service deployment",
+                "summary": "removes a smart-service designs",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Deployment ID",
+                        "description": "Design ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -211,96 +205,6 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": ""
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/deployments/{id}/instances": {
-            "post": {
-                "description": "creates a smart-service instance from the deployment",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "deployments",
-                    "instances"
-                ],
-                "summary": "creates a smart-service instance from the deployment",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Deployment ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "SmartServiceDeploymentParameter",
-                        "name": "message",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.SmartServiceDeploymentParameter"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceInstance"
-                        }
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/deployments/{id}/parameters": {
-            "get": {
-                "description": "returns parameters of a deployment",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "deployments",
-                    "parameter"
-                ],
-                "summary": "returns parameters of a deployment",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Deployment ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.SmartServiceDeploymentExtendedParameter"
-                            }
-                        }
                     },
                     "401": {
                         "description": ""
@@ -439,14 +343,14 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "SmartServiceDeploymentParameter",
+                        "description": "SmartServiceParameter",
                         "name": "message",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.SmartServiceDeploymentParameter"
+                                "$ref": "#/definitions/model.SmartServiceParameter"
                             }
                         }
                     }
@@ -457,187 +361,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.SmartServiceInstance"
                         }
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/models": {
-            "get": {
-                "description": "returns a list of smart-service models",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "models"
-                ],
-                "summary": "returns a list of smart-service models",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.SmartServiceModel"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            },
-            "post": {
-                "description": "creates a smart-service model",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "models"
-                ],
-                "summary": "creates a smart-service model",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "SmartServiceModel",
-                        "name": "message",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceModel"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceModel"
-                        }
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/models/{id}": {
-            "get": {
-                "description": "returns a smart-service model",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "models"
-                ],
-                "summary": "returns a smart-service model",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceModel"
-                        }
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            },
-            "put": {
-                "description": "updates a smart-service model",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "models"
-                ],
-                "summary": "updates a smart-service model",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "SmartServiceModel",
-                        "name": "message",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceModel"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceModel"
-                        }
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            },
-            "delete": {
-                "description": "removes a smart-service model",
-                "tags": [
-                    "models"
-                ],
-                "summary": "removes a smart-service model",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Model ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
                     },
                     "401": {
                         "description": ""
@@ -750,6 +473,283 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/releases": {
+            "get": {
+                "description": "returns a list of smart-service releases",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases"
+                ],
+                "summary": "returns a list of smart-service releases",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceRelease"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "description": "creates a smart-service release",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases"
+                ],
+                "summary": "create a smart-service release",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Release ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SmartServiceRelease",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceRelease"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceRelease"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/releases/{id}": {
+            "get": {
+                "description": "returns a smart-service release",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases"
+                ],
+                "summary": "returns a smart-service release",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Release ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceRelease"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "description": "updates a smart-service release",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases"
+                ],
+                "summary": "updates a smart-service release",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Release ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SmartServiceRelease",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceRelease"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceRelease"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "description": "removes a smart-service release",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases"
+                ],
+                "summary": "removes a smart-service release",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Release ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/releases/{id}/instances": {
+            "post": {
+                "description": "creates a smart-service instance from the release",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases",
+                    "instances"
+                ],
+                "summary": "creates a smart-service instance from the release",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Release ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SmartServiceParameter",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceParameter"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceInstance"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/releases/{id}/parameters": {
+            "get": {
+                "description": "returns parameters of a release",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases",
+                    "parameter"
+                ],
+                "summary": "returns parameters of a release",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Release ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceExtendedParameter"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -765,18 +765,31 @@ const docTemplate = `{
                 }
             }
         },
-        "model.SmartServiceDeployment": {
+        "model.Option": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "description": "optional helper for ui/app to group options",
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "model.SmartServiceDesign": {
             "type": "object",
             "properties": {
                 "id": {
                     "type": "string"
                 },
-                "model_id": {
+                "user_id": {
                     "type": "string"
                 }
             }
         },
-        "model.SmartServiceDeploymentExtendedParameter": {
+        "model.SmartServiceExtendedParameter": {
             "type": "object",
             "properties": {
                 "default_value": {},
@@ -791,21 +804,11 @@ const docTemplate = `{
                 },
                 "options": {
                     "type": "array",
-                    "items": {}
+                    "items": {
+                        "$ref": "#/definitions/model.Option"
+                    }
                 },
                 "type": {
-                    "type": "string"
-                },
-                "value": {}
-            }
-        },
-        "model.SmartServiceDeploymentParameter": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "name": {
                     "type": "string"
                 },
                 "value": {}
@@ -829,22 +832,11 @@ const docTemplate = `{
                 "parameter": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.SmartServiceDeploymentParameter"
+                        "$ref": "#/definitions/model.SmartServiceParameter"
                     }
                 },
                 "ready": {
                     "type": "boolean"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.SmartServiceModel": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
                 },
                 "user_id": {
                     "type": "string"
@@ -878,6 +870,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SmartServiceParameter": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "model.SmartServiceRelease": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "model_id": {
                     "type": "string"
                 }
             }

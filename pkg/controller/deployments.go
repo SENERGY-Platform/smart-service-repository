@@ -59,7 +59,7 @@ func (this *Controller) HandleDeployment(cmd DeploymentCommand) (err error) {
 	}
 }
 
-func (this *Controller) HandleDeploymentSave(deployment model.SmartServiceDeployment) error {
+func (this *Controller) HandleDeploymentSave(deployment model.SmartServiceRelease) error {
 	panic("not implemented") //TODO
 }
 
@@ -67,7 +67,7 @@ func (this *Controller) HandleDeploymentDelete(id string) error {
 	panic("not implemented") //TODO
 }
 
-func (this *Controller) SaveDeployment(token auth.Token, deployment model.SmartServiceDeployment) error {
+func (this *Controller) SaveDeployment(token auth.Token, deployment model.SmartServiceRelease) error {
 	if this.deploymentsProducer == nil {
 		return errors.New("edit is disabled")
 	}

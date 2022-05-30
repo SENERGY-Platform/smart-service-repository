@@ -28,10 +28,10 @@ type Controller struct {
 }
 
 type DeploymentCommand struct {
-	Command    string                        `json:"command"`
-	Id         string                        `json:"id"`
-	Owner      string                        `json:"owner"`
-	Deployment *model.SmartServiceDeployment `json:"deployment"`
+	Command    string                     `json:"command"`
+	Id         string                     `json:"id"`
+	Owner      string                     `json:"owner"`
+	Deployment *model.SmartServiceRelease `json:"deployment"`
 }
 
 func New(ctx context.Context, config configuration.Config) (ctrl *Controller, err error) {

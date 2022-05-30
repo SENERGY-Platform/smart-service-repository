@@ -9,14 +9,23 @@ definitions:
       user_id:
         type: string
     type: object
-  model.SmartServiceDeployment:
+  model.Option:
+    properties:
+      kind:
+        description: optional helper for ui/app to group options
+        type: string
+      label:
+        type: string
+      value: {}
+    type: object
+  model.SmartServiceDesign:
     properties:
       id:
         type: string
-      model_id:
+      user_id:
         type: string
     type: object
-  model.SmartServiceDeploymentExtendedParameter:
+  model.SmartServiceExtendedParameter:
     properties:
       default_value: {}
       description:
@@ -26,17 +35,10 @@ definitions:
       name:
         type: string
       options:
-        items: {}
+        items:
+          $ref: '#/definitions/model.Option'
         type: array
       type:
-        type: string
-      value: {}
-    type: object
-  model.SmartServiceDeploymentParameter:
-    properties:
-      description:
-        type: string
-      name:
         type: string
       value: {}
     type: object
@@ -52,17 +54,10 @@ definitions:
         type: string
       parameter:
         items:
-          $ref: '#/definitions/model.SmartServiceDeploymentParameter'
+          $ref: '#/definitions/model.SmartServiceParameter'
         type: array
       ready:
         type: boolean
-      user_id:
-        type: string
-    type: object
-  model.SmartServiceModel:
-    properties:
-      id:
-        type: string
       user_id:
         type: string
     type: object
@@ -87,6 +82,21 @@ definitions:
       user_id:
         type: string
     type: object
+  model.SmartServiceParameter:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      value: {}
+    type: object
+  model.SmartServiceRelease:
+    properties:
+      id:
+        type: string
+      model_id:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -105,9 +115,9 @@ paths:
       summary: health check
       tags:
       - health
-  /deployments:
+  /designs:
     get:
-      description: returns a list of smart-service deployments
+      description: returns a list of smart-service designs
       produces:
       - application/json
       responses:
@@ -115,58 +125,54 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.SmartServiceDeployment'
+              $ref: '#/definitions/model.SmartServiceDesign'
             type: array
         "401":
           description: ""
         "500":
           description: ""
-      summary: returns a list of smart-service deployments
+      summary: returns a list of smart-service designs
       tags:
-      - deployments
+      - designs
     post:
       consumes:
       - application/json
-      description: creates a smart-service deployment
+      description: creates a smart-service designs
       parameters:
-      - description: Deployment ID
+      - description: Design ID
         in: path
         name: id
         required: true
         type: string
-      - description: SmartServiceDeployment
+      - description: SmartServiceDesign
         in: body
         name: message
         required: true
         schema:
-          $ref: '#/definitions/model.SmartServiceDeployment'
+          $ref: '#/definitions/model.SmartServiceDesign'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.SmartServiceDeployment'
+            $ref: '#/definitions/model.SmartServiceDesign'
         "401":
           description: ""
         "500":
           description: ""
-      summary: create a smart-service deployment
+      summary: creates a smart-service designs
       tags:
-      - deployments
-  /deployments/{id}:
+      - designs
+  /designs/{id}:
     delete:
-      consumes:
-      - application/json
-      description: removes a smart-service deployment
+      description: removes a smart-service designs
       parameters:
-      - description: Deployment ID
+      - description: Design ID
         in: path
         name: id
         required: true
         type: string
-      produces:
-      - application/json
       responses:
         "200":
           description: ""
@@ -174,13 +180,13 @@ paths:
           description: ""
         "500":
           description: ""
-      summary: removes a smart-service deployment
+      summary: removes a smart-service designs
       tags:
-      - deployments
+      - designs
     get:
-      description: returns a smart-service deployment
+      description: returns a smart-service designs
       parameters:
-      - description: Deployment ID
+      - description: Design ID
         in: path
         name: id
         required: true
@@ -191,104 +197,44 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.SmartServiceDeployment'
+            $ref: '#/definitions/model.SmartServiceDesign'
         "401":
           description: ""
         "500":
           description: ""
-      summary: returns a smart-service deployment
+      summary: returns a smart-service designs
       tags:
-      - deployments
+      - designs
     put:
       consumes:
       - application/json
-      description: updates a smart-service deployment
+      description: updates a smart-service designs
       parameters:
-      - description: Deployment ID
+      - description: Design ID
         in: path
         name: id
         required: true
         type: string
-      - description: SmartServiceDeployment
+      - description: SmartServiceDesign
         in: body
         name: message
         required: true
         schema:
-          $ref: '#/definitions/model.SmartServiceDeployment'
+          $ref: '#/definitions/model.SmartServiceDesign'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.SmartServiceDeployment'
+            $ref: '#/definitions/model.SmartServiceDesign'
         "401":
           description: ""
         "500":
           description: ""
-      summary: updates a smart-service deployment
+      summary: updates a smart-service designs
       tags:
-      - deployments
-  /deployments/{id}/instances:
-    post:
-      consumes:
-      - application/json
-      description: creates a smart-service instance from the deployment
-      parameters:
-      - description: Deployment ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: SmartServiceDeploymentParameter
-        in: body
-        name: message
-        required: true
-        schema:
-          items:
-            $ref: '#/definitions/model.SmartServiceDeploymentParameter'
-          type: array
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.SmartServiceInstance'
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: creates a smart-service instance from the deployment
-      tags:
-      - deployments
-      - instances
-  /deployments/{id}/parameters:
-    get:
-      description: returns parameters of a deployment
-      parameters:
-      - description: Deployment ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.SmartServiceDeploymentExtendedParameter'
-            type: array
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: returns parameters of a deployment
-      tags:
-      - deployments
-      - parameter
+      - designs
   /health:
     get:
       description: checks health and reachability of the service
@@ -369,13 +315,13 @@ paths:
         name: id
         required: true
         type: string
-      - description: SmartServiceDeploymentParameter
+      - description: SmartServiceParameter
         in: body
         name: message
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.SmartServiceDeploymentParameter'
+            $ref: '#/definitions/model.SmartServiceParameter'
           type: array
       produces:
       - application/json
@@ -392,126 +338,6 @@ paths:
       tags:
       - instances
       - parameter
-  /models:
-    get:
-      description: returns a list of smart-service models
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.SmartServiceModel'
-            type: array
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: returns a list of smart-service models
-      tags:
-      - models
-    post:
-      consumes:
-      - application/json
-      description: creates a smart-service model
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: SmartServiceModel
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/model.SmartServiceModel'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.SmartServiceModel'
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: creates a smart-service model
-      tags:
-      - models
-  /models/{id}:
-    delete:
-      description: removes a smart-service model
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: removes a smart-service model
-      tags:
-      - models
-    get:
-      description: returns a smart-service model
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.SmartServiceModel'
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: returns a smart-service model
-      tags:
-      - models
-    put:
-      consumes:
-      - application/json
-      description: updates a smart-service model
-      parameters:
-      - description: Model ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: SmartServiceModel
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/model.SmartServiceModel'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.SmartServiceModel'
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: updates a smart-service model
-      tags:
-      - models
   /modules:
     get:
       description: returns a list of smart-service models
@@ -580,6 +406,190 @@ paths:
       summary: create a smart-service module
       tags:
       - modules
+  /releases:
+    get:
+      description: returns a list of smart-service releases
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceRelease'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a list of smart-service releases
+      tags:
+      - releases
+    post:
+      consumes:
+      - application/json
+      description: creates a smart-service release
+      parameters:
+      - description: Release ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceRelease
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceRelease'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceRelease'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: create a smart-service release
+      tags:
+      - releases
+  /releases/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: removes a smart-service release
+      parameters:
+      - description: Release ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: removes a smart-service release
+      tags:
+      - releases
+    get:
+      description: returns a smart-service release
+      parameters:
+      - description: Release ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceRelease'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a smart-service release
+      tags:
+      - releases
+    put:
+      consumes:
+      - application/json
+      description: updates a smart-service release
+      parameters:
+      - description: Release ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceRelease
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceRelease'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceRelease'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: updates a smart-service release
+      tags:
+      - releases
+  /releases/{id}/instances:
+    post:
+      consumes:
+      - application/json
+      description: creates a smart-service instance from the release
+      parameters:
+      - description: Release ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceParameter
+        in: body
+        name: message
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.SmartServiceParameter'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceInstance'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: creates a smart-service instance from the release
+      tags:
+      - releases
+      - instances
+  /releases/{id}/parameters:
+    get:
+      description: returns parameters of a release
+      parameters:
+      - description: Release ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceExtendedParameter'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns parameters of a release
+      tags:
+      - releases
+      - parameter
 securityDefinitions:
   Bearer:
     in: header
