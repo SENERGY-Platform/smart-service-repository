@@ -19,29 +19,27 @@ package controller
 import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/database"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
 type Controller struct {
-	deploymentsProducer *kafka.Producer
+	db               database.Database
+	releasesProducer *kafka.Producer
 }
 
-type DeploymentCommand struct {
-	Command    string                     `json:"command"`
-	Id         string                     `json:"id"`
-	Owner      string                     `json:"owner"`
-	Deployment *model.SmartServiceRelease `json:"deployment"`
+func (this *Controller) GetDatabase() database.Database {
+	return this.db
 }
 
 func New(ctx context.Context, config configuration.Config) (ctrl *Controller, err error) {
 	ctrl = &Controller{}
 	if config.EditForward == "" || config.EditForward == "-" {
-		ctrl.deploymentsProducer, err = kafka.NewProducer(ctx, config, config.KafkaSmartServiceReleaseTopic)
+		ctrl.releasesProducer, err = kafka.NewProducer(ctx, config, config.KafkaSmartServiceReleaseTopic)
 		if err != nil {
 			return ctrl, err
 		}
-		err = kafka.NewConsumer(ctx, config, config.KafkaSmartServiceReleaseTopic, ctrl.HandleDeploymentMessage)
+		err = kafka.NewConsumer(ctx, config, config.KafkaSmartServiceReleaseTopic, ctrl.HandleReleaseMessage)
 		if err != nil {
 			return ctrl, err
 		}

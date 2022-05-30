@@ -23,6 +23,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api/util"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/database"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
 	"log"
@@ -36,6 +37,7 @@ type EndpointMethod = func(config configuration.Config, router *httprouter.Route
 var endpoints = []interface{}{} //list of objects with EndpointMethod
 
 type Controller interface {
+	GetDatabase() database.Database
 	AddModule(token auth.Token, module model.SmartServiceModule) (model.SmartServiceModule, error, int)
 	ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
 }

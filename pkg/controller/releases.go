@@ -25,31 +25,38 @@ import (
 	"runtime/debug"
 )
 
-func (this *Controller) HandleDeploymentMessage(delivery []byte) error {
-	deployment := DeploymentCommand{}
-	err := json.Unmarshal(delivery, &deployment)
+type ReleaseCommand struct {
+	Command string                     `json:"command"`
+	Id      string                     `json:"id"`
+	Owner   string                     `json:"owner"`
+	Release *model.SmartServiceRelease `json:"release"`
+}
+
+func (this *Controller) HandleReleaseMessage(delivery []byte) error {
+	release := ReleaseCommand{}
+	err := json.Unmarshal(delivery, &release)
 	if err != nil {
 		log.Println("ERROR: consumed invalid message --> ignore", err)
 		debug.PrintStack()
 		return err
 	}
-	return this.HandleDeployment(deployment)
+	return this.HandleRelease(release)
 }
 
-func (this *Controller) HandleDeployment(cmd DeploymentCommand) (err error) {
+func (this *Controller) HandleRelease(cmd ReleaseCommand) (err error) {
 	switch cmd.Command {
 	case "PUT":
-		if cmd.Deployment == nil {
-			log.Println("WARNING: missing deployment in deployment put command", cmd)
+		if cmd.Release == nil {
+			log.Println("WARNING: missing release in release put command", cmd)
 			return nil
 		}
-		err = this.HandleDeploymentSave(*cmd.Deployment)
+		err = this.HandleReleaseSave(*cmd.Release)
 		if err != nil {
 			return err
 		}
 		return nil
 	case "DELETE":
-		err = this.HandleDeploymentDelete(cmd.Id)
+		err = this.HandleReleaseDelete(cmd.Id)
 		if err != nil {
 			return err
 		}
@@ -59,23 +66,23 @@ func (this *Controller) HandleDeployment(cmd DeploymentCommand) (err error) {
 	}
 }
 
-func (this *Controller) HandleDeploymentSave(deployment model.SmartServiceRelease) error {
+func (this *Controller) HandleReleaseSave(release model.SmartServiceRelease) error {
 	panic("not implemented") //TODO
 }
 
-func (this *Controller) HandleDeploymentDelete(id string) error {
+func (this *Controller) HandleReleaseDelete(id string) error {
 	panic("not implemented") //TODO
 }
 
-func (this *Controller) SaveDeployment(token auth.Token, deployment model.SmartServiceRelease) error {
-	if this.deploymentsProducer == nil {
+func (this *Controller) SaveRelease(token auth.Token, release model.SmartServiceRelease) error {
+	if this.releasesProducer == nil {
 		return errors.New("edit is disabled")
 	}
 	panic("not implemented") //TODO
 }
 
-func (this *Controller) DeleteDeployment(token auth.Token, id string) error {
-	if this.deploymentsProducer == nil {
+func (this *Controller) DeleteRelease(token auth.Token, id string) error {
+	if this.releasesProducer == nil {
 		return errors.New("edit is disabled")
 	}
 	panic("not implemented") //TODO

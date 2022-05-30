@@ -16,11 +16,6 @@
 
 package model
 
-type SmartServiceDesign struct {
-	Id     string `json:"id"`
-	UserId string `json:"user_id"`
-}
-
 //cqrs
 type SmartServiceRelease struct {
 	Id      string `json:"id"`
@@ -77,4 +72,22 @@ type SmartServiceModule struct {
 type ModuleDeleteInfo struct {
 	Url    string `json:"url"` //url receives a DELETE request and responds with a status code < 300 if ok; 404 is successful delete
 	UserId string `json:"user_id"`
+}
+
+type IndexInfo struct {
+	Name       string
+	FieldNames []string
+	IsUnique   bool
+}
+
+func (this IndexInfo) GetIndexName() string {
+	return this.Name
+}
+
+func (this IndexInfo) GetFieldNames() []string {
+	return this.FieldNames
+}
+
+func (this IndexInfo) Unique() bool {
+	return this.IsUnique
 }

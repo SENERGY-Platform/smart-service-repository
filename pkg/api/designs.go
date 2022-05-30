@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
 	"log"
@@ -72,10 +73,12 @@ func (this *Designs) Get(config configuration.Config, router *httprouter.Router,
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceDesign{})
+		result, err := controller.Get(ctrl, model.SmartServiceDesign{Id: params.ByName("id"), UserId: token.GetUserId()})
+		if err != nil {
+			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 
@@ -89,6 +92,7 @@ func (this *Designs) Get(config configuration.Config, router *httprouter.Router,
 // @Param        message body model.SmartServiceDesign true "SmartServiceDesign"
 // @Success      200 {object} model.SmartServiceDesign
 // @Failure      500
+// @Failure      400
 // @Failure      401
 // @Router       /designs/{id} [put]
 func (this *Designs) Update(config configuration.Config, router *httprouter.Router, ctrl Controller) {
@@ -99,9 +103,35 @@ func (this *Designs) Update(config configuration.Config, router *httprouter.Rout
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceDesign{})
+		element := model.SmartServiceDesign{}
+		err = json.NewDecoder(request.Body).Decode(&element)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if element.Id == "" {
+			element.Id = params.ByName("id")
+		}
+		if element.Id != params.ByName("id") {
+			http.Error(writer, "path id does not match body id", http.StatusBadRequest)
+			return
+		}
+
+		element.UserId = token.GetUserId()
+
+		err = controller.Set(ctrl, element)
+		if err != nil {
+			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			return
+		}
+
+		result, err := controller.Get(ctrl, element)
+		if err != nil {
+			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 
@@ -125,9 +155,31 @@ func (this *Designs) Create(config configuration.Config, router *httprouter.Rout
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceDesign{})
+		element := model.SmartServiceDesign{}
+		err = json.NewDecoder(request.Body).Decode(&element)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if element.Id == "" {
+			element.SetId()
+		}
+
+		element.UserId = token.GetUserId()
+
+		err = controller.Set(ctrl, element)
+		if err != nil {
+			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			return
+		}
+
+		result, err := controller.Get(ctrl, element)
+		if err != nil {
+			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 
@@ -148,8 +200,11 @@ func (this *Designs) Delete(config configuration.Config, router *httprouter.Rout
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceDesign{})
+		err = controller.Delete(ctrl, model.SmartServiceDesign{Id: params.ByName("id"), UserId: token.GetUserId()})
+		if err != nil {
+			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
 	})
 }

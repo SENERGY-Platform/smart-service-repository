@@ -16,6 +16,11 @@
 
 package model
 
+import (
+	"errors"
+	"net/http"
+)
+
 type Type string
 
 const (
@@ -24,3 +29,19 @@ const (
 	Float   Type = "https://schema.org/Float"
 	Boolean Type = "https://schema.org/Boolean"
 )
+
+var ErrBadRequest = errors.New("bad request")
+var ErrNotFound = errors.New("not found")
+
+func ErrToStatusCode(err error) (code int) {
+	if err == nil {
+		return http.StatusOK
+	}
+	if errors.Is(err, ErrBadRequest) {
+		return http.StatusBadRequest
+	}
+	if errors.Is(err, ErrNotFound) {
+		return http.StatusNotFound
+	}
+	return http.StatusInternalServerError
+}
