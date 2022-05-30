@@ -48,12 +48,10 @@ type SmartServiceDeploymentParameter struct {
 
 type SmartServiceDeploymentExtendedParameter struct {
 	SmartServiceDeploymentParameter
-	DefaultValue       interface{}   `json:"default_value"`
-	Type               Type          `json:"type"`
-	Options            []interface{} `json:"options"`
-	IsJsonEncodedArray bool          `json:"is_json_encoded_array"`
-
-	//Validators   []OptionValidator `json:"validators"`
+	DefaultValue       interface{} `json:"default_value"`
+	Type               Type        `json:"type"`
+	Options            []Option    `json:"options"`
+	IsJsonEncodedArray bool        `json:"is_json_encoded_array"`
 }
 
 type Option struct {
@@ -61,13 +59,6 @@ type Option struct {
 	Label string      `json:"label"`
 	Kind  string      `json:"kind"` //optional helper for ui/app to group options
 }
-
-/*
-type OptionValidator struct {
-	Path       string `json:"path"`
-	Expression string `json:"expression"`
-}
-*/
 
 type SmartServiceModuleBase struct {
 	Id           string                 `json:"id"`
