@@ -37,11 +37,11 @@ type DeploymentCommand struct {
 func New(ctx context.Context, config configuration.Config) (ctrl *Controller, err error) {
 	ctrl = &Controller{}
 	if config.EditForward == "" || config.EditForward == "-" {
-		ctrl.deploymentsProducer, err = kafka.NewProducer(ctx, config, config.KafkaSmartServiceDeploymentTopic)
+		ctrl.deploymentsProducer, err = kafka.NewProducer(ctx, config, config.KafkaSmartServiceReleaseTopic)
 		if err != nil {
 			return ctrl, err
 		}
-		err = kafka.NewConsumer(ctx, config, config.KafkaSmartServiceDeploymentTopic, ctrl.HandleDeploymentMessage)
+		err = kafka.NewConsumer(ctx, config, config.KafkaSmartServiceReleaseTopic, ctrl.HandleDeploymentMessage)
 		if err != nil {
 			return ctrl, err
 		}
