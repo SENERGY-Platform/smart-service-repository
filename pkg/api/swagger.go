@@ -23,6 +23,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 	"github.com/swaggo/swag"
 	"net/http"
+	"strings"
 )
 
 func init() {
@@ -45,6 +46,7 @@ func (this *SwaggerEndpoints) Swagger(config configuration.Config, router *httpr
 			http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
+		doc = strings.ReplaceAll(doc, "localhost:8080", request.Host)
 		_, _ = writer.Write([]byte(doc))
 	})
 }
