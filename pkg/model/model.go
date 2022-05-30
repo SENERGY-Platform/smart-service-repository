@@ -35,7 +35,6 @@ type SmartServiceInstance struct {
 	Ready            bool                    `json:"ready"`
 	IncompleteDelete bool                    `json:"incomplete_delete"`
 	Parameter        []SmartServiceParameter `json:"parameter"`
-	//Modules          []SmartServiceModuleBase          `json:"modules"`
 }
 
 type SmartServiceParameters []SmartServiceParameter
@@ -48,10 +47,10 @@ type SmartServiceParameter struct {
 
 type SmartServiceExtendedParameter struct {
 	SmartServiceParameter
-	DefaultValue       interface{} `json:"default_value"`
-	Type               Type        `json:"type"`
-	Options            []Option    `json:"options"`
-	IsJsonEncodedArray bool        `json:"is_json_encoded_array"`
+	DefaultValue interface{} `json:"default_value"`
+	Type         Type        `json:"type"`
+	Options      []Option    `json:"options"`  //if null -> "free text/number/etc"
+	Multiple     bool        `json:"multiple"` //if true: Value = new([]Type); if false: Value = new(Type);
 }
 
 type Option struct {

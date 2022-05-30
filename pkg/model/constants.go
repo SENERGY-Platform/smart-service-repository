@@ -23,7 +23,4 @@ const (
 	Integer Type = "https://schema.org/Integer"
 	Float   Type = "https://schema.org/Float"
 	Boolean Type = "https://schema.org/Boolean"
-
-	List      Type = "https://schema.org/ItemList"
-	Structure Type = "https://schema.org/StructuredValue"
 )
