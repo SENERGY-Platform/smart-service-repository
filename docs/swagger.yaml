@@ -22,6 +22,8 @@ definitions:
     properties:
       bpmn_xml:
         type: string
+      description:
+        type: string
       id:
         type: string
       name:
@@ -52,13 +54,15 @@ definitions:
     type: object
   model.SmartServiceInstance:
     properties:
-      deployment_id:
+      description:
+        type: string
+      design_id:
         type: string
       id:
         type: string
       incomplete_delete:
         type: boolean
-      model_id:
+      name:
         type: string
       parameter:
         items:
@@ -66,6 +70,8 @@ definitions:
         type: array
       ready:
         type: boolean
+      release_id:
+        type: string
       user_id:
         type: string
     type: object
@@ -73,19 +79,19 @@ definitions:
     properties:
       delete_info:
         $ref: '#/definitions/model.ModuleDeleteInfo'
-      deployment_id:
+      design_id:
         type: string
       id:
         type: string
       instance_id:
-        type: string
-      model_id:
         type: string
       module_data:
         additionalProperties: true
         type: object
       module_type:
         description: '"process-deployment" | "analytics" ...'
+        type: string
+      release_id:
         type: string
       user_id:
         type: string
@@ -100,9 +106,15 @@ definitions:
     type: object
   model.SmartServiceRelease:
     properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      design_id:
+        type: string
       id:
         type: string
-      model_id:
+      name:
         type: string
     type: object
 host: localhost:8080

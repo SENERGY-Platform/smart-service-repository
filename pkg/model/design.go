@@ -23,11 +23,12 @@ import (
 )
 
 type SmartServiceDesign struct {
-	Id      string `json:"id" bson:"id"`
-	UserId  string `json:"user_id" bson:"user_id"`
-	Name    string `json:"name" bson:"name"`
-	BpmnXml string `json:"bpmn_xml" bson:"bpmn_xml"`
-	SvgXml  string `json:"svg_xml" bson:"svg_xml"`
+	Id          string `json:"id" bson:"id"`
+	UserId      string `json:"user_id" bson:"user_id"`
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description"`
+	BpmnXml     string `json:"bpmn_xml" bson:"bpmn_xml"`
+	SvgXml      string `json:"svg_xml" bson:"svg_xml"`
 }
 
 func (this SmartServiceDesign) GetIndexInfo() (result []database.IndexInfo) {

@@ -18,15 +18,20 @@ package model
 
 //cqrs
 type SmartServiceRelease struct {
-	Id      string `json:"id"`
-	ModelId string `json:"model_id"`
+	Id          string `json:"id"`
+	DesignId    string `json:"design_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"created_at"`
 }
 
 type SmartServiceInstance struct {
 	Id               string                  `json:"id"`
 	UserId           string                  `json:"user_id"`
-	ModelId          string                  `json:"model_id"`
-	DeploymentId     string                  `json:"deployment_id"`
+	Name             string                  `json:"name"`
+	Description      string                  `json:"description"`
+	DesignId         string                  `json:"design_id"`
+	ReleaseId        string                  `json:"release_id"`
 	Ready            bool                    `json:"ready"`
 	IncompleteDelete bool                    `json:"incomplete_delete"`
 	Parameter        []SmartServiceParameter `json:"parameter"`
@@ -55,13 +60,13 @@ type Option struct {
 }
 
 type SmartServiceModuleBase struct {
-	Id           string                 `json:"id"`
-	UserId       string                 `json:"user_id"`
-	InstanceId   string                 `json:"instance_id"`
-	ModelId      string                 `json:"model_id"`
-	DeploymentId string                 `json:"deployment_id"`
-	ModuleType   string                 `json:"module_type"` //"process-deployment" | "analytics" ...
-	ModuleData   map[string]interface{} `json:"module_data"`
+	Id         string                 `json:"id"`
+	UserId     string                 `json:"user_id"`
+	InstanceId string                 `json:"instance_id"`
+	DesignId   string                 `json:"design_id"`
+	ReleaseId  string                 `json:"release_id"`
+	ModuleType string                 `json:"module_type"` //"process-deployment" | "analytics" ...
+	ModuleData map[string]interface{} `json:"module_data"`
 }
 
 type SmartServiceModule struct {

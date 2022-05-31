@@ -807,6 +807,9 @@ const docTemplate = `{
                 "bpmn_xml": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -851,7 +854,10 @@ const docTemplate = `{
         "model.SmartServiceInstance": {
             "type": "object",
             "properties": {
-                "deployment_id": {
+                "description": {
+                    "type": "string"
+                },
+                "design_id": {
                     "type": "string"
                 },
                 "id": {
@@ -860,7 +866,7 @@ const docTemplate = `{
                 "incomplete_delete": {
                     "type": "boolean"
                 },
-                "model_id": {
+                "name": {
                     "type": "string"
                 },
                 "parameter": {
@@ -871,6 +877,9 @@ const docTemplate = `{
                 },
                 "ready": {
                     "type": "boolean"
+                },
+                "release_id": {
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "string"
@@ -883,7 +892,7 @@ const docTemplate = `{
                 "delete_info": {
                     "$ref": "#/definitions/model.ModuleDeleteInfo"
                 },
-                "deployment_id": {
+                "design_id": {
                     "type": "string"
                 },
                 "id": {
@@ -892,15 +901,15 @@ const docTemplate = `{
                 "instance_id": {
                     "type": "string"
                 },
-                "model_id": {
-                    "type": "string"
-                },
                 "module_data": {
                     "type": "object",
                     "additionalProperties": true
                 },
                 "module_type": {
                     "description": "\"process-deployment\" | \"analytics\" ...",
+                    "type": "string"
+                },
+                "release_id": {
                     "type": "string"
                 },
                 "user_id": {
@@ -923,10 +932,19 @@ const docTemplate = `{
         "model.SmartServiceRelease": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "design_id": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
-                "model_id": {
+                "name": {
                     "type": "string"
                 }
             }
