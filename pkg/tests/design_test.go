@@ -169,13 +169,13 @@ func TestDesignApi(t *testing.T) {
 		t.Run("default", func(t *testing.T) {
 			testDesignList(t, apiUrl, "", names)
 		})
-		t.Run("default sort=name.asc", func(t *testing.T) {
+		t.Run("sort=name.asc", func(t *testing.T) {
 			testDesignList(t, apiUrl, "?sort=name.asc", names)
 		})
-		t.Run("default sort=name.desc", func(t *testing.T) {
+		t.Run("sort=name.desc", func(t *testing.T) {
 			testDesignList(t, apiUrl, "?sort=name.desc", reverse(names))
 		})
-		t.Run("default limit and offset", func(t *testing.T) {
+		t.Run("limit and offset", func(t *testing.T) {
 			testDesignList(t, apiUrl, "?limit=2&offset=1", names[1:3])
 		})
 	})
