@@ -15,3 +15,44 @@
  */
 
 package controller
+
+import (
+	"errors"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"net/http"
+)
+
+func (this *Controller) ListDesigns(token auth.Token, query model.DesignQueryOptions) ([]model.SmartServiceDesign, error, int) {
+	return this.db.ListDesigns(token.GetUserId(), query)
+}
+
+func (this *Controller) GetDesign(token auth.Token, id string) (result model.SmartServiceDesign, err error, code int) {
+	return this.db.GetDesign(id, token.GetUserId())
+}
+
+func (this *Controller) SetDesign(token auth.Token, element model.SmartServiceDesign) (result model.SmartServiceDesign, err error, code int) {
+	err, code = this.ValidateDesign(token, element)
+	if err != nil {
+		return result, err, code
+	}
+	err, code = this.db.SetDesign(element)
+	if err != nil {
+		return result, err, code
+	}
+	return this.db.GetDesign(element.Id, token.GetUserId())
+}
+
+func (this *Controller) DeleteDesign(token auth.Token, id string) (error, int) {
+	return this.db.DeleteDesign(id, token.GetUserId())
+}
+
+func (this *Controller) ValidateDesign(token auth.Token, element model.SmartServiceDesign) (err error, code int) {
+	if element.Id == "" {
+		return errors.New("missing id"), http.StatusBadRequest
+	}
+	if element.UserId == "" {
+		return errors.New("missing user id"), http.StatusBadRequest
+	}
+	return nil, http.StatusOK
+}

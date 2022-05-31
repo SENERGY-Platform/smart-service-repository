@@ -19,17 +19,13 @@ package controller
 import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/database"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
+	"github.com/google/uuid"
 )
 
 type Controller struct {
-	db               database.Database
+	db               Database
 	releasesProducer *kafka.Producer
-}
-
-func (this *Controller) GetDatabase() database.Database {
-	return this.db
 }
 
 func New(ctx context.Context, config configuration.Config) (ctrl *Controller, err error) {
@@ -45,4 +41,8 @@ func New(ctx context.Context, config configuration.Config) (ctrl *Controller, er
 		}
 	}
 	return ctrl, nil
+}
+
+func (this *Controller) GetNewId() string {
+	return uuid.NewString()
 }

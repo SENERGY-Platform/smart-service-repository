@@ -14,13 +14,4 @@
  * limitations under the License.
  */
 
-package model
-
-type Type string
-
-const (
-	String  Type = "https://schema.org/Text"
-	Integer Type = "https://schema.org/Integer"
-	Float   Type = "https://schema.org/Float"
-	Boolean Type = "https://schema.org/Boolean"
-)
+package mongo

@@ -16,6 +16,15 @@
 
 package model
 
+type SmartServiceDesign struct {
+	Id          string `json:"id" bson:"id"`
+	UserId      string `json:"user_id" bson:"user_id"`
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description"`
+	BpmnXml     string `json:"bpmn_xml" bson:"bpmn_xml"`
+	SvgXml      string `json:"svg_xml" bson:"svg_xml"`
+}
+
 //cqrs
 type SmartServiceRelease struct {
 	Id          string `json:"id"`

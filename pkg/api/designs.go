@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -73,14 +72,9 @@ func (this *Designs) List(config configuration.Config, router *httprouter.Router
 		if query.Sort == "" {
 			query.Sort = "name.asc"
 		}
-		result, err := controller.List[model.SmartServiceDesign](
-			ctrl,
-			map[string]interface{}{"user_id": token.GetUserId()},
-			int64(query.Limit),
-			int64(query.Offset),
-			query.Sort)
+		result, err, code := ctrl.ListDesigns(token, query)
 		if err != nil {
-			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			http.Error(writer, err.Error(), code)
 			return
 		}
 		json.NewEncoder(writer).Encode(result)
@@ -104,9 +98,14 @@ func (this *Designs) Get(config configuration.Config, router *httprouter.Router,
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		result, err := controller.Get(ctrl, model.SmartServiceDesign{Id: params.ByName("id"), UserId: token.GetUserId()})
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+		result, err, code := ctrl.GetDesign(token, id)
 		if err != nil {
-			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			http.Error(writer, err.Error(), code)
 			return
 		}
 		json.NewEncoder(writer).Encode(result)
@@ -133,6 +132,11 @@ func (this *Designs) Update(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
 
 		element := model.SmartServiceDesign{}
 		err = json.NewDecoder(request.Body).Decode(&element)
@@ -151,15 +155,9 @@ func (this *Designs) Update(config configuration.Config, router *httprouter.Rout
 
 		element.UserId = token.GetUserId()
 
-		err = controller.Set(ctrl, element)
+		result, err, code := ctrl.SetDesign(token, element)
 		if err != nil {
-			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
-			return
-		}
-
-		result, err := controller.Get(ctrl, element)
-		if err != nil {
-			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			http.Error(writer, err.Error(), code)
 			return
 		}
 		json.NewEncoder(writer).Encode(result)
@@ -194,20 +192,14 @@ func (this *Designs) Create(config configuration.Config, router *httprouter.Rout
 		}
 
 		if element.Id == "" {
-			element.SetId()
+			element.Id = ctrl.GetNewId()
 		}
 
 		element.UserId = token.GetUserId()
 
-		err = controller.Set(ctrl, element)
+		result, err, code := ctrl.SetDesign(token, element)
 		if err != nil {
-			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
-			return
-		}
-
-		result, err := controller.Get(ctrl, element)
-		if err != nil {
-			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			http.Error(writer, err.Error(), code)
 			return
 		}
 		json.NewEncoder(writer).Encode(result)
@@ -230,10 +222,15 @@ func (this *Designs) Delete(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
 
-		err = controller.Delete(ctrl, model.SmartServiceDesign{Id: params.ByName("id"), UserId: token.GetUserId()})
+		err, code := ctrl.DeleteDesign(token, id)
 		if err != nil {
-			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			http.Error(writer, err.Error(), code)
 			return
 		}
 		writer.WriteHeader(http.StatusOK)
