@@ -6,6 +6,7 @@
     "consumer_group": "smart_service_repository",
     "kafka_smart_service_release_topic": "smart_service_releases",
     "edit_forward": "",
+    "forwarded_endpoints": ["releases"],
 
     "mongo_url": "",
     "mongo_table": "smart_services",

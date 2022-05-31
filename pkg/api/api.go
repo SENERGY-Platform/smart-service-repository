@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"reflect"
 	"runtime/debug"
+	"strings"
 )
 
 type EndpointMethod = func(config configuration.Config, router *httprouter.Router, ctrl Controller)
@@ -77,8 +78,16 @@ func GetRouter(config configuration.Config, command Controller) http.Handler {
 	var handler http.Handler
 	handler = util.NewLogger(util.NewCors(router))
 	if config.EditForward != "" && config.EditForward != "-" {
+		isCqrsEndpoint := func(path string) bool {
+			for _, forwardedEndpoint := range config.ForwardedEndpoints {
+				if strings.HasPrefix(path, forwardedEndpoint) || strings.HasPrefix(path, "/"+forwardedEndpoint) {
+					return true
+				}
+			}
+			return false
+		}
 		handler = util.NewConditionalForward(handler, config.EditForward, func(r *http.Request) bool {
-			return r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete
+			return (r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete) && isCqrsEndpoint(r.URL.Path)
 		})
 	}
 	return handler
