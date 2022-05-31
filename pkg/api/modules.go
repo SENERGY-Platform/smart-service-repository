@@ -54,15 +54,15 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 		}
 
 		query := model.ModuleQueryOptions{}
-		moduleTypeFilter := params.ByName("module_type")
+		moduleTypeFilter := request.URL.Query().Get("module_type")
 		if moduleTypeFilter != "" {
 			query.TypeFilter = &moduleTypeFilter
 		}
-		instanceIdFilter := params.ByName("instance_id")
+		instanceIdFilter := request.URL.Query().Get("instance_id")
 		if instanceIdFilter != "" {
 			query.InstanceIdFilter = &instanceIdFilter
 		}
-		limit := params.ByName("limit")
+		limit := request.URL.Query().Get("limit")
 		if limit != "" {
 			query.Limit, err = strconv.Atoi(limit)
 			if err != nil {
@@ -70,13 +70,17 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 				return
 			}
 		}
-		offset := params.ByName("offset")
+		offset := request.URL.Query().Get("offset")
 		if offset != "" {
 			query.Offset, err = strconv.Atoi(offset)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusBadRequest)
 				return
 			}
+		}
+		query.Sort = request.URL.Query().Get("sort")
+		if query.Sort == "" {
+			query.Sort = "name.asc"
 		}
 
 		result, err, code := ctrl.ListModules(token, query)

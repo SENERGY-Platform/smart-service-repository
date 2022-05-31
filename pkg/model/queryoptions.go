@@ -21,6 +21,22 @@ type ModuleQueryOptions struct {
 	InstanceIdFilter *string
 	Limit            int
 	Offset           int
+	Sort             string
+}
+
+func (this ModuleQueryOptions) GetLimit() int64 {
+	return int64(this.Limit)
+}
+
+func (this ModuleQueryOptions) GetOffset() int64 {
+	return int64(this.Offset)
+}
+
+func (this ModuleQueryOptions) GetSort() string {
+	if this.Sort == "" {
+		return "name.asc"
+	}
+	return this.Sort
 }
 
 type DesignQueryOptions struct {

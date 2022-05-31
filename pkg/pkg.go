@@ -22,6 +22,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
 )
 
 func Start(ctx context.Context, config configuration.Config) error {
@@ -29,7 +30,7 @@ func Start(ctx context.Context, config configuration.Config) error {
 	if err != nil {
 		return err
 	}
-	cmd, err := controller.New(ctx, config, db)
+	cmd, err := controller.New(ctx, config, db, kafka.NewConsumer, controller.NewProducerFactory(kafka.NewProducer))
 	if err != nil {
 		return err
 	}

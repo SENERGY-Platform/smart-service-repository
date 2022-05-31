@@ -20,25 +20,32 @@ import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
 	"github.com/google/uuid"
 )
 
 type Controller struct {
 	db               Database
-	releasesProducer *kafka.Producer
+	releasesProducer Producer
 }
 
-func New(ctx context.Context, config configuration.Config, db *mongo.Mongo) (ctrl *Controller, err error) {
+type Producer interface {
+	Produce(key string, message []byte) error
+}
+
+type GenericProducerFactory[T Producer] func(ctx context.Context, config configuration.Config, topic string) (T, error)
+type ProducerFactory = GenericProducerFactory[Producer]
+type Consumer = func(ctx context.Context, config configuration.Config, topic string, listener func(delivery []byte) error) error
+
+func New(ctx context.Context, config configuration.Config, db *mongo.Mongo, consumer Consumer, producer ProducerFactory) (ctrl *Controller, err error) {
 	ctrl = &Controller{
 		db: db,
 	}
 	if config.EditForward == "" || config.EditForward == "-" {
-		ctrl.releasesProducer, err = kafka.NewProducer(ctx, config, config.KafkaSmartServiceReleaseTopic)
+		ctrl.releasesProducer, err = producer(ctx, config, config.KafkaSmartServiceReleaseTopic)
 		if err != nil {
 			return ctrl, err
 		}
-		err = kafka.NewConsumer(ctx, config, config.KafkaSmartServiceReleaseTopic, ctrl.HandleReleaseMessage)
+		err = consumer(ctx, config, config.KafkaSmartServiceReleaseTopic, ctrl.HandleReleaseMessage)
 		if err != nil {
 			return ctrl, err
 		}

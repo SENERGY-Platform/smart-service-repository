@@ -52,7 +52,7 @@ func (this *Designs) List(config configuration.Config, router *httprouter.Router
 			return
 		}
 		query := model.DesignQueryOptions{}
-		limit := params.ByName("limit")
+		limit := request.URL.Query().Get("limit")
 		if limit != "" {
 			query.Limit, err = strconv.Atoi(limit)
 			if err != nil {
@@ -60,7 +60,7 @@ func (this *Designs) List(config configuration.Config, router *httprouter.Router
 				return
 			}
 		}
-		offset := params.ByName("offset")
+		offset := request.URL.Query().Get("offset")
 		if offset != "" {
 			query.Offset, err = strconv.Atoi(offset)
 			if err != nil {
@@ -68,7 +68,7 @@ func (this *Designs) List(config configuration.Config, router *httprouter.Router
 				return
 			}
 		}
-		query.Sort = params.ByName("sort")
+		query.Sort = request.URL.Query().Get("sort")
 		if query.Sort == "" {
 			query.Sort = "name.asc"
 		}
@@ -216,7 +216,7 @@ func (this *Designs) Create(config configuration.Config, router *httprouter.Rout
 // @Failure      401
 // @Router       /designs/{id} [delete]
 func (this *Designs) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.POST("/designs/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.DELETE("/designs/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
