@@ -15,3 +15,39 @@
  */
 
 package mongo
+
+import (
+	"context"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
+)
+
+type Mongo struct {
+	config configuration.Config
+	client *mongo.Client
+}
+
+var CreateCollections = []func(db *Mongo) error{}
+
+func New(conf configuration.Config) (*Mongo, error) {
+	ctx, _ := getTimeoutContext()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoUrl))
+	if err != nil {
+		return nil, err
+	}
+	db := &Mongo{config: conf, client: client}
+	for _, creators := range CreateCollections {
+		err = creators(db)
+		if err != nil {
+			client.Disconnect(context.Background())
+			return nil, err
+		}
+	}
+	return db, nil
+}
+
+func getTimeoutContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
+}

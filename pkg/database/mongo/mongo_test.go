@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-package pkg
+package mongo
 
 import (
-	"context"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
+	"testing"
 )
 
-func Start(ctx context.Context, config configuration.Config) error {
-	db, err := mongo.New(config)
-	if err != nil {
-		return err
-	}
-	cmd, err := controller.New(ctx, config, db)
-	if err != nil {
-		return err
-	}
-	return api.Start(ctx, config, cmd)
+func TestFillObjectWithItsBsonFieldNames(t *testing.T) {
+	t.Log(DesignBson)
 }

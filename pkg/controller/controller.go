@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
 	"github.com/google/uuid"
 )
@@ -28,8 +29,10 @@ type Controller struct {
 	releasesProducer *kafka.Producer
 }
 
-func New(ctx context.Context, config configuration.Config) (ctrl *Controller, err error) {
-	ctrl = &Controller{}
+func New(ctx context.Context, config configuration.Config, db *mongo.Mongo) (ctrl *Controller, err error) {
+	ctrl = &Controller{
+		db: db,
+	}
 	if config.EditForward == "" || config.EditForward == "-" {
 		ctrl.releasesProducer, err = kafka.NewProducer(ctx, config, config.KafkaSmartServiceReleaseTopic)
 		if err != nil {

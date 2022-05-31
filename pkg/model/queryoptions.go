@@ -28,3 +28,18 @@ type DesignQueryOptions struct {
 	Offset int
 	Sort   string
 }
+
+func (this DesignQueryOptions) GetLimit() int64 {
+	return int64(this.Limit)
+}
+
+func (this DesignQueryOptions) GetOffset() int64 {
+	return int64(this.Offset)
+}
+
+func (this DesignQueryOptions) GetSort() string {
+	if this.Sort == "" {
+		return "name.asc"
+	}
+	return this.Sort
+}

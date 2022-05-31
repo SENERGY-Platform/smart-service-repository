@@ -7,5 +7,7 @@
     "kafka_smart_service_release_topic": "smart_service_releases",
     "edit_forward": "",
 
-    "persistence_resource_design": "smart_service_designs"
+    "mongo_url": "",
+    "mongo_table": "smart_services",
+    "mongo_collection_design": "designs"
 }

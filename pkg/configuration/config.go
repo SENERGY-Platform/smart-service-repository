@@ -34,7 +34,9 @@ type Config struct {
 	ConsumerGroup                 string `json:"consumer_group"`
 	KafkaSmartServiceReleaseTopic string `json:"kafka_smart_service_release_topic"`
 	EditForward                   string `json:"edit_forward"`
-	PersistenceResourceDesign     string `json:"persistence_resource_design"`
+	MongoUrl                      string `json:"mongo_url"`
+	MongoTable                    string `json:"mongo_table"`
+	MongoCollectionDesign         string `json:"mongo_collection_design"`
 }
 
 //loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)
