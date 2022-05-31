@@ -20,7 +20,13 @@ definitions:
     type: object
   model.SmartServiceDesign:
     properties:
+      bpmn_xml:
+        type: string
       id:
+        type: string
+      name:
+        type: string
+      svg_xml:
         type: string
       user_id:
         type: string
@@ -30,11 +36,13 @@ definitions:
       default_value: {}
       description:
         type: string
-      is_json_encoded_array:
+      multiple:
+        description: 'if true: Value = new([]Type); if false: Value = new(Type);'
         type: boolean
       name:
         type: string
       options:
+        description: if null -> "free text/number/etc"
         items:
           $ref: '#/definitions/model.Option'
         type: array
@@ -118,6 +126,19 @@ paths:
   /designs:
     get:
       description: returns a list of smart-service designs
+      parameters:
+      - description: limits size of result; 0 means unlimited
+        in: query
+        name: limit
+        type: integer
+      - description: offset to be used in combination with limit
+        in: query
+        name: offset
+        type: integer
+      - description: describes the sorting in the form of name.asc
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
@@ -228,6 +249,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.SmartServiceDesign'
+        "400":
+          description: ""
         "401":
           description: ""
         "500":

@@ -23,8 +23,8 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
-	"log"
 	"net/http"
+	"strconv"
 )
 
 func init() {
@@ -37,6 +37,9 @@ type Designs struct{}
 // @Summary      returns a list of smart-service designs
 // @Description  returns a list of smart-service designs
 // @Tags         designs
+// @Param        limit query integer false "limits size of result; 0 means unlimited"
+// @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceDesign
 // @Failure      500
@@ -49,10 +52,38 @@ func (this *Designs) List(config configuration.Config, router *httprouter.Router
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode([]model.SmartServiceDesign{})
+		query := model.DesignQueryOptions{}
+		limit := params.ByName("limit")
+		if limit != "" {
+			query.Limit, err = strconv.Atoi(limit)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		offset := params.ByName("offset")
+		if offset != "" {
+			query.Offset, err = strconv.Atoi(offset)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		query.Sort = params.ByName("sort")
+		if query.Sort == "" {
+			query.Sort = "name.asc"
+		}
+		result, err := controller.List[model.SmartServiceDesign](
+			ctrl,
+			map[string]interface{}{"user_id": token.GetUserId()},
+			int64(query.Limit),
+			int64(query.Offset),
+			query.Sort)
+		if err != nil {
+			http.Error(writer, err.Error(), model.ErrToStatusCode(err))
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 

@@ -44,6 +44,26 @@ const docTemplate = `{
                     "designs"
                 ],
                 "summary": "returns a list of smart-service designs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limits size of result; 0 means unlimited",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset to be used in combination with limit",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "describes the sorting in the form of name.asc",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -178,6 +198,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.SmartServiceDesign"
                         }
+                    },
+                    "400": {
+                        "description": ""
                     },
                     "401": {
                         "description": ""
@@ -781,7 +804,16 @@ const docTemplate = `{
         "model.SmartServiceDesign": {
             "type": "object",
             "properties": {
+                "bpmn_xml": {
+                    "type": "string"
+                },
                 "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "svg_xml": {
                     "type": "string"
                 },
                 "user_id": {
@@ -796,13 +828,15 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "is_json_encoded_array": {
+                "multiple": {
+                    "description": "if true: Value = new([]Type); if false: Value = new(Type);",
                     "type": "boolean"
                 },
                 "name": {
                     "type": "string"
                 },
                 "options": {
+                    "description": "if null -\u003e \"free text/number/etc\"",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Option"

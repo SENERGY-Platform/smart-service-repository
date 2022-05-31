@@ -22,3 +22,9 @@ type ModuleQueryOptions struct {
 	Limit            int
 	Offset           int
 }
+
+type DesignQueryOptions struct {
+	Limit  int
+	Offset int
+	Sort   string
+}
