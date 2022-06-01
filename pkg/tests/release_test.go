@@ -37,7 +37,7 @@ func TestReleaseApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, true, func(err error) {
+	apiUrl, err := apiTestEnv(ctx, wg, true, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -111,7 +111,7 @@ func TestReleaseApi(t *testing.T) {
 		}
 	})
 
-	time.Sleep(1 * time.Second) //allow async cqrs
+	time.Sleep(5 * time.Second) //allow async cqrs
 
 	t.Run("read release", func(t *testing.T) {
 		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id))
@@ -149,5 +149,5 @@ func TestReleaseApi(t *testing.T) {
 		}
 	})
 
-	time.Sleep(1 * time.Second) //allow async cqrs delete to play out
+	time.Sleep(2 * time.Second) //allow async cqrs delete to play out
 }

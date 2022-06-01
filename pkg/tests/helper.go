@@ -25,6 +25,8 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
 	"io"
@@ -36,10 +38,10 @@ import (
 	"time"
 )
 
-func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, withCamunda bool, errHandler func(error)) (apiUrl string, permissions *mocks.Permissions, err error) {
+func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, releaseDependencies bool, errHandler func(error)) (apiUrl string, err error) {
 	config, err := configuration.Load("../../config.json")
 	if err != nil {
-		return "", permissions, err
+		return "", err
 	}
 	config.Debug = true
 
@@ -58,39 +60,69 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, withCamunda bool, errHa
 	mongoPort, _, err := docker.Mongo(ctx, wg)
 	if err != nil {
 		debug.PrintStack()
-		return "", permissions, err
+		return "", err
 	}
 
 	config.MongoUrl = "mongodb://localhost:" + mongoPort
 
 	db, err := mongo.New(config)
 	if err != nil {
-		return "", permissions, err
+		return "", err
 	}
 
-	sender, consumer := mocks.NewConsumer(errHandler)
-	producer := mocks.NewProducer(func(topic string, key string, message []byte) error {
-		go sender(topic, message)
-		return nil
-	})
+	var consumer controller.Consumer
+	var producer controller.ProducerFactory
+	var perm controller.Permissions
 
-	if withCamunda {
+	if releaseDependencies {
+		_, zkIp, err := docker.Zookeeper(ctx, wg)
+		if err != nil {
+			return "", err
+		}
+		zkUrl := zkIp + ":2181"
+
+		config.KafkaUrl, err = docker.Kafka(ctx, wg, zkUrl)
+		if err != nil {
+			return "", err
+		}
+		time.Sleep(5 * time.Second)
 		_, camundaPgIp, camundaPgPort, err := docker.Postgres(ctx, wg, "camunda")
 		if err != nil {
-			return "", permissions, err
+			return "", err
 		}
 
 		config.CamundaUrl, err = docker.Camunda(ctx, wg, camundaPgIp, camundaPgPort)
 		if err != nil {
-			return "", permissions, err
+			return "", err
 		}
+
+		_, elasticIp, err := docker.Elasticsearch(ctx, wg)
+		if err != nil {
+			return "", err
+		}
+
+		_, permIp, err := docker.PermSearch(ctx, wg, config.KafkaUrl, elasticIp)
+		if err != nil {
+			return "", err
+		}
+		time.Sleep(5 * time.Second)
+		config.PermissionsUrl = "http://" + permIp + ":8080"
+		perm = permissions.New(config)
+		consumer = kafka.NewConsumer
+		producer = controller.NewProducerFactory(kafka.NewProducer)
+	} else {
+		var sender func(topic string, message []byte)
+		sender, consumer = mocks.NewConsumer(errHandler)
+		producer = mocks.NewProducer(func(topic string, key string, message []byte) error {
+			go sender(topic, message)
+			return nil
+		})
+		perm = mocks.NewPermissions()
 	}
 
-	permissions = mocks.NewPermissions()
-
-	ctrl, err := controller.New(ctx, config, db, permissions, camunda.New(config), consumer, producer)
+	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), consumer, producer)
 	if err != nil {
-		return "", permissions, err
+		return "", err
 	}
 
 	router := api.GetRouter(config, ctrl)
@@ -101,7 +133,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, withCamunda bool, errHa
 		server.Close()
 		wg.Done()
 	}()
-	return server.URL, permissions, nil
+	return server.URL, nil
 }
 
 var SleepAfterEdit = 0 * time.Second

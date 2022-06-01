@@ -20,7 +20,6 @@ import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
-	"github.com/ory/dockertest/v3"
 	"reflect"
 	"sync"
 	"testing"
@@ -31,6 +30,12 @@ func TestKafka(t *testing.T) {
 	if testing.Short() {
 		t.Skip("short tests only without docker")
 	}
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	config, err := configuration.Load("../../config.json")
 	if err != nil {
 		t.Error(err)
@@ -38,33 +43,21 @@ func TestKafka(t *testing.T) {
 	}
 	config.Debug = true
 
-	pool, err := dockertest.NewPool("")
+	_, zkIp, err := docker.Zookeeper(ctx, wg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-
-	closeZk, _, zkIp, err := docker.Zookeeper(pool)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer closeZk()
 	zkUrl := zkIp + ":2181"
 
 	//kafka
-	var closeKafka func()
-	config.KafkaUrl, closeKafka, err = docker.Kafka(pool, zkUrl)
+	config.KafkaUrl, err = docker.Kafka(ctx, wg, zkUrl)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	defer closeKafka()
 
 	time.Sleep(2 * time.Second)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	consumed := []string{}
 	mux := sync.Mutex{}

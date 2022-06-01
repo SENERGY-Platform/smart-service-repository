@@ -37,7 +37,7 @@ func TestDesignApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, false, func(err error) {
+	apiUrl, err := apiTestEnv(ctx, wg, false, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
