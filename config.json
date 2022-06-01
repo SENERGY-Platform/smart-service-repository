@@ -2,6 +2,11 @@
     "server_port": "8080",
     "debug": false,
     "enable_swagger_ui": false,
+
+    "permissions_url": "",
+    "camunda_url": "",
+    "notification_url": "",
+
     "kafka_url": "",
     "consumer_group": "smart_service_repository",
     "kafka_smart_service_release_topic": "smart_service_releases",
@@ -10,5 +15,6 @@
 
     "mongo_url": "",
     "mongo_table": "smart_services",
-    "mongo_collection_design": "designs"
+    "mongo_collection_design": "designs",
+    "mongo_collection_release": "releases"
 }

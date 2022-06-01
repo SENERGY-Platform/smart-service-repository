@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/camunda"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
@@ -28,6 +29,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
 	"net/http"
 	"net/http/httptest"
+	"runtime/debug"
 	"sync"
 	"time"
 )
@@ -40,6 +42,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, errHandler func(error))
 
 	mongoPort, _, err := docker.Mongo(ctx, wg)
 	if err != nil {
+		debug.PrintStack()
 		return "", err
 	}
 
@@ -56,7 +59,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, errHandler func(error))
 		return nil
 	})
 
-	ctrl, err := controller.New(ctx, config, db, consumer, producer)
+	ctrl, err := controller.New(ctx, config, db, mocks.NewPermissions(), camunda.New(config), consumer, producer)
 	if err != nil {
 		return "", err
 	}

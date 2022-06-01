@@ -19,10 +19,12 @@ package pkg
 import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/camunda"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 )
 
 func Start(ctx context.Context, config configuration.Config) error {
@@ -30,7 +32,15 @@ func Start(ctx context.Context, config configuration.Config) error {
 	if err != nil {
 		return err
 	}
-	cmd, err := controller.New(ctx, config, db, kafka.NewConsumer, controller.NewProducerFactory(kafka.NewProducer))
+	cmd, err := controller.New(
+		ctx,
+		config,
+		db,
+		permissions.New(config),
+		camunda.New(config),
+		kafka.NewConsumer,
+		controller.NewProducerFactory(kafka.NewProducer),
+	)
 	if err != nil {
 		return err
 	}

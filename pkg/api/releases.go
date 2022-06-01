@@ -32,79 +32,6 @@ func init() {
 
 type Releases struct{}
 
-// List godoc
-// @Summary      returns a list of smart-service releases
-// @Description  returns a list of smart-service releases
-// @Tags         releases
-// @Produce      json
-// @Success      200 {array} model.SmartServiceRelease
-// @Failure      500
-// @Failure      401
-// @Router       /releases [get]
-func (this *Releases) List(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.GET("/releases", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode([]model.SmartServiceRelease{})
-	})
-}
-
-// Get godoc
-// @Summary      returns a smart-service release
-// @Description  returns a smart-service release
-// @Tags         releases
-// @Produce      json
-// @Param        id path string true "Release ID"
-// @Success      200 {object} model.SmartServiceRelease
-// @Failure      500
-// @Failure      401
-// @Router       /releases/{id} [get]
-func (this *Releases) Get(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.GET("/releases/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceRelease{})
-	})
-}
-
-// Update godoc
-// @Summary      updates a smart-service release
-// @Description  updates a smart-service release
-// @Tags         releases
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Release ID"
-// @Param        message body model.SmartServiceRelease true "SmartServiceRelease"
-// @Success      200 {object} model.SmartServiceRelease
-// @Failure      500
-// @Failure      401
-// @Router       /releases/{id} [put]
-func (this *Releases) Update(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.PUT("/releases/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceRelease{})
-	})
-}
-
 // Create godoc
 // @Summary      create a smart-service release
 // @Description  creates a smart-service release
@@ -125,9 +52,23 @@ func (this *Releases) Create(config configuration.Config, router *httprouter.Rou
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceRelease{})
+		element := model.SmartServiceRelease{}
+		err = json.NewDecoder(request.Body).Decode(&element)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if element.Id == "" {
+			element.Id = ctrl.GetNewId()
+		}
+
+		result, err, code := ctrl.CreateRelease(token, element)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 
@@ -140,7 +81,9 @@ func (this *Releases) Create(config configuration.Config, router *httprouter.Rou
 // @Param        id path string true "Release ID"
 // @Success      200
 // @Failure      500
+// @Failure      400
 // @Failure      401
+// @Failure      403
 // @Router       /releases/{id} [delete]
 func (this *Releases) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.POST("/releases/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -150,9 +93,72 @@ func (this *Releases) Delete(config configuration.Config, router *httprouter.Rou
 			return
 		}
 
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		err, code := ctrl.DeleteRelease(token, id)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
+	})
+}
+
+// Get godoc
+// @Summary      returns a smart-service release
+// @Description  returns a smart-service release
+// @Tags         releases
+// @Produce      json
+// @Param        id path string true "Release ID"
+// @Success      200 {object} model.SmartServiceRelease
+// @Failure      500
+// @Failure      401
+// @Router       /releases/{id} [get]
+func (this *Releases) Get(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/releases/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+		result, err, code := ctrl.GetRelease(token, id)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
+	})
+}
+
+// List godoc
+// @Summary      returns a list of smart-service releases
+// @Description  returns a list of smart-service releases
+// @Tags         releases
+// @Produce      json
+// @Success      200 {array} model.SmartServiceRelease
+// @Failure      500
+// @Failure      401
+// @Router       /releases [get]
+func (this *Releases) List(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/releases", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
 		//TODO: replace with real code
 		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceRelease{})
+		json.NewEncoder(writer).Encode([]model.SmartServiceRelease{})
 	})
 }
 

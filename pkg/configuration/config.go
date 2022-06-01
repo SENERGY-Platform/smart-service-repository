@@ -30,6 +30,9 @@ type Config struct {
 	ServerPort                    string   `json:"server_port"`
 	Debug                         bool     `json:"debug"`
 	EnableSwaggerUi               bool     `json:"enable_swagger_ui"`
+	CamundaUrl                    string   `json:"camunda_url"`
+	PermissionsUrl                string   `json:"permissions_url"`
+	NotificationUrl               string   `json:"notification_url"`
 	KafkaUrl                      string   `json:"kafka_url"`
 	ConsumerGroup                 string   `json:"consumer_group"`
 	KafkaSmartServiceReleaseTopic string   `json:"kafka_smart_service_release_topic"`
@@ -38,6 +41,7 @@ type Config struct {
 	MongoUrl                      string   `json:"mongo_url"`
 	MongoTable                    string   `json:"mongo_table"`
 	MongoCollectionDesign         string   `json:"mongo_collection_design"`
+	MongoCollectionRelease        string   `json:"mongo_collection_release"`
 }
 
 //loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)

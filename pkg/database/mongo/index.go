@@ -28,14 +28,14 @@ import (
 
 func getBsonFieldObject[T any]() T {
 	v := new(T)
-	err := fillObjectWithItsBsonFieldNames(v)
+	err := fillObjectWithItsBsonFieldNames(v, nil)
 	if err != nil {
 		panic(err)
 	}
 	return *v
 }
 
-func fillObjectWithItsBsonFieldNames(ptr interface{}) error {
+func fillObjectWithItsBsonFieldNames(ptr interface{}, prefix []string) error {
 	ptrval := reflect.ValueOf(ptr)
 	objval := reflect.Indirect(ptrval)
 	objecttype := objval.Type()
@@ -46,7 +46,21 @@ func fillObjectWithItsBsonFieldNames(ptr interface{}) error {
 			if err != nil {
 				return err
 			}
-			objval.Field(i).SetString(tags.Name)
+			objval.Field(i).SetString(strings.Join(append(prefix, tags.Name), "."))
+		}
+		if field.Type.Kind() == reflect.Struct {
+			tags, err := bsoncodec.DefaultStructTagParser.ParseStructTags(field)
+			if err != nil {
+				return err
+			}
+			if tags.Inline {
+				err = fillObjectWithItsBsonFieldNames(objval.Field(i).Addr().Interface(), prefix)
+			} else {
+				err = fillObjectWithItsBsonFieldNames(objval.Field(i).Addr().Interface(), append(prefix, tags.Name))
+			}
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

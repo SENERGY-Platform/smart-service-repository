@@ -24,6 +24,7 @@ import (
 type Controller interface {
 	DesignsInterface
 	ModulesInterface
+	ReleaseInterface
 	GetNewId() string
 }
 
@@ -37,4 +38,10 @@ type DesignsInterface interface {
 	GetDesign(token auth.Token, id string) (model.SmartServiceDesign, error, int)
 	SetDesign(token auth.Token, element model.SmartServiceDesign) (model.SmartServiceDesign, error, int)
 	DeleteDesign(token auth.Token, id string) (error, int)
+}
+
+type ReleaseInterface interface {
+	CreateRelease(token auth.Token, element model.SmartServiceRelease) (model.SmartServiceRelease, error, int)
+	DeleteRelease(token auth.Token, id string) (error, int)
+	GetRelease(token auth.Token, id string) (model.SmartServiceRelease, error, int)
 }

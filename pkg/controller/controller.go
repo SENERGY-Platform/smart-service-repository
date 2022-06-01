@@ -18,27 +18,44 @@ package controller
 
 import (
 	"context"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/google/uuid"
 )
 
 type Controller struct {
+	config           configuration.Config
 	db               Database
+	camunda          Camunda
 	releasesProducer Producer
+	permissions      Permissions
 }
 
 type Producer interface {
 	Produce(key string, message []byte) error
 }
 
+type Permissions interface {
+	CheckAccess(token auth.Token, topic string, id string, right string) (bool, error)
+}
+
+type Camunda interface {
+	DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool)
+	RemoveRelease(id string) error
+}
+
 type GenericProducerFactory[T Producer] func(ctx context.Context, config configuration.Config, topic string) (T, error)
 type ProducerFactory = GenericProducerFactory[Producer]
 type Consumer = func(ctx context.Context, config configuration.Config, topic string, listener func(delivery []byte) error) error
 
-func New(ctx context.Context, config configuration.Config, db *mongo.Mongo, consumer Consumer, producer ProducerFactory) (ctrl *Controller, err error) {
+func New(ctx context.Context, config configuration.Config, db *mongo.Mongo, permissions Permissions, camunda Camunda, consumer Consumer, producer ProducerFactory) (ctrl *Controller, err error) {
 	ctrl = &Controller{
-		db: db,
+		config:      config,
+		db:          db,
+		permissions: permissions,
+		camunda:     camunda,
 	}
 	if config.EditForward == "" || config.EditForward == "-" {
 		ctrl.releasesProducer, err = producer(ctx, config, config.KafkaSmartServiceReleaseTopic)

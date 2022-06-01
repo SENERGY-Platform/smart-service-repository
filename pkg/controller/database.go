@@ -22,6 +22,7 @@ type Database interface {
 	DesignsInterface
 	ModuleInterface
 	InstanceInterface
+	ReleaseInterface
 }
 
 type DesignsInterface interface {
@@ -39,4 +40,11 @@ type ModuleInterface interface {
 
 type InstanceInterface interface {
 	GetInstance(id string, userId string) (model.SmartServiceInstance, error, int)
+}
+
+type ReleaseInterface interface {
+	SetRelease(element model.SmartServiceReleaseExtended) (error, int)
+	SetReleaseError(id string, errMsg string) error
+	GetRelease(id string) (model.SmartServiceReleaseExtended, error, int)
+	DeleteRelease(id string) (error, int)
 }

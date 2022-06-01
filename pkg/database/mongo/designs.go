@@ -22,6 +22,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"runtime/debug"
 )
 
 var DesignBson = getBsonFieldObject[model.SmartServiceDesign]()
@@ -30,8 +31,9 @@ func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
 		var err error
 		collection := db.client.Database(db.config.MongoTable).Collection(db.config.MongoCollectionDesign)
-		err = db.ensureCompoundIndex(collection, "design_id_name_index", true, true, DesignBson.Id, DesignBson.Name)
+		err = db.ensureCompoundIndex(collection, "design_id_user_index", true, true, DesignBson.Id, DesignBson.UserId)
 		if err != nil {
+			debug.PrintStack()
 			return err
 		}
 		return nil

@@ -27,11 +27,22 @@ type SmartServiceDesign struct {
 
 //cqrs
 type SmartServiceRelease struct {
-	Id          string `json:"id"`
-	DesignId    string `json:"design_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   string `json:"created_at"`
+	Id          string `json:"id" bson:"id"`
+	DesignId    string `json:"design_id" bson:"design_id"`
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description" bson:"description"`
+	CreatedAt   int64  `json:"created_at" bson:"created_at"` //unix timestamp, set by service on creation
+	Error       string `json:"error,omitempty" bson:"error"` //is set if errors occurred while releasing
+}
+
+type SmartServiceReleaseExtended struct {
+	SmartServiceRelease `bson:",inline"`
+	BpmnXml             string                  `json:"bpmn_xml" bson:"bpmn_xml"`
+	SvgXml              string                  `json:"svg_xml" bson:"svg_xml"`
+	ParsedInfo          SmartServiceReleaseInfo `json:"parsed_info" bson:"parsed_info"`
+}
+
+type SmartServiceReleaseInfo struct {
 }
 
 type SmartServiceInstance struct {
