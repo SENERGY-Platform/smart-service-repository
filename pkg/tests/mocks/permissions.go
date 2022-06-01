@@ -17,15 +17,37 @@
 package mocks
 
 import (
+	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 )
 
-type Permissions struct{}
+type Permissions struct {
+	queryFindResponses map[string]map[string]interface{}
+}
 
 func NewPermissions() *Permissions {
-	return &Permissions{}
+	return &Permissions{
+		queryFindResponses: map[string]map[string]interface{}{},
+	}
 }
 
 func (this *Permissions) CheckAccess(token auth.Token, topic string, id string, right string) (bool, error) {
 	return true, nil
+}
+
+func (this *Permissions) Query(token string, query permissions.QueryMessage, result interface{}) (err error, code int) {
+	if _, ok := this.queryFindResponses[token]; !ok {
+		this.queryFindResponses[token] = map[string]interface{}{}
+	}
+	if _, ok := this.queryFindResponses[token][query.Resource]; !ok {
+		this.queryFindResponses[token][query.Resource] = []interface{}{}
+	}
+	temp, _ := json.Marshal(this.queryFindResponses[token][query.Resource])
+	err = json.Unmarshal(temp, result)
+	return
+}
+
+func (this *Permissions) SetQueryFindResponses(queryFindResponses map[string]map[string]interface{}) {
+	this.queryFindResponses = queryFindResponses
 }

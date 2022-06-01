@@ -24,6 +24,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func init() {
@@ -156,9 +157,33 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
-		json.NewEncoder(writer).Encode([]model.SmartServiceRelease{})
+		query := model.ReleaseQueryOptions{}
+		limit := request.URL.Query().Get("limit")
+		if limit != "" {
+			query.Limit, err = strconv.Atoi(limit)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		offset := request.URL.Query().Get("offset")
+		if offset != "" {
+			query.Offset, err = strconv.Atoi(offset)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		query.Sort = request.URL.Query().Get("sort")
+		if query.Sort == "" {
+			query.Sort = "name.asc"
+		}
+		result, err, code := ctrl.ListReleases(token, query)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 

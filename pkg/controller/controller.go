@@ -22,6 +22,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/google/uuid"
 )
 
@@ -39,6 +40,7 @@ type Producer interface {
 
 type Permissions interface {
 	CheckAccess(token auth.Token, topic string, id string, right string) (bool, error)
+	Query(token string, query permissions.QueryMessage, result interface{}) (err error, code int)
 }
 
 type Camunda interface {

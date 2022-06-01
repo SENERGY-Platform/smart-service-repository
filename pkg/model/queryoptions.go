@@ -16,6 +16,8 @@
 
 package model
 
+import "strings"
+
 type ModuleQueryOptions struct {
 	TypeFilter       *string
 	InstanceIdFilter *string
@@ -58,4 +60,36 @@ func (this DesignQueryOptions) GetSort() string {
 		return "name.asc"
 	}
 	return this.Sort
+}
+
+type ReleaseQueryOptions struct {
+	Limit  int
+	Offset int
+	Sort   string
+}
+
+func (this ReleaseQueryOptions) GetLimit() int64 {
+	return int64(this.Limit)
+}
+
+func (this ReleaseQueryOptions) GetOffset() int64 {
+	return int64(this.Offset)
+}
+
+func (this ReleaseQueryOptions) GetSort() string {
+	if this.Sort == "" {
+		return "name.asc"
+	}
+	return this.Sort
+}
+
+func (this ReleaseQueryOptions) GetSortField() string {
+	field := this.GetSort()
+	field = strings.TrimSuffix(field, ".asc")
+	field = strings.TrimSuffix(field, ".desc")
+	return field
+}
+
+func (this ReleaseQueryOptions) GetSortAsc() bool {
+	return strings.HasSuffix(this.GetSort(), ".desc")
 }

@@ -62,3 +62,38 @@ func (this *Permissions) CheckAccess(token auth.Token, topic string, id string, 
 	}
 	return allowed, nil
 }
+
+func (this *Permissions) Query(token string, query QueryMessage, result interface{}) (err error, code int) {
+	requestBody := new(bytes.Buffer)
+	err = json.NewEncoder(requestBody).Encode(query)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	req, err := http.NewRequest("POST", this.config.PermissionsUrl+"/v3/query", requestBody)
+	if err != nil {
+		debug.PrintStack()
+		return err, http.StatusInternalServerError
+	}
+	req.Header.Set("Authorization", token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		debug.PrintStack()
+		return err, http.StatusInternalServerError
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		err = errors.New(buf.String())
+		log.Println("ERROR: ", resp.StatusCode, err)
+		debug.PrintStack()
+		return err, resp.StatusCode
+	}
+	err = json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		debug.PrintStack()
+		return err, http.StatusInternalServerError
+	}
+
+	return nil, http.StatusOK
+}

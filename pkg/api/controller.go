@@ -44,4 +44,5 @@ type ReleaseInterface interface {
 	CreateRelease(token auth.Token, element model.SmartServiceRelease) (model.SmartServiceRelease, error, int)
 	DeleteRelease(token auth.Token, id string) (error, int)
 	GetRelease(token auth.Token, id string) (model.SmartServiceRelease, error, int)
+	ListReleases(token auth.Token, query model.ReleaseQueryOptions) ([]model.SmartServiceRelease, error, int)
 }

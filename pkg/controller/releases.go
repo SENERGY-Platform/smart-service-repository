@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -95,6 +96,41 @@ func (this *Controller) GetRelease(token auth.Token, id string) (result model.Sm
 	var extended model.SmartServiceReleaseExtended
 	extended, err, code = this.db.GetRelease(id)
 	return extended.SmartServiceRelease, err, code
+}
+
+type IdWrapper struct {
+	Id string `json:"id"`
+}
+
+func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceRelease, err error, code int) {
+	idWrapperList := []IdWrapper{}
+	err, _ = this.permissions.Query(token.Jwt(), permissions.QueryMessage{
+		Resource: this.config.KafkaSmartServiceReleaseTopic,
+		Find: &permissions.QueryFind{
+			QueryListCommons: permissions.QueryListCommons{
+				Limit:    query.Limit,
+				Offset:   query.Offset,
+				Rights:   "r",
+				SortBy:   query.GetSortField(),
+				SortDesc: !query.GetSortAsc(),
+			},
+		},
+	}, &idWrapperList)
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	idList := []string{}
+	for _, id := range idWrapperList {
+		idList = append(idList, id.Id)
+	}
+	temp, err := this.db.GetReleaseListByIds(idList, query.GetSort())
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	for _, release := range temp {
+		result = append(result, release.SmartServiceRelease)
+	}
+	return result, nil, http.StatusOK
 }
 
 func (this *Controller) DeleteRelease(token auth.Token, id string) (error, int) {

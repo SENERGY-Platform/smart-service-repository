@@ -46,5 +46,6 @@ type ReleaseInterface interface {
 	SetRelease(element model.SmartServiceReleaseExtended) (error, int)
 	SetReleaseError(id string, errMsg string) error
 	GetRelease(id string) (model.SmartServiceReleaseExtended, error, int)
+	GetReleaseListByIds(ids []string, sort string) ([]model.SmartServiceReleaseExtended, error)
 	DeleteRelease(id string) (error, int)
 }

@@ -38,10 +38,12 @@ func createFindOptions(query QueryOptions) *options.FindOptions {
 	}
 	opt.SetSkip(query.GetOffset())
 
-	parts := strings.Split(query.GetSort(), ".")
-	sortby := parts[0]
+	sortby := query.GetSort()
+	sortby = strings.TrimSuffix(sortby, ".asc")
+	sortby = strings.TrimSuffix(sortby, ".desc")
+
 	direction := int32(1)
-	if len(parts) > 1 && parts[1] == "desc" {
+	if strings.HasSuffix(query.GetSort(), ".desc") {
 		direction = int32(-1)
 	}
 	opt.SetSort(bsonx.Doc{{sortby, bsonx.Int32(direction)}})
