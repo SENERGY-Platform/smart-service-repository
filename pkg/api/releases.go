@@ -144,6 +144,9 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 // @Summary      returns a list of smart-service releases
 // @Description  returns a list of smart-service releases
 // @Tags         releases
+// @Param        limit query integer false "limits size of result"
+// @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceRelease
 // @Failure      500
@@ -157,7 +160,9 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 			return
 		}
 
-		query := model.ReleaseQueryOptions{}
+		query := model.ReleaseQueryOptions{
+			Limit: 100,
+		}
 		limit := request.URL.Query().Get("limit")
 		if limit != "" {
 			query.Limit, err = strconv.Atoi(limit)

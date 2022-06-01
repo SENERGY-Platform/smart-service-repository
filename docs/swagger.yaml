@@ -107,10 +107,14 @@ definitions:
   model.SmartServiceRelease:
     properties:
       created_at:
-        type: string
+        description: unix timestamp, set by service on creation
+        type: integer
       description:
         type: string
       design_id:
+        type: string
+      error:
+        description: is set if errors occurred while releasing
         type: string
       id:
         type: string
@@ -444,6 +448,19 @@ paths:
   /releases:
     get:
       description: returns a list of smart-service releases
+      parameters:
+      - description: limits size of result
+        in: query
+        name: limit
+        type: integer
+      - description: offset to be used in combination with limit
+        in: query
+        name: offset
+        type: integer
+      - description: describes the sorting in the form of name.asc
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
@@ -506,7 +523,11 @@ paths:
       responses:
         "200":
           description: ""
+        "400":
+          description: ""
         "401":
+          description: ""
+        "403":
           description: ""
         "500":
           description: ""
@@ -533,36 +554,6 @@ paths:
         "500":
           description: ""
       summary: returns a smart-service release
-      tags:
-      - releases
-    put:
-      consumes:
-      - application/json
-      description: updates a smart-service release
-      parameters:
-      - description: Release ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: SmartServiceRelease
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/model.SmartServiceRelease'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.SmartServiceRelease'
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: updates a smart-service release
       tags:
       - releases
   /releases/{id}/instances:

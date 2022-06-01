@@ -507,6 +507,26 @@ const docTemplate = `{
                     "releases"
                 ],
                 "summary": "returns a list of smart-service releases",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limits size of result",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset to be used in combination with limit",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "describes the sorting in the form of name.asc",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -605,51 +625,6 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
-                "description": "updates a smart-service release",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "releases"
-                ],
-                "summary": "updates a smart-service release",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Release ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "SmartServiceRelease",
-                        "name": "message",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceRelease"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceRelease"
-                        }
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            },
             "delete": {
                 "description": "removes a smart-service release",
                 "consumes": [
@@ -675,7 +650,13 @@ const docTemplate = `{
                     "200": {
                         "description": ""
                     },
+                    "400": {
+                        "description": ""
+                    },
                     "401": {
+                        "description": ""
+                    },
+                    "403": {
                         "description": ""
                     },
                     "500": {
@@ -933,12 +914,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "created_at": {
-                    "type": "string"
+                    "description": "unix timestamp, set by service on creation",
+                    "type": "integer"
                 },
                 "description": {
                     "type": "string"
                 },
                 "design_id": {
+                    "type": "string"
+                },
+                "error": {
+                    "description": "is set if errors occurred while releasing",
                     "type": "string"
                 },
                 "id": {
