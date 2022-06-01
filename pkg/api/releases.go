@@ -87,7 +87,7 @@ func (this *Releases) Create(config configuration.Config, router *httprouter.Rou
 // @Failure      403
 // @Router       /releases/{id} [delete]
 func (this *Releases) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.POST("/releases/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.DELETE("/releases/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)

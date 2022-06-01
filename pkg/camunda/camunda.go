@@ -43,37 +43,63 @@ func New(config configuration.Config) *Camunda {
 	}
 }
 
+func idToCNName(id string) string {
+	result := strings.ReplaceAll(id, "-", "_")
+	if !strings.HasPrefix(result, "id_") {
+		result = "id_" + result
+	}
+	return result
+}
+
 func (this *Camunda) RemoveRelease(id string) error {
-	deplId, exists, err := this.getDeploymentId(id)
+	id = idToCNName(id)
+	deplIds, err := this.getDeploymentIds(id)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return nil
+	if this.config.Debug && len(deplIds) > 0 {
+		log.Println("DEBUG: remove deployments", deplIds)
 	}
-	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/deployment/"+url.PathEscape(deplId), nil)
+	for _, deplId := range deplIds {
+		err = this.removeDeployment(deplId)
+		if err != nil {
+			return fmt.Errorf("unable to delete release %v\n%w", id, err)
+		}
+	}
+	return nil
+}
+
+func (this *Camunda) removeDeployment(deplId string) error {
+	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/deployment/"+url.PathEscape(deplId)+"?cascade=true&skipIoMappings=true", nil)
 	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
 		return err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
 		temp, _ := io.ReadAll(resp.Body)
-		err = fmt.Errorf("unable to remove release (%v, %v) from camunda: %v", id, deplId, string(temp))
+		err = fmt.Errorf("unable to remove deployment (%v) from camunda: %v", deplId, string(temp))
+		log.Println("ERROR:", err)
+		debug.PrintStack()
 		return err
 	}
 	return nil
 }
 
 func (this *Camunda) DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool) {
+	id := idToCNName(release.Id)
 	err = this.RemoveRelease(release.Id) //remove existing releases with the same id
 	if err != nil {
 		return err, false
 	}
-	releaseXml, err := setReleaseIdToBpmn(release.BpmnXml, release.Id)
+	releaseXml, err := setReleaseIdToBpmn(release.BpmnXml, id)
 	if err != nil {
 		return err, true
 	}
@@ -96,8 +122,9 @@ func (this *Camunda) DeployRelease(owner string, release model.SmartServiceRelea
 			})
 			return fmt.Errorf("unable to release: %v", msg), true
 		}
+		return errors.New("unknown release error"), true
 	}
-	return errors.New("unknown release error"), true
+	return nil, false
 }
 
 func (this *Camunda) deployProcess(name string, xml string, svg string) (result map[string]interface{}, err error, code int) {
@@ -106,6 +133,7 @@ func (this *Camunda) deployProcess(name string, xml string, svg string) (result 
 	b := strings.NewReader(buildPayLoad(name, xml, svg, boundary))
 	resp, err := http.Post(this.config.CamundaUrl+"/engine-rest/deployment/create", "multipart/form-data; boundary="+boundary, b)
 	if err != nil {
+		debug.PrintStack()
 		log.Println("ERROR: request to processengine ", err)
 		return result, err, 0
 	}
@@ -120,18 +148,81 @@ func (this *Camunda) getDeploymentId(id string) (deplId string, exists bool, err
 	return definition.DeploymentId, exists, err
 }
 
-func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, exists bool, err error) {
-	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/process-definition/key/"+url.PathEscape(id), nil)
+func (this *Camunda) getDeploymentIds(id string) (deplIds []string, err error) {
+	var definitions []ProcessDefinition
+	definitions, err = this.getProcessDefinitionListByKey(id)
 	if err != nil {
+		return deplIds, err
+	}
+	for _, definition := range definitions {
+		deplIds = append(deplIds, definition.DeploymentId)
+	}
+	return deplIds, nil
+}
+
+func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, exists bool, err error) {
+	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(id), nil)
+	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
 		return result, false, err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
 		return result, false, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
 		return result, false, nil
+	}
+	if resp.StatusCode >= 300 {
+		temp, _ := io.ReadAll(resp.Body)
+		err = errors.New(string(temp))
+		log.Println("ERROR:", err)
+		debug.PrintStack()
+		return result, false, err
+	}
+	exists = true
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	return
+}
+
+func (this *Camunda) getProcessDefinitionList() (result []ProcessDefinition, err error) {
+	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition", nil)
+	if err != nil {
+		return result, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		debug.PrintStack()
+		return result, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		temp, _ := io.ReadAll(resp.Body)
+		return result, fmt.Errorf("unable to get process-definition list: %v, %v", resp.StatusCode, string(temp))
+	}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	return
+}
+
+func (this *Camunda) getProcessDefinitionListByKey(key string) (result []ProcessDefinition, err error) {
+	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition?key="+url.QueryEscape(key), nil)
+	if err != nil {
+		return result, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", err)
+		return result, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		temp, _ := io.ReadAll(resp.Body)
+		return result, fmt.Errorf("unable to get process-definition list by key: %v, %v", resp.StatusCode, string(temp))
 	}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	return

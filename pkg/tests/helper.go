@@ -27,6 +27,8 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"runtime/debug"
@@ -34,23 +36,36 @@ import (
 	"time"
 )
 
-func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, errHandler func(error)) (apiUrl string, err error) {
+func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, withCamunda bool, errHandler func(error)) (apiUrl string, permissions *mocks.Permissions, err error) {
 	config, err := configuration.Load("../../config.json")
 	if err != nil {
-		return "", err
+		return "", permissions, err
 	}
+	config.Debug = true
+
+	notificationMock := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		msg, _ := io.ReadAll(request.Body)
+		log.Println("NOTIFICATION:", string(msg))
+	}))
+	wg.Add(1)
+	go func() {
+		<-ctx.Done()
+		notificationMock.Close()
+		wg.Done()
+	}()
+	config.NotificationUrl = notificationMock.URL
 
 	mongoPort, _, err := docker.Mongo(ctx, wg)
 	if err != nil {
 		debug.PrintStack()
-		return "", err
+		return "", permissions, err
 	}
 
 	config.MongoUrl = "mongodb://localhost:" + mongoPort
 
 	db, err := mongo.New(config)
 	if err != nil {
-		return "", err
+		return "", permissions, err
 	}
 
 	sender, consumer := mocks.NewConsumer(errHandler)
@@ -59,9 +74,23 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, errHandler func(error))
 		return nil
 	})
 
-	ctrl, err := controller.New(ctx, config, db, mocks.NewPermissions(), camunda.New(config), consumer, producer)
+	if withCamunda {
+		_, camundaPgIp, camundaPgPort, err := docker.Postgres(ctx, wg, "camunda")
+		if err != nil {
+			return "", permissions, err
+		}
+
+		config.CamundaUrl, err = docker.Camunda(ctx, wg, camundaPgIp, camundaPgPort)
+		if err != nil {
+			return "", permissions, err
+		}
+	}
+
+	permissions = mocks.NewPermissions()
+
+	ctrl, err := controller.New(ctx, config, db, permissions, camunda.New(config), consumer, producer)
 	if err != nil {
-		return "", err
+		return "", permissions, err
 	}
 
 	router := api.GetRouter(config, ctrl)
@@ -72,7 +101,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, errHandler func(error))
 		server.Close()
 		wg.Done()
 	}()
-	return server.URL, nil
+	return server.URL, permissions, nil
 }
 
 var SleepAfterEdit = 0 * time.Second

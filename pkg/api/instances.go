@@ -115,7 +115,7 @@ func (this *Instances) Update(config configuration.Config, router *httprouter.Ro
 // @Failure      401
 // @Router       /instances/{id} [delete]
 func (this *Instances) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.POST("/instances/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.DELETE("/instances/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
