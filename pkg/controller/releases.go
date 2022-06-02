@@ -290,14 +290,29 @@ func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.S
 			Type:         fieldType,
 			DefaultValue: defaultValue,
 		}
+		if options, ok := properties["options"]; ok {
+			err = json.Unmarshal([]byte(options), &param.Options)
+			if err != nil {
+				return result, fmt.Errorf("invalid options property for formField %v: %w", id, err)
+			}
+		}
+		if multiple, ok := properties["multiple"]; ok {
+			param.Multiple, err = strconv.ParseBool(multiple)
+			if err != nil {
+				return result, fmt.Errorf("invalid multiple property for formField %v: %w", id, err)
+			}
+		}
 		if iot, ok := properties["iot"]; ok {
+			if _, containsOptions := properties["options"]; containsOptions {
+				return result, fmt.Errorf("invalid options/iot property for formField %v: %v", id, "iot and options are mutual exclusive")
+			}
 			typeFilter := []string{}
 			iot = strings.ReplaceAll(iot, " ", "")
 			if iot != "" {
 				typeFilter = strings.Split(iot, ",")
 			}
 			criteria := []model.Criteria{}
-			if criteriaStr, ok := properties["criteria"]; ok {
+			if criteriaStr, hasCriteria := properties["criteria"]; hasCriteria {
 				err = json.Unmarshal([]byte(criteriaStr), &criteria)
 				if err != nil {
 					return result, fmt.Errorf("invalid criteria property for formField %v: %w", id, err)

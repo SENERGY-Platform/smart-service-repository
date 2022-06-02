@@ -46,26 +46,6 @@ type SmartServiceReleaseInfo struct {
 	ParameterDescriptions []ParameterDescription `json:"parameter_descriptions" bson:"parameter_descriptions"`
 }
 
-type ParameterDescription struct {
-	Id             string          `json:"id" bson:"id"`
-	Label          string          `json:"label" bson:"label"`
-	Description    string          `json:"description" bson:"description"`
-	Type           string          `json:"type" bson:"type"`
-	DefaultValue   interface{}     `json:"default_value" bson:"default_value"`
-	IotDescription *IotDescription `json:"iot_description" bson:"iot_description"`
-}
-
-type IotDescription struct {
-	TypeFilter []string   `json:"type_filter" bson:"type_filter"`
-	Criteria   []Criteria `json:"criteria" bson:"criteria"`
-}
-
-type Criteria struct {
-	FunctionId    *string `json:"function_id" bson:"function_id"`
-	DeviceClassId *string `json:"device_class_id" bson:"device_class_id"`
-	AspectId      *string `json:"aspect_id" bson:"aspect_id"`
-}
-
 type SmartServiceInstance struct {
 	Id               string                  `json:"id" bson:"id"`
 	UserId           string                  `json:"user_id" bson:"user_id"`
@@ -76,29 +56,6 @@ type SmartServiceInstance struct {
 	Ready            bool                    `json:"ready" bson:"ready"`
 	IncompleteDelete bool                    `json:"incomplete_delete" bson:"incomplete_delete"`
 	Parameter        []SmartServiceParameter `json:"parameter" bson:"parameter"`
-}
-
-type SmartServiceParameters []SmartServiceParameter
-
-type SmartServiceParameter struct {
-	Id    string      `json:"id"`
-	Value interface{} `json:"value"`
-}
-
-type SmartServiceExtendedParameter struct {
-	SmartServiceParameter
-	Label        string      `json:"label"`
-	Description  string      `json:"description"`
-	DefaultValue interface{} `json:"default_value"`
-	Type         Type        `json:"type"`
-	Options      []Option    `json:"options"`  //if null -> "free text/number/etc"
-	Multiple     bool        `json:"multiple"` //if true: Value = new([]Type); if false: Value = new(Type);
-}
-
-type Option struct {
-	Value interface{} `json:"value"`
-	Label string      `json:"label"`
-	Kind  string      `json:"kind"` //optional helper for ui/app to group options
 }
 
 type SmartServiceModuleBase struct {
