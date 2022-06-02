@@ -237,6 +237,9 @@ func (this *Camunda) getProcessDefinitionListByKey(key string) (result []Process
 }
 
 func (this *Camunda) filterUrlFromErr(in error) (out error) {
+	if this.config.Debug {
+		log.Println("DEBUG: transform error message:", in)
+	}
 	text := in.Error()
 	text = strings.ReplaceAll(text, this.config.CamundaUrl, "http://camunda:8080")
 	parsed, err := url.Parse(this.config.CamundaUrl)

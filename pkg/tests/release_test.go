@@ -37,7 +37,7 @@ func TestReleaseOptionsApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, err := apiTestEnv(ctx, wg, true, func(err error) {
+	apiUrl, err := apiTestEnv(ctx, wg, false, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -115,7 +115,7 @@ func TestReleaseOptionsApi(t *testing.T) {
 		}
 	})
 
-	time.Sleep(5 * time.Second) //allow async cqrs
+	time.Sleep(2 * time.Second)
 
 	t.Run("read params", func(t *testing.T) {
 		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/parameters")
@@ -129,7 +129,7 @@ func TestReleaseOptionsApi(t *testing.T) {
 			return
 		}
 		checkContentType(t, resp)
-		temp := model.SmartServiceExtendedParameter{}
+		temp := []model.SmartServiceExtendedParameter{}
 		err = json.NewDecoder(resp.Body).Decode(&temp)
 		if err != nil {
 			t.Error(err)

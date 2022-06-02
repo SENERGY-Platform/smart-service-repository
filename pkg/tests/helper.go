@@ -34,12 +34,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 )
 
-func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, releaseDependencies bool, errHandler func(error)) (apiUrl string, err error) {
+func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, errHandler func(error)) (apiUrl string, err error) {
 	config, err := configuration.Load("../../config.json")
 	if err != nil {
 		return "", err
@@ -75,7 +76,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, releaseDependencies boo
 	var producer controller.ProducerFactory
 	var perm controller.Permissions
 
-	if releaseDependencies {
+	if camundaAndCqrsDependencies {
 		_, zkIp, err := docker.Zookeeper(ctx, wg)
 		if err != nil {
 			return "", err
@@ -120,9 +121,27 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, releaseDependencies boo
 			return nil
 		})
 		perm = mocks.NewPermissions()
+
+		camundaMock := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			element := map[string]interface{}{"id": "foobar", "deploymentId": "foo"}
+			if strings.HasSuffix(request.URL.Path, "process-definition") {
+				json.NewEncoder(writer).Encode([]interface{}{element})
+			} else {
+				json.NewEncoder(writer).Encode(element)
+			}
+		}))
+		wg.Add(1)
+		go func() {
+			<-ctx.Done()
+			camundaMock.Close()
+			wg.Done()
+		}()
+		config.CamundaUrl = camundaMock.URL
 	}
 
-	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), consumer, producer)
+	selectablesMock := mocks.NewSelectables(nil)
+
+	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, consumer, producer)
 	if err != nil {
 		return "", err
 	}

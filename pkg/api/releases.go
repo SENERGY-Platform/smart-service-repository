@@ -213,10 +213,18 @@ func (this *Releases) Parameters(config configuration.Config, router *httprouter
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+		result, err, code := ctrl.GetReleaseParameter(token, id)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
 		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(model.SmartServiceDesign{})
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 
@@ -227,7 +235,7 @@ func (this *Releases) Parameters(config configuration.Config, router *httprouter
 // @Accept       json
 // @Produce      json
 // @Param        id path string true "Release ID"
-// @Param        message body model.SmartServiceParameters true "SmartServiceParameter"
+// @Param        message body model.SmartServiceInstanceInit true "SmartServiceInstanceInit"
 // @Success      200 {object} model.SmartServiceInstance
 // @Failure      500
 // @Failure      401

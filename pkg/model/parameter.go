@@ -37,9 +37,10 @@ type IotDescription struct {
 }
 
 type Criteria struct {
-	FunctionId    *string `json:"function_id" bson:"function_id"`
-	DeviceClassId *string `json:"device_class_id" bson:"device_class_id"`
-	AspectId      *string `json:"aspect_id" bson:"aspect_id"`
+	Interaction   *Interaction `json:"interaction" bson:"interaction"`
+	FunctionId    *string      `json:"function_id" bson:"function_id"`
+	DeviceClassId *string      `json:"device_class_id" bson:"device_class_id"`
+	AspectId      *string      `json:"aspect_id" bson:"aspect_id"`
 }
 
 //---------------------------------
@@ -67,4 +68,26 @@ type Option struct {
 	Value interface{} `json:"value"`
 	Label string      `json:"label"`
 	Kind  string      `json:"kind"` //optional helper for ui/app to group options
+}
+
+type IotOption struct {
+	DeviceSelection      *DeviceSelection      `json:"device_selection"`
+	DeviceGroupSelection *DeviceGroupSelection `json:"device_group_selection"`
+	ImportSelection      *ImportSelection      `json:"import_selection"`
+}
+
+type DeviceSelection struct {
+	DeviceId  string  `json:"device_id"`
+	ServiceId *string `json:"service_id"`
+	Path      *string `json:"path"`
+}
+
+type DeviceGroupSelection struct {
+	Id string `json:"id"`
+}
+
+type ImportSelection struct {
+	Id   string  `json:"id"`
+	Path *string `json:"path"`
+	//TODO
 }

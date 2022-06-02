@@ -161,6 +161,52 @@ func (this *Controller) DeleteRelease(token auth.Token, id string) (error, int) 
 	return nil, http.StatusOK
 }
 
+func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int) {
+	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, id, "x")
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	if !access {
+		return result, errors.New("access denied"), http.StatusForbidden
+	}
+	release, err, code := this.db.GetRelease(id)
+	if err != nil {
+		return result, err, code
+	}
+	for _, paramDesc := range release.ParsedInfo.ParameterDescriptions {
+		param := model.SmartServiceExtendedParameter{
+			SmartServiceParameter: model.SmartServiceParameter{
+				Id:    paramDesc.Id,
+				Value: paramDesc.DefaultValue,
+			},
+			Label:        paramDesc.Label,
+			Description:  paramDesc.Description,
+			DefaultValue: paramDesc.DefaultValue,
+			Type:         getSchemaOrgType(paramDesc.Type),
+			Multiple:     paramDesc.Multiple,
+		}
+		param.Options, err, code = this.getParamOptions(token, paramDesc)
+		if err != nil {
+			return result, err, code
+		}
+		result = append(result, param)
+	}
+	return result, nil, http.StatusOK
+}
+
+func getSchemaOrgType(t string) model.Type {
+	switch t {
+	case "string":
+		return model.String
+	case "long":
+		return model.Integer
+	case "number":
+		return model.Float
+	default:
+		return model.Type(t)
+	}
+}
+
 //---------- CQRS -------------
 
 type ReleaseCommand struct {

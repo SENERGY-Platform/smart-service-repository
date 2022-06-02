@@ -25,6 +25,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/selectables"
 )
 
 func Start(ctx context.Context, config configuration.Config) error {
@@ -38,6 +39,7 @@ func Start(ctx context.Context, config configuration.Config) error {
 		db,
 		permissions.New(config),
 		camunda.New(config),
+		selectables.New(config),
 		kafka.NewConsumer,
 		controller.NewProducerFactory(kafka.NewProducer),
 	)

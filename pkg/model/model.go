@@ -46,16 +46,20 @@ type SmartServiceReleaseInfo struct {
 	ParameterDescriptions []ParameterDescription `json:"parameter_descriptions" bson:"parameter_descriptions"`
 }
 
+type SmartServiceInstanceInit struct {
+	Name        string                  `json:"name" bson:"name"`
+	Description string                  `json:"description" bson:"description"`
+	Parameters  []SmartServiceParameter `json:"parameters" bson:"parameters"`
+}
+
 type SmartServiceInstance struct {
-	Id               string                  `json:"id" bson:"id"`
-	UserId           string                  `json:"user_id" bson:"user_id"`
-	Name             string                  `json:"name" bson:"name"`
-	Description      string                  `json:"description" bson:"description"`
-	DesignId         string                  `json:"design_id" bson:"design_id"`
-	ReleaseId        string                  `json:"release_id" bson:"release_id"`
-	Ready            bool                    `json:"ready" bson:"ready"`
-	IncompleteDelete bool                    `json:"incomplete_delete" bson:"incomplete_delete"`
-	Parameter        []SmartServiceParameter `json:"parameter" bson:"parameter"`
+	SmartServiceInstanceInit
+	Id               string `json:"id" bson:"id"`
+	UserId           string `json:"user_id" bson:"user_id"`
+	DesignId         string `json:"design_id" bson:"design_id"`
+	ReleaseId        string `json:"release_id" bson:"release_id"`
+	Ready            bool   `json:"ready" bson:"ready"`
+	IncompleteDelete bool   `json:"incomplete_delete" bson:"incomplete_delete"`
 }
 
 type SmartServiceModuleBase struct {
