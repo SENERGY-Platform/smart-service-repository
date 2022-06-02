@@ -38,3 +38,7 @@ jobs:
         uses: wei/curl@v1
         with:
           args: -X POST -u ${{ secrets.RANCHER_TOKEN }} ${{ secrets.RANCHER_URL }}${{ secrets.RANCHER_SERVICE }}?action=redeploy
+      - name: Deploy
+        uses: wei/curl@v1
+        with:
+          args: -X POST -u ${{ secrets.RANCHER_TOKEN }} ${{ secrets.RANCHER_URL }}${{ secrets.RANCHER_SERVICE_EDIT }}?action=redeploy
