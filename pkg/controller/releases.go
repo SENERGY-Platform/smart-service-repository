@@ -23,9 +23,12 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
+	"github.com/beevik/etree"
 	"log"
 	"net/http"
 	"runtime/debug"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -229,7 +232,83 @@ func (this *Controller) HandleReleaseDelete(id string) error {
 
 //------------ Parsing ----------------
 
-func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (model.SmartServiceReleaseInfo, error) {
-	//TODO
-	return model.SmartServiceReleaseInfo{}, nil
+func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.SmartServiceReleaseInfo, err error) {
+	defer func() {
+		if r := recover(); r != nil && err == nil {
+			log.Printf("%s: %s", r, debug.Stack())
+			err = errors.New(fmt.Sprint("Recovered Error: ", r))
+		}
+	}()
+	doc := etree.NewDocument()
+	err = doc.ReadFromString(xml)
+	if err != nil {
+		return result, err
+	}
+	for _, formField := range doc.FindElements("//camunda:formField") {
+		id := formField.SelectAttrValue("id", "")
+		if id == "" {
+			return result, errors.New("missing id in camunda:formField")
+		}
+		label := formField.SelectAttrValue("label", id)
+		fieldType := formField.SelectAttrValue("type", "")
+		if id == "" {
+			return result, errors.New("missing type in camunda:formField")
+		}
+		var defaultValue interface{}
+		defaultValueField := formField.SelectAttr("defaultValue")
+		if defaultValueField != nil {
+			switch fieldType {
+			case "string":
+				defaultValue = defaultValueField.Value
+			case "long":
+				defaultValue, err = strconv.ParseFloat(defaultValueField.Value, 64)
+				if err != nil {
+					return result, fmt.Errorf("expect number in camunda:formField %v defaultValue: %w", id, err)
+				}
+			case "boolean":
+				defaultValue, err = strconv.ParseBool(defaultValueField.Value)
+				if err != nil {
+					return result, fmt.Errorf("expect boolean in camunda:formField %v defaultValue: %w", id, err)
+				}
+			}
+
+		}
+		properties := map[string]string{}
+
+		for _, property := range formField.FindElements("./camunda:properties/camunda:property") {
+			propertyId := property.SelectAttrValue("id", "")
+			if propertyId == "" {
+				return result, fmt.Errorf("missing property id in formField %v", id)
+			}
+			properties[propertyId] = property.SelectAttrValue("value", "")
+		}
+
+		param := model.ParameterDescription{
+			Id:           id,
+			Label:        label,
+			Description:  properties["description"],
+			Type:         fieldType,
+			DefaultValue: defaultValue,
+		}
+		if iot, ok := properties["iot"]; ok {
+			typeFilter := []string{}
+			iot = strings.ReplaceAll(iot, " ", "")
+			if iot != "" {
+				typeFilter = strings.Split(iot, ",")
+			}
+			criteria := []model.Criteria{}
+			if criteriaStr, ok := properties["criteria"]; ok {
+				err = json.Unmarshal([]byte(criteriaStr), &criteria)
+				if err != nil {
+					return result, fmt.Errorf("invalid criteria property for formField %v: %w", id, err)
+				}
+			}
+			param.IotDescription = &model.IotDescription{
+				TypeFilter: typeFilter,
+				Criteria:   criteria,
+			}
+		}
+		result.ParameterDescriptions = append(result.ParameterDescriptions, param)
+	}
+	return result, nil
 }

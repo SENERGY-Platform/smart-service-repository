@@ -23,3 +23,9 @@ var NamedDescBpmn string
 
 //go:embed nameanddesc.svg
 var NamedDescSvg string
+
+//go:embed params.bpmn
+var ParamsBpmn string
+
+//go:embed params.svg
+var ParamsSvg string

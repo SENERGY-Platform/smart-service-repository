@@ -43,30 +43,52 @@ type SmartServiceReleaseExtended struct {
 }
 
 type SmartServiceReleaseInfo struct {
+	ParameterDescriptions []ParameterDescription `json:"parameter_descriptions" bson:"parameter_descriptions"`
+}
+
+type ParameterDescription struct {
+	Id             string          `json:"id" bson:"id"`
+	Label          string          `json:"label" bson:"label"`
+	Description    string          `json:"description" bson:"description"`
+	Type           string          `json:"type" bson:"type"`
+	DefaultValue   interface{}     `json:"default_value" bson:"default_value"`
+	IotDescription *IotDescription `json:"iot_description" bson:"iot_description"`
+}
+
+type IotDescription struct {
+	TypeFilter []string   `json:"type_filter" bson:"type_filter"`
+	Criteria   []Criteria `json:"criteria" bson:"criteria"`
+}
+
+type Criteria struct {
+	FunctionId    *string `json:"function_id" bson:"function_id"`
+	DeviceClassId *string `json:"device_class_id" bson:"device_class_id"`
+	AspectId      *string `json:"aspect_id" bson:"aspect_id"`
 }
 
 type SmartServiceInstance struct {
-	Id               string                  `json:"id"`
-	UserId           string                  `json:"user_id"`
-	Name             string                  `json:"name"`
-	Description      string                  `json:"description"`
-	DesignId         string                  `json:"design_id"`
-	ReleaseId        string                  `json:"release_id"`
-	Ready            bool                    `json:"ready"`
-	IncompleteDelete bool                    `json:"incomplete_delete"`
-	Parameter        []SmartServiceParameter `json:"parameter"`
+	Id               string                  `json:"id" bson:"id"`
+	UserId           string                  `json:"user_id" bson:"user_id"`
+	Name             string                  `json:"name" bson:"name"`
+	Description      string                  `json:"description" bson:"description"`
+	DesignId         string                  `json:"design_id" bson:"design_id"`
+	ReleaseId        string                  `json:"release_id" bson:"release_id"`
+	Ready            bool                    `json:"ready" bson:"ready"`
+	IncompleteDelete bool                    `json:"incomplete_delete" bson:"incomplete_delete"`
+	Parameter        []SmartServiceParameter `json:"parameter" bson:"parameter"`
 }
 
 type SmartServiceParameters []SmartServiceParameter
 
 type SmartServiceParameter struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Value       interface{} `json:"value"`
+	Id    string      `json:"id"`
+	Value interface{} `json:"value"`
 }
 
 type SmartServiceExtendedParameter struct {
 	SmartServiceParameter
+	Label        string      `json:"label"`
+	Description  string      `json:"description"`
 	DefaultValue interface{} `json:"default_value"`
 	Type         Type        `json:"type"`
 	Options      []Option    `json:"options"`  //if null -> "free text/number/etc"
@@ -81,38 +103,20 @@ type Option struct {
 
 type SmartServiceModuleBase struct {
 	Id         string                 `json:"id"`
-	UserId     string                 `json:"user_id"`
-	InstanceId string                 `json:"instance_id"`
-	DesignId   string                 `json:"design_id"`
-	ReleaseId  string                 `json:"release_id"`
-	ModuleType string                 `json:"module_type"` //"process-deployment" | "analytics" ...
-	ModuleData map[string]interface{} `json:"module_data"`
+	UserId     string                 `json:"user_id" bson:"user_id"`
+	InstanceId string                 `json:"instance_id" bson:"instance_id"`
+	DesignId   string                 `json:"design_id" bson:"design_id"`
+	ReleaseId  string                 `json:"release_id" bson:"release_id"`
+	ModuleType string                 `json:"module_type" bson:"module_type"` //"process-deployment" | "analytics" ...
+	ModuleData map[string]interface{} `json:"module_data" bson:"module_data"`
 }
 
 type SmartServiceModule struct {
-	SmartServiceModuleBase
-	DeleteInfo *ModuleDeleteInfo `json:"delete_info"`
+	SmartServiceModuleBase `bson:",inline"`
+	DeleteInfo             *ModuleDeleteInfo `json:"delete_info" bson:"delete_info"`
 }
 
 type ModuleDeleteInfo struct {
-	Url    string `json:"url"` //url receives a DELETE request and responds with a status code < 300 if ok; 404 is successful delete
-	UserId string `json:"user_id"`
-}
-
-type IndexInfo struct {
-	Name       string
-	FieldNames []string
-	IsUnique   bool
-}
-
-func (this IndexInfo) GetIndexName() string {
-	return this.Name
-}
-
-func (this IndexInfo) GetFieldNames() []string {
-	return this.FieldNames
-}
-
-func (this IndexInfo) Unique() bool {
-	return this.IsUnique
+	Url    string `json:"url" bson:"url"` //url receives a DELETE request and responds with a status code < 300 if ok; 404 is successful delete
+	UserId string `json:"user_id" bson:"user_id"`
 }
