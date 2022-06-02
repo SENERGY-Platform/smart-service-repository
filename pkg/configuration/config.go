@@ -30,7 +30,7 @@ type Config struct {
 	ServerPort                    string   `json:"server_port"`
 	Debug                         bool     `json:"debug"`
 	EnableSwaggerUi               bool     `json:"enable_swagger_ui"`
-	CamundaUrl                    string   `json:"camunda_url"`
+	CamundaUrl                    string   `json:"camunda_url" config:"secret"`
 	PermissionsUrl                string   `json:"permissions_url"`
 	NotificationUrl               string   `json:"notification_url"`
 	KafkaUrl                      string   `json:"kafka_url"`
@@ -79,10 +79,13 @@ func handleEnvironmentVars(config *Config) {
 	configType := configValue.Type()
 	for index := 0; index < configType.NumField(); index++ {
 		fieldName := configType.Field(index).Name
+		fieldConfig := configType.Field(index).Tag.Get("config")
 		envName := fieldNameToEnvName(fieldName)
 		envValue := os.Getenv(envName)
 		if envValue != "" {
-			fmt.Println("use environment variable: ", envName, " = ", envValue)
+			if !strings.Contains(fieldConfig, "secret") {
+				fmt.Println("use environment variable: ", envName, " = ", envValue)
+			}
 			if configValue.FieldByName(fieldName).Kind() == reflect.Int64 {
 				i, _ := strconv.ParseInt(envValue, 10, 64)
 				configValue.FieldByName(fieldName).SetInt(i)

@@ -72,12 +72,14 @@ func (this *Camunda) RemoveRelease(id string) error {
 func (this *Camunda) removeDeployment(deplId string) error {
 	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/deployment/"+url.PathEscape(deplId)+"?cascade=true&skipIoMappings=true", nil)
 	if err != nil {
+		err = this.filterUrlFromErr(err)
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		err = this.filterUrlFromErr(err)
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return err
@@ -133,6 +135,7 @@ func (this *Camunda) deployProcess(name string, xml string, svg string) (result 
 	b := strings.NewReader(buildPayLoad(name, xml, svg, boundary))
 	resp, err := http.Post(this.config.CamundaUrl+"/engine-rest/deployment/create", "multipart/form-data; boundary="+boundary, b)
 	if err != nil {
+		err = this.filterUrlFromErr(err)
 		debug.PrintStack()
 		log.Println("ERROR: request to processengine ", err)
 		return result, err, 0
@@ -163,12 +166,14 @@ func (this *Camunda) getDeploymentIds(id string) (deplIds []string, err error) {
 func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, exists bool, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(id), nil)
 	if err != nil {
+		err = this.filterUrlFromErr(err)
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return result, false, err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		err = this.filterUrlFromErr(err)
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return result, false, err
@@ -180,6 +185,7 @@ func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, 
 	if resp.StatusCode >= 300 {
 		temp, _ := io.ReadAll(resp.Body)
 		err = errors.New(string(temp))
+		err = this.filterUrlFromErr(err)
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return result, false, err
@@ -192,10 +198,11 @@ func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, 
 func (this *Camunda) getProcessDefinitionList() (result []ProcessDefinition, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition", nil)
 	if err != nil {
-		return result, err
+		return result, this.filterUrlFromErr(err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		err = this.filterUrlFromErr(err)
 		debug.PrintStack()
 		return result, err
 	}
@@ -211,10 +218,11 @@ func (this *Camunda) getProcessDefinitionList() (result []ProcessDefinition, err
 func (this *Camunda) getProcessDefinitionListByKey(key string) (result []ProcessDefinition, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition?key="+url.QueryEscape(key), nil)
 	if err != nil {
-		return result, err
+		return result, this.filterUrlFromErr(err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		err = this.filterUrlFromErr(err)
 		debug.PrintStack()
 		log.Println("ERROR:", err)
 		return result, err
@@ -226,6 +234,17 @@ func (this *Camunda) getProcessDefinitionListByKey(key string) (result []Process
 	}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	return
+}
+
+func (this *Camunda) filterUrlFromErr(in error) (out error) {
+	text := in.Error()
+	text = strings.ReplaceAll(text, this.config.CamundaUrl, "http://camunda:8080")
+	parsed, err := url.Parse(this.config.CamundaUrl)
+	if err == nil {
+		text = strings.ReplaceAll(text, parsed.Hostname(), "camunda")
+		text = strings.ReplaceAll(text, parsed.User.Username()+":***@camunda", "camunda")
+	}
+	return errors.New(text)
 }
 
 func setReleaseIdToBpmn(xml string, id string) (resultXml string, err error) {

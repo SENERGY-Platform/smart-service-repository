@@ -208,13 +208,14 @@ func (this *Controller) HandleReleaseSave(owner string, release model.SmartServi
 	}
 	err, isInvalidCamundaDeployment := this.camunda.DeployRelease(owner, release)
 	if err != nil {
+		errOnErrNotification := this.db.SetReleaseError(release.Id, err.Error())
 		if isInvalidCamundaDeployment {
-			return this.db.SetReleaseError(release.Id, err.Error())
+			return errOnErrNotification
 		} else {
 			return err
 		}
 	}
-	return nil
+	return this.db.SetReleaseError(release.Id, "")
 }
 
 func (this *Controller) HandleReleaseDelete(id string) error {

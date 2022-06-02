@@ -95,6 +95,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, releaseDependencies boo
 		if err != nil {
 			return "", err
 		}
+		//config.CamundaUrl = "http://foo:barr@defectUrl:8080"
 
 		_, elasticIp, err := docker.Elasticsearch(ctx, wg)
 		if err != nil {
