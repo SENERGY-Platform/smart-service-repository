@@ -61,6 +61,7 @@ func TestReleaseApi(t *testing.T) {
 			t.Error(resp.StatusCode, string(temp))
 			return
 		}
+		checkContentType(t, resp)
 		err = json.NewDecoder(resp.Body).Decode(&design)
 		if err != nil {
 			t.Error(err)
@@ -104,6 +105,7 @@ func TestReleaseApi(t *testing.T) {
 			t.Error(resp.StatusCode, string(temp))
 			return
 		}
+		checkContentType(t, resp)
 		err = json.NewDecoder(resp.Body).Decode(&release)
 		if err != nil {
 			t.Error(err)
@@ -124,6 +126,7 @@ func TestReleaseApi(t *testing.T) {
 			t.Error(resp.StatusCode, string(temp))
 			return
 		}
+		checkContentType(t, resp)
 		temp := model.SmartServiceRelease{}
 		err = json.NewDecoder(resp.Body).Decode(&temp)
 		if err != nil {
@@ -166,6 +169,7 @@ func TestReleaseApi(t *testing.T) {
 				t.Error(resp.StatusCode, string(temp))
 				return
 			}
+			checkContentType(t, resp)
 		}
 	})
 
@@ -198,6 +202,7 @@ func testReleaseList(t *testing.T, apiUrl string, query string, expectedNamesOrd
 		t.Error(resp.StatusCode, string(temp))
 		return
 	}
+	checkContentType(t, resp)
 	result := []model.SmartServiceRelease{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {

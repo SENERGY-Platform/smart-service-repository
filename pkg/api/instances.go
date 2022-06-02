@@ -51,6 +51,7 @@ func (this *Instances) List(config configuration.Config, router *httprouter.Rout
 
 		//TODO: replace with real code
 		log.Println(token)
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode([]model.SmartServiceInstance{})
 	})
 }
@@ -75,6 +76,7 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 
 		//TODO: replace with real code
 		log.Println(token)
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
 	})
 }
@@ -101,6 +103,7 @@ func (this *Instances) Update(config configuration.Config, router *httprouter.Ro
 
 		//TODO: replace with real code
 		log.Println(token)
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
 	})
 }
@@ -124,6 +127,5 @@ func (this *Instances) Delete(config configuration.Config, router *httprouter.Ro
 
 		//TODO: replace with real code
 		log.Println(token)
-		json.NewEncoder(writer).Encode(model.SmartServiceDesign{})
 	})
 }

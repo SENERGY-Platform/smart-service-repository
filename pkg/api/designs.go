@@ -77,6 +77,7 @@ func (this *Designs) List(config configuration.Config, router *httprouter.Router
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }
@@ -108,6 +109,7 @@ func (this *Designs) Get(config configuration.Config, router *httprouter.Router,
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }
@@ -160,6 +162,7 @@ func (this *Designs) Update(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }
@@ -202,6 +205,7 @@ func (this *Designs) Create(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }

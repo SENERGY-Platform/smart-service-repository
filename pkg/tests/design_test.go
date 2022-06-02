@@ -61,6 +61,7 @@ func TestDesignApi(t *testing.T) {
 			t.Error(resp.StatusCode, string(temp))
 			return
 		}
+		checkContentType(t, resp)
 		err = json.NewDecoder(resp.Body).Decode(&design)
 		if err != nil {
 			t.Error(err)
@@ -102,6 +103,7 @@ func TestDesignApi(t *testing.T) {
 			t.Error(resp.StatusCode, string(temp))
 			return
 		}
+		checkContentType(t, resp)
 		err = json.NewDecoder(resp.Body).Decode(&design)
 		if err != nil {
 			t.Error(err)
@@ -149,6 +151,7 @@ func TestDesignApi(t *testing.T) {
 				t.Error(resp.StatusCode, string(temp))
 				return
 			}
+			checkContentType(t, resp)
 		}
 	})
 
@@ -193,6 +196,7 @@ func testDesignList(t *testing.T, apiUrl string, query string, expectedNamesOrde
 		t.Error(resp.StatusCode, string(temp))
 		return
 	}
+	checkContentType(t, resp)
 	result := []model.SmartServiceDesign{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
@@ -222,6 +226,7 @@ func testDesignRead(t *testing.T, apiUrl string, design model.SmartServiceDesign
 		t.Error(resp.StatusCode, string(temp))
 		return
 	}
+	checkContentType(t, resp)
 	temp := model.SmartServiceDesign{}
 	err = json.NewDecoder(resp.Body).Decode(&temp)
 	if err != nil {

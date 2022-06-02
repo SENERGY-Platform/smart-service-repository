@@ -88,6 +88,7 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }
@@ -124,6 +125,7 @@ func (this *Modules) Create(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }

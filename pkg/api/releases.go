@@ -69,6 +69,7 @@ func (this *Releases) Create(config configuration.Config, router *httprouter.Rou
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }
@@ -136,6 +137,7 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }
@@ -188,6 +190,7 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})
 }
@@ -212,6 +215,7 @@ func (this *Releases) Parameters(config configuration.Config, router *httprouter
 
 		//TODO: replace with real code
 		log.Println(token)
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(model.SmartServiceDesign{})
 	})
 }
@@ -238,6 +242,7 @@ func (this *Releases) Start(config configuration.Config, router *httprouter.Rout
 
 		//TODO: replace with real code
 		log.Println(token)
+		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(model.SmartServiceRelease{})
 	})
 }

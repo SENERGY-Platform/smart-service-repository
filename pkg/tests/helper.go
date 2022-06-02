@@ -35,6 +35,7 @@ import (
 	"net/http/httptest"
 	"runtime/debug"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -209,4 +210,12 @@ func reverse[T any](s []T) (result []T) {
 		result = append(result, s[i])
 	}
 	return result
+}
+
+func checkContentType(t *testing.T, resp *http.Response) {
+	t.Helper()
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		t.Fatal(contentType)
+	}
 }
