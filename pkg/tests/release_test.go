@@ -149,5 +149,69 @@ func TestReleaseApi(t *testing.T) {
 		}
 	})
 
+	names := []string{"a", "b", "c", "d", "e", "f"}
+	t.Run("create list releases", func(t *testing.T) {
+		for _, name := range names {
+			resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+				DesignId:    design.Id,
+				Name:        name,
+				Description: "test description",
+			})
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+		}
+	})
+
 	time.Sleep(2 * time.Second) //allow async cqrs delete to play out
+
+	t.Run("list", func(t *testing.T) {
+		t.Run("default", func(t *testing.T) {
+			testReleaseList(t, apiUrl, "", names)
+		})
+		t.Run("sort=name.asc", func(t *testing.T) {
+			testReleaseList(t, apiUrl, "?sort=name.asc", names)
+		})
+		t.Run("sort=name.desc", func(t *testing.T) {
+			testReleaseList(t, apiUrl, "?sort=name.desc", reverse(names))
+		})
+		t.Run("limit and offset", func(t *testing.T) {
+			testReleaseList(t, apiUrl, "?limit=2&offset=1", names[1:3])
+		})
+	})
+}
+
+func testReleaseList(t *testing.T, apiUrl string, query string, expectedNamesOrder []string) {
+	resp, err := get(userToken, apiUrl+"/releases"+query)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if resp.StatusCode != http.StatusOK {
+		temp, _ := io.ReadAll(resp.Body)
+		t.Error(resp.StatusCode, string(temp))
+		return
+	}
+	result := []model.SmartServiceRelease{}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(result) != len(expectedNamesOrder) {
+		t.Error(len(result), len(expectedNamesOrder), result)
+		return
+	}
+	for i, element := range result {
+		if element.Name != expectedNamesOrder[i] {
+			t.Error(element.Name, expectedNamesOrder[i])
+			return
+		}
+	}
 }

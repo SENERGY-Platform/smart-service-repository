@@ -91,5 +91,5 @@ func (this ReleaseQueryOptions) GetSortField() string {
 }
 
 func (this ReleaseQueryOptions) GetSortAsc() bool {
-	return strings.HasSuffix(this.GetSort(), ".desc")
+	return !strings.HasSuffix(this.GetSort(), ".desc")
 }

@@ -100,7 +100,7 @@ func (this *Mongo) DeleteRelease(id string) (error, int) {
 func (this *Mongo) GetReleaseListByIds(ids []string, sort string) (result []model.SmartServiceReleaseExtended, err error) {
 	ctx, _ := getTimeoutContext()
 	opt := createFindOptions(model.ReleaseQueryOptions{Sort: sort})
-	cursor, err := this.designCollection().Find(ctx, bson.M{ReleaseBson.Id: bson.M{"$in": ids}}, opt)
+	cursor, err := this.releaseCollection().Find(ctx, bson.M{ReleaseBson.Id: bson.M{"$in": ids}}, opt)
 	if err != nil {
 		return result, err
 	}
