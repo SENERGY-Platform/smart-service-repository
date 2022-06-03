@@ -81,7 +81,7 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 	})
 }
 
-// Update godoc
+// Redeploy godoc
 // @Summary      updates smart-service instance parameter
 // @Description  updates smart-service instance parameter
 // @Tags         instances, parameter
@@ -92,9 +92,36 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 // @Success      200 {object}  model.SmartServiceInstance
 // @Failure      500
 // @Failure      401
-// @Router       /instances/{id}/parameter [patch]
-func (this *Instances) Update(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.PATCH("/instances/:id/parameter", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Router       /instances/{id}/parameter [put]
+func (this *Instances) Redeploy(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PUT("/instances/:id/parameters", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		//TODO: replace with real code
+		log.Println(token)
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
+	})
+}
+
+// UpdateInfo godoc
+// @Summary      updates smart-service instance parameter
+// @Description  updates smart-service instance parameter
+// @Tags         instances, parameter
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Instance ID"
+// @Param        message body model.SmartServiceInstanceInfo true "SmartServiceParameter"
+// @Success      200 {object}  model.SmartServiceInstance
+// @Failure      500
+// @Failure      401
+// @Router       /instances/{id} [put]
+func (this *Instances) UpdateInfo(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PUT("/instances/:id/info", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)

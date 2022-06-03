@@ -47,9 +47,13 @@ type SmartServiceReleaseInfo struct {
 }
 
 type SmartServiceInstanceInit struct {
-	Name        string                  `json:"name" bson:"name"`
-	Description string                  `json:"description" bson:"description"`
-	Parameters  []SmartServiceParameter `json:"parameters" bson:"parameters"`
+	SmartServiceInstanceInfo
+	Parameters []SmartServiceParameter `json:"parameters" bson:"parameters"`
+}
+
+type SmartServiceInstanceInfo struct {
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description" bson:"description"`
 }
 
 type SmartServiceInstance struct {
