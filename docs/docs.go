@@ -343,8 +343,56 @@ const docTemplate = `{
                 }
             }
         },
-        "/instances/{id}/parameter": {
-            "patch": {
+        "/instances/{id}/info": {
+            "put": {
+                "description": "updates smart-service instance parameter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "parameter"
+                ],
+                "summary": "updates smart-service instance parameter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SmartServiceParameter",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceInstanceInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceInstance"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/parameters": {
+            "put": {
                 "description": "updates smart-service instance parameter",
                 "consumes": [
                     "application/json"
@@ -688,15 +736,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "SmartServiceParameter",
+                        "description": "SmartServiceInstanceInit",
                         "name": "message",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.SmartServiceParameter"
-                            }
+                            "$ref": "#/definitions/model.SmartServiceInstanceInit"
                         }
                     }
                 ],
@@ -812,12 +857,15 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
                 "multiple": {
                     "description": "if true: Value = new([]Type); if false: Value = new(Type);",
                     "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
                 },
                 "options": {
                     "description": "if null -\u003e \"free text/number/etc\"",
@@ -850,7 +898,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "parameter": {
+                "parameters": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.SmartServiceParameter"
@@ -864,6 +912,34 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "model.SmartServiceInstanceInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SmartServiceInstanceInit": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SmartServiceParameter"
+                    }
                 }
             }
         },
@@ -901,10 +977,7 @@ const docTemplate = `{
         "model.SmartServiceParameter": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "name": {
+                "id": {
                     "type": "string"
                 },
                 "value": {}

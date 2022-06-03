@@ -92,7 +92,7 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 // @Success      200 {object}  model.SmartServiceInstance
 // @Failure      500
 // @Failure      401
-// @Router       /instances/{id}/parameter [put]
+// @Router       /instances/{id}/parameters [put]
 func (this *Instances) Redeploy(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.PUT("/instances/:id/parameters", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
@@ -119,7 +119,7 @@ func (this *Instances) Redeploy(config configuration.Config, router *httprouter.
 // @Success      200 {object}  model.SmartServiceInstance
 // @Failure      500
 // @Failure      401
-// @Router       /instances/{id} [put]
+// @Router       /instances/{id}/info [put]
 func (this *Instances) UpdateInfo(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.PUT("/instances/:id/info", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)

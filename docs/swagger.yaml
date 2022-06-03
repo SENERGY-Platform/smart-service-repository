@@ -38,11 +38,13 @@ definitions:
       default_value: {}
       description:
         type: string
+      id:
+        type: string
+      label:
+        type: string
       multiple:
         description: 'if true: Value = new([]Type); if false: Value = new(Type);'
         type: boolean
-      name:
-        type: string
       options:
         description: if null -> "free text/number/etc"
         items:
@@ -64,7 +66,7 @@ definitions:
         type: boolean
       name:
         type: string
-      parameter:
+      parameters:
         items:
           $ref: '#/definitions/model.SmartServiceParameter'
         type: array
@@ -74,6 +76,24 @@ definitions:
         type: string
       user_id:
         type: string
+    type: object
+  model.SmartServiceInstanceInfo:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  model.SmartServiceInstanceInit:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      parameters:
+        items:
+          $ref: '#/definitions/model.SmartServiceParameter'
+        type: array
     type: object
   model.SmartServiceModule:
     properties:
@@ -98,9 +118,7 @@ definitions:
     type: object
   model.SmartServiceParameter:
     properties:
-      description:
-        type: string
-      name:
+      id:
         type: string
       value: {}
     type: object
@@ -343,8 +361,40 @@ paths:
       summary: returns a smart-service instance
       tags:
       - instances
-  /instances/{id}/parameter:
-    patch:
+  /instances/{id}/info:
+    put:
+      consumes:
+      - application/json
+      description: updates smart-service instance parameter
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceParameter
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceInstanceInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceInstance'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: updates smart-service instance parameter
+      tags:
+      - instances
+      - parameter
+  /instances/{id}/parameters:
+    put:
       consumes:
       - application/json
       description: updates smart-service instance parameter
@@ -567,14 +617,12 @@ paths:
         name: id
         required: true
         type: string
-      - description: SmartServiceParameter
+      - description: SmartServiceInstanceInit
         in: body
         name: message
         required: true
         schema:
-          items:
-            $ref: '#/definitions/model.SmartServiceParameter'
-          type: array
+          $ref: '#/definitions/model.SmartServiceInstanceInit'
       produces:
       - application/json
       responses:
