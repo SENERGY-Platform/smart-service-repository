@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"runtime/debug"
 	"sync"
 	"testing"
@@ -136,9 +137,11 @@ func TestReleaseOptionsApi(t *testing.T) {
 			return
 		}
 
-		//TODO: compare with expectations
-		temp, _ := json.Marshal(parameters)
-		t.Log(string(temp))
+		if !reflect.DeepEqual(resources.ExpectedParams1Obj, parameters) {
+			temp1, _ := json.Marshal(parameters)
+			temp2, _ := json.Marshal(resources.ExpectedParams1Obj)
+			t.Error("\n", string(temp1), "\n", string(temp2))
+		}
 	})
 }
 

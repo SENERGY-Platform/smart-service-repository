@@ -38,11 +38,20 @@ var ParamsSvg string
 
 //go:embed selections_response_1.json
 var SelectionsResponse1 []byte
-
 var SelectionsResponse1Obj []model.Selectable
+
+//go:embed expected_params_1.json
+var ExpectedParams1 []byte
+var ExpectedParams1Obj []model.SmartServiceExtendedParameter
 
 func init() {
 	err := json.Unmarshal(SelectionsResponse1, &SelectionsResponse1Obj)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", err)
+		panic(err)
+	}
+	err = json.Unmarshal(ExpectedParams1, &ExpectedParams1Obj)
 	if err != nil {
 		debug.PrintStack()
 		log.Println("ERROR:", err)
