@@ -129,13 +129,16 @@ func TestReleaseOptionsApi(t *testing.T) {
 			return
 		}
 		checkContentType(t, resp)
-		temp := []model.SmartServiceExtendedParameter{}
-		err = json.NewDecoder(resp.Body).Decode(&temp)
+		parameters := []model.SmartServiceExtendedParameter{}
+		err = json.NewDecoder(resp.Body).Decode(&parameters)
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		t.Log(temp)
+
+		//TODO: compare with expectations
+		temp, _ := json.Marshal(parameters)
+		t.Log(string(temp))
 	})
 }
 

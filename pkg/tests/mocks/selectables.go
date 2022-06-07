@@ -18,6 +18,7 @@ package mocks
 
 import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"net/http"
 )
@@ -34,5 +35,20 @@ func NewSelectables(response []model.Selectable) *Selectables {
 }
 
 func (this *Selectables) Get(token auth.Token, searchedEntities []string, criteria []model.Criteria) (result []model.Selectable, err error, code int) {
-	return this.Response, nil, http.StatusOK
+	result = this.Response
+	if len(searchedEntities) == 0 {
+		return result, nil, http.StatusOK
+	}
+	return controller.ListFilter(result, func(s model.Selectable) bool {
+		if s.Device != nil && !controller.ListContains(searchedEntities, func(element string) bool { return element == model.DeviceFilter }) {
+			return false
+		}
+		if s.DeviceGroup != nil && !controller.ListContains(searchedEntities, func(element string) bool { return element == model.GroupFilter }) {
+			return false
+		}
+		if s.Import != nil && !controller.ListContains(searchedEntities, func(element string) bool { return element == model.ImportFilter }) {
+			return false
+		}
+		return true
+	}), nil, http.StatusOK
 }

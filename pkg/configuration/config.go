@@ -31,6 +31,7 @@ type Config struct {
 	Debug                         bool     `json:"debug"`
 	EnableSwaggerUi               bool     `json:"enable_swagger_ui"`
 	CamundaUrl                    string   `json:"camunda_url" config:"secret"`
+	DeviceSelectionApi            string   `json:"device_selection_api"`
 	PermissionsUrl                string   `json:"permissions_url"`
 	NotificationUrl               string   `json:"notification_url"`
 	KafkaUrl                      string   `json:"kafka_url"`

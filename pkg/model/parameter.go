@@ -32,8 +32,8 @@ type ParameterDescription struct {
 }
 
 type IotDescription struct {
-	TypeFilter []string   `json:"type_filter" bson:"type_filter"`
-	Criteria   []Criteria `json:"criteria" bson:"criteria"`
+	TypeFilter []FilterPossibility `json:"type_filter" bson:"type_filter"`
+	Criteria   []Criteria          `json:"criteria" bson:"criteria"`
 }
 
 type Criteria struct {
@@ -42,6 +42,14 @@ type Criteria struct {
 	DeviceClassId *string      `json:"device_class_id" bson:"device_class_id"`
 	AspectId      *string      `json:"aspect_id" bson:"aspect_id"`
 }
+
+type FilterPossibility = string
+
+const (
+	DeviceFilter FilterPossibility = "device"
+	GroupFilter  FilterPossibility = "group"
+	ImportFilter FilterPossibility = "import"
+)
 
 //---------------------------------
 // parameters in api
@@ -71,9 +79,9 @@ type Option struct {
 }
 
 type IotOption struct {
-	DeviceSelection      *DeviceSelection      `json:"device_selection"`
-	DeviceGroupSelection *DeviceGroupSelection `json:"device_group_selection"`
-	ImportSelection      *ImportSelection      `json:"import_selection"`
+	DeviceSelection      *DeviceSelection      `json:"device_selection,omitempty"`
+	DeviceGroupSelection *DeviceGroupSelection `json:"device_group_selection,omitempty"`
+	ImportSelection      *ImportSelection      `json:"import_selection,omitempty"`
 }
 
 type DeviceSelection struct {

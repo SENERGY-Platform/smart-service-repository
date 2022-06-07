@@ -30,3 +30,31 @@ func FMap3[I1 any, I2 any, I3 any, ResultType any, NewResultType any](f func(in1
 		return result, err
 	}
 }
+
+func ListMap[From any, To any](from []From, converter func(From) To) (to []To) {
+	if from != nil {
+		to = make([]To, len(from))
+	}
+	for i, e := range from {
+		to[i] = converter(e)
+	}
+	return
+}
+
+func ListContains[T any](list []T, check func(a T) bool) bool {
+	for _, e := range list {
+		if check(e) {
+			return true
+		}
+	}
+	return false
+}
+
+func ListFilter[T any](in []T, filter func(T) bool) (out []T) {
+	for _, e := range in {
+		if filter(e) {
+			out = append(out, e)
+		}
+	}
+	return
+}

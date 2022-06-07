@@ -4,6 +4,7 @@
     "enable_swagger_ui": false,
 
     "permissions_url": "",
+    "device_selection_api": "",
     "camunda_url": "",
     "notification_url": "",
 

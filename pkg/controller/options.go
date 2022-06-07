@@ -113,8 +113,8 @@ func (this *Controller) selectableToDeviceOptions(selectable model.Selectable) (
 
 func (this *Controller) selectableToImportOptions(selectable model.Selectable) (result []model.Option, err error, code int) {
 	withPaths := false
-	pathCount := len(selectable.ServicePathOptions[selectable.Import.Id])
-	for _, path := range selectable.ServicePathOptions[selectable.Import.Id] {
+	pathCount := len(selectable.ServicePathOptions[selectable.Import.ImportTypeId])
+	for _, path := range selectable.ServicePathOptions[selectable.Import.ImportTypeId] {
 		withPaths = true
 		option, err := optionFromImport(*selectable.Import, path.Path, pathCount)
 		if err != nil {

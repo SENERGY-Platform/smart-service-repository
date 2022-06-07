@@ -29,6 +29,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 	"io"
 	"log"
 	"net/http"
@@ -139,7 +140,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 		config.CamundaUrl = camundaMock.URL
 	}
 
-	selectablesMock := mocks.NewSelectables(nil)
+	selectablesMock := mocks.NewSelectables(resources.SelectionsResponse1Obj)
 
 	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, consumer, producer)
 	if err != nil {

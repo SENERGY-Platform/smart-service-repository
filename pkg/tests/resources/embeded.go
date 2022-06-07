@@ -16,7 +16,13 @@
 
 package resources
 
-import _ "embed"
+import (
+	_ "embed"
+	"encoding/json"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"log"
+	"runtime/debug"
+)
 
 //go:embed nameanddesc.bpmn
 var NamedDescBpmn string
@@ -29,3 +35,17 @@ var ParamsBpmn string
 
 //go:embed params.svg
 var ParamsSvg string
+
+//go:embed selections_response_1.json
+var SelectionsResponse1 []byte
+
+var SelectionsResponse1Obj []model.Selectable
+
+func init() {
+	err := json.Unmarshal(SelectionsResponse1, &SelectionsResponse1Obj)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", err)
+		panic(err)
+	}
+}
