@@ -43,6 +43,7 @@ type Config struct {
 	MongoTable                    string   `json:"mongo_table"`
 	MongoCollectionDesign         string   `json:"mongo_collection_design"`
 	MongoCollectionRelease        string   `json:"mongo_collection_release"`
+	MongoCollectionInstance       string   `json:"mongo_collection_instance"`
 }
 
 //loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)

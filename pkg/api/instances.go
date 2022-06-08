@@ -24,6 +24,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func init() {
@@ -36,6 +37,9 @@ type Instances struct{}
 // @Summary      returns a list of smart-service instances
 // @Description  returns a list of smart-service instances
 // @Tags         instances
+// @Param        limit query integer false "limits size of result; 0 means unlimited"
+// @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Produce      json
 // @Success      200 {array}  model.SmartServiceInstance
 // @Failure      500
@@ -48,11 +52,34 @@ func (this *Instances) List(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-
-		//TODO: replace with real code
-		log.Println(token)
+		query := model.InstanceQueryOptions{}
+		limit := request.URL.Query().Get("limit")
+		if limit != "" {
+			query.Limit, err = strconv.Atoi(limit)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		offset := request.URL.Query().Get("offset")
+		if offset != "" {
+			query.Offset, err = strconv.Atoi(offset)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		query.Sort = request.URL.Query().Get("sort")
+		if query.Sort == "" {
+			query.Sort = "name.asc"
+		}
+		result, err, code := ctrl.ListInstances(token, query)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
 		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode([]model.SmartServiceInstance{})
+		json.NewEncoder(writer).Encode(result)
 	})
 }
 
@@ -73,11 +100,49 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-
-		//TODO: replace with real code
-		log.Println(token)
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+		result, err, code := ctrl.GetInstance(token, id)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
 		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
+		json.NewEncoder(writer).Encode(result)
+	})
+}
+
+// Delete godoc
+// @Summary      removes a smart-service instance with all modules
+// @Description  removes a smart-service instance with all modules
+// @Tags         instances
+// @Param        id path string true "Instance ID"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /instances/{id} [delete]
+func (this *Instances) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.DELETE("/instances/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		err, code := ctrl.DeleteInstance(token, id)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
 	})
 }
 
@@ -153,11 +218,14 @@ func (this *Instances) SetError(config configuration.Config, router *httprouter.
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-
-		//TODO: replace with real code
-		log.Println(token)
-		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
+		if token.IsAdmin() {
+		}
+		err, code := ctrl.SetInstanceError(token, params.ByName("id"))
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
 	})
 }
 
@@ -184,27 +252,5 @@ func (this *Instances) SetErrorByProcessInstance(config configuration.Config, ro
 		log.Println(token)
 		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
-	})
-}
-
-// Delete godoc
-// @Summary      removes a smart-service instance with all modules
-// @Description  removes a smart-service instance with all modules
-// @Tags         instances
-// @Param        id path string true "Instance ID"
-// @Success      200
-// @Failure      500
-// @Failure      401
-// @Router       /instances/{id} [delete]
-func (this *Instances) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.DELETE("/instances/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		//TODO: replace with real code
-		log.Println(token)
 	})
 }

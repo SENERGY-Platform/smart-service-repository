@@ -26,6 +26,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"runtime/debug"
 	"sync"
 	"testing"
@@ -163,7 +164,7 @@ func TestInstanceApi(t *testing.T) {
 			return
 		}
 		if instance.UserId != userId {
-			t.Error(instance.UserId)
+			t.Error(instance.UserId, userId)
 			return
 		}
 		if instance.DesignId != design.Id {
@@ -230,8 +231,31 @@ func TestInstanceApi(t *testing.T) {
 
 	count := 0
 	mocks.NewModuleWorker(ctx, wg, apiUrl, config, func(taskWorkerMsg mocks.ModuleWorkerMessage) (err error) {
-		temp, _ := json.Marshal(taskWorkerMsg)
-		t.Log(string(temp)) //TODO: check inputs
+		expectedVariables := map[string]mocks.CamundaVariable{
+			"Task_foo.parameter": {
+				Type:  "String",
+				Value: "{\"inputs.on\": true, \"inputs.hex\": #ff00ff}",
+			},
+			"Task_foo.selection": {
+				Type:  "String",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+			},
+			"color_hex": {
+				Type:  "String",
+				Value: "#ff00ff",
+			},
+			"device_selection": {
+				Type:  "String",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+			},
+			"process_model_id": {
+				Type:  "String",
+				Value: "76e6f65c-c3c1-47c0-a999-4675baace425",
+			},
+		}
+		if !reflect.DeepEqual(taskWorkerMsg.Variables, expectedVariables) {
+			t.Error(err)
+		}
 		count = count + 1
 		if count%2 == 0 {
 			err = errors.New("test-error")
@@ -242,7 +266,7 @@ func TestInstanceApi(t *testing.T) {
 	names := []string{"a", "b", "c", "d", "e", "f"}
 	t.Run("create list releases", func(t *testing.T) {
 		for _, name := range names {
-			resp, err := post(userToken, apiUrl+"/instances", model.SmartServiceInstanceInit{
+			resp, err := post(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/instances", model.SmartServiceInstanceInit{
 				SmartServiceInstanceInfo: model.SmartServiceInstanceInfo{
 					Name:        name,
 					Description: "instance description",
@@ -302,7 +326,7 @@ func TestInstanceApi(t *testing.T) {
 			t.Error(instance.ReleaseId)
 			return
 		}
-		if instance.Ready != true {
+		if !instance.Ready {
 			t.Error(instance.Ready)
 			return
 		}

@@ -47,6 +47,9 @@ type Permissions interface {
 type Camunda interface {
 	DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool)
 	RemoveRelease(id string) error
+	Start(result model.SmartServiceInstance) error
+	CheckInstanceReady(instanceId string) (finished bool, missing bool)
+	StopInstance(instanceId string) error
 }
 
 type Selectables interface {

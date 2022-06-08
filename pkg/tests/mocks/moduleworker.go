@@ -36,6 +36,7 @@ import (
 
 var CAMUNDA_MODULE_WORKER_TOPIC = "process_deployment"
 var MOCK_MODULE_DELETE_INFO *model.ModuleDeleteInfo = nil
+var WORKER_ID = "test"
 
 type ModuleWorkerMessage = CamundaExternalTask
 
@@ -69,8 +70,18 @@ func executeNextTasks(smartServiceRepoApi string, config configuration.Config, h
 		err = handler(task)
 		if err != nil {
 			sendWorkerError(smartServiceRepoApi, task, err)
+			err = completeTask(config.CamundaUrl, task.Id)
+			if err != nil {
+				log.Println("ERROR", err)
+				debug.PrintStack()
+			}
 		} else {
 			sendWorkerModule(smartServiceRepoApi, task)
+			err = completeTask(config.CamundaUrl, task.Id)
+			if err != nil {
+				log.Println("ERROR", err)
+				debug.PrintStack()
+			}
 		}
 	}
 	return false
@@ -78,7 +89,7 @@ func executeNextTasks(smartServiceRepoApi string, config configuration.Config, h
 
 func getTasks(config configuration.Config) (tasks []CamundaExternalTask, err error) {
 	fetchRequest := CamundaFetchRequest{
-		WorkerId: "test",
+		WorkerId: WORKER_ID,
 		MaxTasks: 100,
 		Topics:   []CamundaTopic{{LockDuration: 60000, Name: CAMUNDA_MODULE_WORKER_TOPIC}},
 	}
@@ -153,9 +164,7 @@ func sendWorkerModule(api string, task CamundaExternalTask) {
 		debug.PrintStack()
 		return
 	}
-	if task.TenantId == userId {
-		req.Header.Set("Authorization", userToken)
-	}
+	req.Header.Set("Authorization", adminToken)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -186,9 +195,7 @@ func sendWorkerError(api string, task CamundaExternalTask, err error) {
 		debug.PrintStack()
 		return
 	}
-	if task.TenantId == userId {
-		req.Header.Set("Authorization", userToken)
-	}
+	req.Header.Set("Authorization", adminToken)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -205,5 +212,49 @@ func sendWorkerError(api string, task CamundaExternalTask, err error) {
 	return
 }
 
+func completeTask(api string, taskId string) (err error) {
+	log.Println("Start complete Request")
+	client := http.Client{Timeout: 5 * time.Second}
+
+	var completeRequest = CamundaCompleteRequest{WorkerId: WORKER_ID}
+	b := new(bytes.Buffer)
+	err = json.NewEncoder(b).Encode(completeRequest)
+	if err != nil {
+		return
+	}
+	resp, err := client.Post(api+"/engine-rest/external-task/"+taskId+"/complete", "application/json", b)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	pl, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode >= 300 {
+		temp, _ := io.ReadAll(resp.Body)
+		log.Println("WARNING: unable to complete task:", resp.StatusCode, string(temp))
+	} else {
+		log.Println("complete camunda task: ", completeRequest, string(pl))
+	}
+	return
+}
+
+type TaskInfo struct {
+	WorkerId            string `json:"worker_id"`
+	TaskId              string `json:"task_id"`
+	ProcessInstanceId   string `json:"process_instance_id"`
+	ProcessDefinitionId string `json:"process_definition_id"`
+	CompletionStrategy  string `json:"completion_strategy"`
+	Time                string `json:"time"`
+	TenantId            string `json:"tenant_id"`
+}
+
+type CamundaCompleteRequest struct {
+	WorkerId string `json:"workerId,omitempty"`
+}
+
 const userToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIzaUtabW9aUHpsMmRtQnBJdS1vSkY4ZVVUZHh4OUFIckVOcG5CcHM5SjYwIn0.eyJqdGkiOiIzMmE1OTljZC0zNDgxLTQzYWUtYWY0NC04YTVmNjU4NzYxZTUiLCJleHAiOjE1NjI5MjAwMDUsIm5iZiI6MCwiaWF0IjoxNTYyOTE2NDA1LCJpc3MiOiJodHRwczovL2F1dGguc2VwbC5pbmZhaS5vcmcvYXV0aC9yZWFsbXMvbWFzdGVyIiwiYXVkIjoiZnJvbnRlbmQiLCJzdWIiOiJlYmJhZDkyNy00YzM5LTRkMTItODY5MC04OWIwNjdkZDRjZTciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJmcm9udGVuZCIsIm5vbmNlIjoiNTVlMzA4N2UtZjljNi00MmQ2LWE0MmEtMGZiMjcxNWE4OTkyIiwiYXV0aF90aW1lIjoxNTYyOTE2NDA0LCJzZXNzaW9uX3N0YXRlIjoiYmU5MDQ2MmYtOGE3Yy00NWU4LTg1MjAtMGRlYzViZWI1ZWZlIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJ1bWFfYXV0aG9yaXphdGlvbiIsInVzZXIiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJyb2xlcyI6WyJ1bWFfYXV0aG9yaXphdGlvbiIsInVzZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJpbmdvIn0.pggKYb3V0VxFINWBqpFE_t14MKhSM7bhw8YqrYBRvOzh8ft7zu_-bOvLOYbJBwo0GU1D68U2d_eerkYEIt-mc0dNtdFasy5DG_GtvnWA4nsbf0BVsYKSZcRiDK4d4qbHu9NMjBdEwSkP9KDGEtou0yHtOnVzB1eHHNm_uSUO-O_kz2LWsXOPK2sbL1LTiCKS0XToJPdlaNczDMZB0nXR3sHbyi3Lwk-Va2ATS6Kke5M1KmFMowK-Y0jK2urt8GnCBIXvZMT6gUW9-dvlv4w_lAuVXQ9hFg_r0sBnoWzZOUR_xlrz2T-syjrZzmXlAkJrcD8KWPH-lCs0jD9pdiROhQ"
-const userId = "dd69ea0d-f553-4336-80f3-7f4567f85c7b"
+const userId = "ebbad927-4c39-4d12-8690-89b067dd4ce7"
+const adminToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzMmE1OTljZC0zNDgxLTQzYWUtYWY0NC04YTVmNjU4NzYxZTUiLCJleHAiOjE1NjI5MjAwMDUsIm5iZiI6MCwiaWF0IjoxNTYyOTE2NDA1LCJpc3MiOiJodHRwczovL2F1dGguc2VwbC5pbmZhaS5vcmcvYXV0aC9yZWFsbXMvbWFzdGVyIiwiYXVkIjoiZnJvbnRlbmQiLCJzdWIiOiJlYmJhZDkyNy00YzM5LTRkMTItODY5MC04OWIwNjdkZDRjZTciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJmcm9udGVuZCIsIm5vbmNlIjoiNTVlMzA4N2UtZjljNi00MmQ2LWE0MmEtMGZiMjcxNWE4OTkyIiwiYXV0aF90aW1lIjoxNTYyOTE2NDA0LCJzZXNzaW9uX3N0YXRlIjoiYmU5MDQ2MmYtOGE3Yy00NWU4LTg1MjAtMGRlYzViZWI1ZWZlIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJhZG1pbiIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInJvbGVzIjpbInVtYV9hdXRob3JpemF0aW9uIiwidXNlciIsIm9mZmxpbmVfYWNjZXNzIl0sInByZWZlcnJlZF91c2VybmFtZSI6ImluZ28ifQ.k_sCFMPGvx6pXF9MU7llKSbrh3PL6OSY4PnBMvhgVKo"

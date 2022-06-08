@@ -22,7 +22,6 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -247,10 +246,23 @@ func (this *Releases) Start(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-
-		//TODO: replace with real code
-		log.Println(token)
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing release id", http.StatusBadRequest)
+			return
+		}
+		instance := model.SmartServiceInstanceInit{}
+		err = json.NewDecoder(request.Body).Decode(&instance)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+		result, err, code := ctrl.CreateInstance(token, id, instance)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
 		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(model.SmartServiceRelease{})
+		json.NewEncoder(writer).Encode(result)
 	})
 }

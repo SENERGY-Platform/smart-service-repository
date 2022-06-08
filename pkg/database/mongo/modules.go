@@ -32,3 +32,8 @@ func (this *Mongo) ListModules(id string, query model.ModuleQueryOptions) ([]mod
 	//TODO implement me
 	panic("implement me")
 }
+
+func (this *Mongo) RemoveModulesOfInstance(instanceId string, userId string) (error, int) {
+	//TODO implement me
+	panic("implement me")
+}

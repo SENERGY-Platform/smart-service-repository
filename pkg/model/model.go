@@ -46,25 +46,25 @@ type SmartServiceReleaseInfo struct {
 	ParameterDescriptions []ParameterDescription `json:"parameter_descriptions" bson:"parameter_descriptions"`
 }
 
+type SmartServiceInstance struct {
+	SmartServiceInstanceInit `bson:",inline"`
+	Id                       string `json:"id" bson:"id"`
+	UserId                   string `json:"user_id" bson:"user_id"`
+	DesignId                 string `json:"design_id" bson:"design_id"`
+	ReleaseId                string `json:"release_id" bson:"release_id"`
+	Ready                    bool   `json:"ready" bson:"ready"`
+	IncompleteDelete         bool   `json:"incomplete_delete" bson:"incomplete_delete"`
+	Error                    string `json:"error,omitempty" bson:"error"` //is set if module-worker notifies the repository about a error
+}
+
 type SmartServiceInstanceInit struct {
-	SmartServiceInstanceInfo
-	Parameters []SmartServiceParameter `json:"parameters" bson:"parameters"`
+	SmartServiceInstanceInfo `bson:",inline"`
+	Parameters               []SmartServiceParameter `json:"parameters" bson:"parameters"`
 }
 
 type SmartServiceInstanceInfo struct {
 	Name        string `json:"name" bson:"name"`
 	Description string `json:"description" bson:"description"`
-}
-
-type SmartServiceInstance struct {
-	SmartServiceInstanceInit
-	Id               string `json:"id" bson:"id"`
-	UserId           string `json:"user_id" bson:"user_id"`
-	DesignId         string `json:"design_id" bson:"design_id"`
-	ReleaseId        string `json:"release_id" bson:"release_id"`
-	Ready            bool   `json:"ready" bson:"ready"`
-	IncompleteDelete bool   `json:"incomplete_delete" bson:"incomplete_delete"`
-	Error            string `json:"error,omitempty" bson:"error"` //is set if module-worker notifies the repository about a error
 }
 
 type SmartServiceModuleBase struct {

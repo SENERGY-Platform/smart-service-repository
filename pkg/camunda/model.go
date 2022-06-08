@@ -31,3 +31,8 @@ type ProcessDefinition struct {
 	VersionTag        string `json:"versionTag,omitempty"`
 	HistoryTimeToLive int    `json:"historyTimeToLive,omitempty"`
 }
+
+type HistoricProcessInstance struct {
+	Id      string `json:"id"`
+	EndTime string `json:"endTime"`
+}

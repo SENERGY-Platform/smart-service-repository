@@ -16,9 +16,89 @@
 
 package mongo
 
-import "github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+import (
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"net/http"
+	"runtime/debug"
+)
 
-func (this *Mongo) GetInstance(id string, userId string) (model.SmartServiceInstance, error, int) {
-	//TODO implement me
-	panic("implement me")
+var InstanceBson = getBsonFieldObject[model.SmartServiceInstance]()
+
+func init() {
+	CreateCollections = append(CreateCollections, func(db *Mongo) error {
+		var err error
+		collection := db.client.Database(db.config.MongoTable).Collection(db.config.MongoCollectionInstance)
+		err = db.ensureCompoundIndex(collection, "instance_id_user_index", true, true, InstanceBson.Id, InstanceBson.UserId)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
+		return nil
+	})
+}
+
+func (this *Mongo) instanceCollection() *mongo.Collection {
+	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionInstance)
+}
+
+func (this *Mongo) GetInstance(id string, userId string) (result model.SmartServiceInstance, err error, code int) {
+	ctx, _ := getTimeoutContext()
+	temp := this.instanceCollection().FindOne(ctx, bson.M{InstanceBson.Id: id, InstanceBson.UserId: userId})
+	err = temp.Err()
+	if err == mongo.ErrNoDocuments {
+		return result, err, http.StatusNotFound
+	}
+	if err != nil {
+		return
+	}
+	err = temp.Decode(&result)
+	if err == mongo.ErrNoDocuments {
+		return result, err, http.StatusNotFound
+	}
+	return result, nil, http.StatusOK
+}
+
+func (this *Mongo) SetInstance(element model.SmartServiceInstance) (error, int) {
+	ctx, _ := getTimeoutContext()
+	_, err := this.instanceCollection().ReplaceOne(
+		ctx,
+		bson.M{
+			InstanceBson.Id:     element.Id,
+			InstanceBson.UserId: element.UserId,
+		},
+		element,
+		options.Replace().SetUpsert(true))
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	return nil, http.StatusOK
+}
+
+func (this *Mongo) DeleteInstance(id string, userId string) (err error, code int) {
+	err, code = this.RemoveModulesOfInstance(id, userId)
+	if err != nil {
+		return err, code
+	}
+	ctx, _ := getTimeoutContext()
+	_, err = this.instanceCollection().DeleteOne(ctx, bson.M{
+		InstanceBson.Id:     id,
+		InstanceBson.UserId: userId,
+	})
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	return nil, http.StatusOK
+}
+
+func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, err error, code int) {
+	opt := createFindOptions(query)
+	ctx, _ := getTimeoutContext()
+	cursor, err := this.instanceCollection().Find(ctx, bson.M{InstanceBson.UserId: userId}, opt)
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	return readCursorResult[model.SmartServiceInstance](ctx, cursor)
 }

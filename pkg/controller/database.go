@@ -40,6 +40,9 @@ type ModuleInterface interface {
 
 type InstanceInterface interface {
 	GetInstance(id string, userId string) (model.SmartServiceInstance, error, int)
+	DeleteInstance(id string, userId string) (error, int)
+	SetInstance(element model.SmartServiceInstance) (error, int)
+	ListInstances(userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, err error, code int)
 }
 
 type ReleaseInterface interface {

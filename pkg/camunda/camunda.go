@@ -164,7 +164,8 @@ func (this *Camunda) getDeploymentIds(id string) (deplIds []string, err error) {
 }
 
 func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, exists bool, err error) {
-	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(id), nil)
+	key := idToCNName(id)
+	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(key), nil)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
 		log.Println("ERROR:", err)

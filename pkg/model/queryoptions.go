@@ -93,3 +93,24 @@ func (this ReleaseQueryOptions) GetSortField() string {
 func (this ReleaseQueryOptions) GetSortAsc() bool {
 	return !strings.HasSuffix(this.GetSort(), ".desc")
 }
+
+type InstanceQueryOptions struct {
+	Limit  int
+	Offset int
+	Sort   string
+}
+
+func (this InstanceQueryOptions) GetLimit() int64 {
+	return int64(this.Limit)
+}
+
+func (this InstanceQueryOptions) GetOffset() int64 {
+	return int64(this.Offset)
+}
+
+func (this InstanceQueryOptions) GetSort() string {
+	if this.Sort == "" {
+		return "name.asc"
+	}
+	return this.Sort
+}

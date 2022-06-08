@@ -25,6 +25,7 @@ type Controller interface {
 	DesignsInterface
 	ModulesInterface
 	ReleaseInterface
+	InstancesInterface
 	GetNewId() string
 }
 
@@ -46,4 +47,12 @@ type ReleaseInterface interface {
 	GetRelease(token auth.Token, id string) (model.SmartServiceRelease, error, int)
 	ListReleases(token auth.Token, query model.ReleaseQueryOptions) ([]model.SmartServiceRelease, error, int)
 	GetReleaseParameter(token auth.Token, id string) ([]model.SmartServiceExtendedParameter, error, int)
+}
+
+type InstancesInterface interface {
+	CreateInstance(token auth.Token, releaseId string, instance model.SmartServiceInstanceInit) (model.SmartServiceInstance, error, int)
+	ListInstances(token auth.Token, query model.InstanceQueryOptions) ([]model.SmartServiceInstance, error, int)
+	GetInstance(token auth.Token, id string) (model.SmartServiceInstance, error, int)
+	DeleteInstance(token auth.Token, id string) (error, int)
+	SetInstanceError(token auth.Token, name string) (error, int)
 }
