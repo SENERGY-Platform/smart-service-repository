@@ -36,6 +36,12 @@ var ParamsBpmn string
 //go:embed params.svg
 var ParamsSvg string
 
+//go:embed process_deployment.bpmn
+var ProcessDeploymentBpmn string
+
+//go:embed process_deployment.svg
+var ProcessDeploymentSvg string
+
 //go:embed selections_response_1.json
 var SelectionsResponse1 []byte
 var SelectionsResponse1Obj []model.Selectable

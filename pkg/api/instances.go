@@ -135,6 +135,58 @@ func (this *Instances) UpdateInfo(config configuration.Config, router *httproute
 	})
 }
 
+// SetError godoc
+// @Summary      sets smart-service instance error
+// @Description  sets smart-service instance error
+// @Tags         instances, error
+// @Accept       json
+// @Param        id path string true "Instance ID"
+// @Param        message body string true "error message"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /instances/{id}/error [put]
+func (this *Instances) SetError(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PUT("/instances/:id/error", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		//TODO: replace with real code
+		log.Println(token)
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
+	})
+}
+
+// SetErrorByProcessInstance godoc
+// @Summary      sets smart-service instance error
+// @Description  sets smart-service instance error
+// @Tags         instances, process-id, error
+// @Accept       json
+// @Param        id path string true "Instance ID"
+// @Param        message body string true "error message"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /instances-by-process-id/{id}/error [put]
+func (this *Instances) SetErrorByProcessInstance(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PUT("/instances-by-process-id/:id/error", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		//TODO: replace with real code
+		log.Println(token)
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
+	})
+}
+
 // Delete godoc
 // @Summary      removes a smart-service instance with all modules
 // @Description  removes a smart-service instance with all modules

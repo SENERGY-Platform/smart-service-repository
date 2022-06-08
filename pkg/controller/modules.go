@@ -24,7 +24,11 @@ import (
 	"net/http"
 )
 
-func (this *Controller) AddModule(token auth.Token, element model.SmartServiceModule) (result model.SmartServiceModule, err error, code int) {
+func (this *Controller) AddModule(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+	element, err, code := this.prepareModule(token, processInstanceId, module)
+	if err != nil {
+		return result, err, code
+	}
 	err, code = this.ValidateModule(token, element)
 	if err != nil {
 		return result, err, code
@@ -61,4 +65,9 @@ func (this *Controller) ValidateModule(token auth.Token, element model.SmartServ
 		return errors.New("referenced smart service instance is owned by a different user"), http.StatusForbidden
 	}
 	return nil, http.StatusOK
+}
+
+func (this *Controller) prepareModule(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+	//TODO get process instance from camunda; instance.businessKey is module.instance_id; get smart-service-instance (with businessKey as id);  use smart-service-instance info for SmartServiceModule
+	return result, errors.New("not implemented"), http.StatusNotImplemented
 }

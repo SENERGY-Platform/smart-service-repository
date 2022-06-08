@@ -38,7 +38,7 @@ func TestReleaseOptionsApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, err := apiTestEnv(ctx, wg, false, func(err error) {
+	apiUrl, _, err := apiTestEnv(ctx, wg, false, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -152,7 +152,7 @@ func TestReleaseApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, err := apiTestEnv(ctx, wg, true, func(err error) {
+	apiUrl, _, err := apiTestEnv(ctx, wg, true, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})

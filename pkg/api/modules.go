@@ -100,27 +100,27 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 // @Accept       json
 // @Produce      json
 // @Param        id path string true "Module ID"
-// @Param        message body model.SmartServiceModule true "SmartServiceModule"
+// @Param        message body model.SmartServiceModuleInit true "SmartServiceModuleInit"
 // @Success      200 {object} model.SmartServiceModule
 // @Failure      500
 // @Failure      400
 // @Failure      401
 // @Router       /modules [post]
 func (this *Modules) Create(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.POST("/modules", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.POST("/instances-by-process-id/:id/modules", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		module := model.SmartServiceModule{}
+		module := model.SmartServiceModuleInit{}
 		err = json.NewDecoder(request.Body).Decode(&module)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.AddModule(token, module)
+		result, err, code := ctrl.AddModule(token, params.ByName("id"), module)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

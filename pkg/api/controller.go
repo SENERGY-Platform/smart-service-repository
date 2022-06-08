@@ -29,7 +29,7 @@ type Controller interface {
 }
 
 type ModulesInterface interface {
-	AddModule(token auth.Token, module model.SmartServiceModule) (model.SmartServiceModule, error, int)
+	AddModule(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
 	ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
 }
 

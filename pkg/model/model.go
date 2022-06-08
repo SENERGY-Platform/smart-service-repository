@@ -64,21 +64,26 @@ type SmartServiceInstance struct {
 	ReleaseId        string `json:"release_id" bson:"release_id"`
 	Ready            bool   `json:"ready" bson:"ready"`
 	IncompleteDelete bool   `json:"incomplete_delete" bson:"incomplete_delete"`
+	Error            string `json:"error,omitempty" bson:"error"` //is set if module-worker notifies the repository about a error
 }
 
 type SmartServiceModuleBase struct {
-	Id         string                 `json:"id"`
-	UserId     string                 `json:"user_id" bson:"user_id"`
-	InstanceId string                 `json:"instance_id" bson:"instance_id"`
-	DesignId   string                 `json:"design_id" bson:"design_id"`
-	ReleaseId  string                 `json:"release_id" bson:"release_id"`
-	ModuleType string                 `json:"module_type" bson:"module_type"` //"process-deployment" | "analytics" ...
-	ModuleData map[string]interface{} `json:"module_data" bson:"module_data"`
+	Id         string `json:"id"`
+	UserId     string `json:"user_id" bson:"user_id"`
+	InstanceId string `json:"instance_id" bson:"instance_id"`
+	DesignId   string `json:"design_id" bson:"design_id"`
+	ReleaseId  string `json:"release_id" bson:"release_id"`
 }
 
 type SmartServiceModule struct {
 	SmartServiceModuleBase `bson:",inline"`
-	DeleteInfo             *ModuleDeleteInfo `json:"delete_info" bson:"delete_info"`
+	SmartServiceModuleInit `bson:",inline"`
+}
+
+type SmartServiceModuleInit struct {
+	DeleteInfo *ModuleDeleteInfo      `json:"delete_info" bson:"delete_info"`
+	ModuleType string                 `json:"module_type" bson:"module_type"` //"process-deployment" | "analytics" ...
+	ModuleData map[string]interface{} `json:"module_data" bson:"module_data"`
 }
 
 type ModuleDeleteInfo struct {

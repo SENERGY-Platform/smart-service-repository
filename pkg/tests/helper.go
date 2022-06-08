@@ -41,10 +41,10 @@ import (
 	"time"
 )
 
-func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, errHandler func(error)) (apiUrl string, err error) {
-	config, err := configuration.Load("../../config.json")
+func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, errHandler func(error)) (apiUrl string, config configuration.Config, err error) {
+	config, err = configuration.Load("../../config.json")
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
 	config.Debug = true
 
@@ -63,14 +63,14 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 	mongoPort, _, err := docker.Mongo(ctx, wg)
 	if err != nil {
 		debug.PrintStack()
-		return "", err
+		return "", config, err
 	}
 
 	config.MongoUrl = "mongodb://localhost:" + mongoPort
 
 	db, err := mongo.New(config)
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
 
 	var consumer controller.Consumer
@@ -80,34 +80,34 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 	if camundaAndCqrsDependencies {
 		_, zkIp, err := docker.Zookeeper(ctx, wg)
 		if err != nil {
-			return "", err
+			return "", config, err
 		}
 		zkUrl := zkIp + ":2181"
 
 		config.KafkaUrl, err = docker.Kafka(ctx, wg, zkUrl)
 		if err != nil {
-			return "", err
+			return "", config, err
 		}
 		time.Sleep(5 * time.Second)
 		_, camundaPgIp, camundaPgPort, err := docker.Postgres(ctx, wg, "camunda")
 		if err != nil {
-			return "", err
+			return "", config, err
 		}
 
 		config.CamundaUrl, err = docker.Camunda(ctx, wg, camundaPgIp, camundaPgPort)
 		if err != nil {
-			return "", err
+			return "", config, err
 		}
 		//config.CamundaUrl = "http://foo:barr@defectUrl:8080"
 
 		_, elasticIp, err := docker.Elasticsearch(ctx, wg)
 		if err != nil {
-			return "", err
+			return "", config, err
 		}
 
 		_, permIp, err := docker.PermSearch(ctx, wg, config.KafkaUrl, elasticIp)
 		if err != nil {
-			return "", err
+			return "", config, err
 		}
 		time.Sleep(5 * time.Second)
 		config.PermissionsUrl = "http://" + permIp + ":8080"
@@ -144,7 +144,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 
 	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, consumer, producer)
 	if err != nil {
-		return "", err
+		return "", config, err
 	}
 
 	router := api.GetRouter(config, ctrl)
@@ -155,7 +155,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 		server.Close()
 		wg.Done()
 	}()
-	return server.URL, nil
+	return server.URL, config, nil
 }
 
 var SleepAfterEdit = 0 * time.Second
@@ -236,6 +236,6 @@ func checkContentType(t *testing.T, resp *http.Response) {
 	t.Helper()
 	contentType := resp.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		t.Fatal(contentType)
+		t.Error(contentType)
 	}
 }
