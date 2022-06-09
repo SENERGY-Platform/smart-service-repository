@@ -50,6 +50,7 @@ type Camunda interface {
 	Start(result model.SmartServiceInstance) error
 	CheckInstanceReady(instanceId string) (finished bool, missing bool)
 	StopInstance(instanceId string) error
+	GetProcessInstanceBusinessKey(processInstanceId string) (string, error, int)
 }
 
 type Selectables interface {

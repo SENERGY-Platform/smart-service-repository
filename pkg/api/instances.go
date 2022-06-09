@@ -137,7 +137,75 @@ func (this *Instances) Delete(config configuration.Config, router *httprouter.Ro
 			return
 		}
 
-		err, code := ctrl.DeleteInstance(token, id)
+		ignoreModuleDeleteErrors, _ := strconv.ParseBool(request.URL.Query().Get("ignore_module_delete_errors"))
+
+		err, code := ctrl.DeleteInstance(token, id, ignoreModuleDeleteErrors)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
+	})
+}
+
+// SetError godoc
+// @Summary      sets smart-service instance error
+// @Description  sets smart-service instance error
+// @Tags         instances, error
+// @Accept       json
+// @Param        id path string true "Instance ID"
+// @Param        message body string true "error message (json encoded)"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /instances/{id}/error [put]
+func (this *Instances) SetError(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PUT("/instances/:id/error", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		errMsg := ""
+		err = json.NewDecoder(request.Body).Decode(&errMsg)
+		if err != nil {
+			http.Error(writer, "expect json encoded string in body", http.StatusBadRequest)
+			return
+		}
+		err, code := ctrl.SetInstanceError(token, params.ByName("id"), errMsg)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
+	})
+}
+
+// SetErrorByProcessInstance godoc
+// @Summary      sets smart-service instance error
+// @Description  sets smart-service instance error
+// @Tags         instances, process-id, error
+// @Accept       json
+// @Param        id path string true "Process-Instance ID"
+// @Param        message body string true "error message (json encoded)"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /instances-by-process-id/{id}/error [put]
+func (this *Instances) SetErrorByProcessInstance(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PUT("/instances-by-process-id/:id/error", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		errMsg := ""
+		err = json.NewDecoder(request.Body).Decode(&errMsg)
+		if err != nil {
+			http.Error(writer, "expect json encoded string in body", http.StatusBadRequest)
+			return
+		}
+		err, code := ctrl.SetInstanceErrorByProcessInstanceId(token, params.ByName("id"), errMsg)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -187,61 +255,6 @@ func (this *Instances) Redeploy(config configuration.Config, router *httprouter.
 // @Router       /instances/{id}/info [put]
 func (this *Instances) UpdateInfo(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.PUT("/instances/:id/info", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		//TODO: replace with real code
-		log.Println(token)
-		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
-	})
-}
-
-// SetError godoc
-// @Summary      sets smart-service instance error
-// @Description  sets smart-service instance error
-// @Tags         instances, error
-// @Accept       json
-// @Param        id path string true "Instance ID"
-// @Param        message body string true "error message"
-// @Success      200
-// @Failure      500
-// @Failure      401
-// @Router       /instances/{id}/error [put]
-func (this *Instances) SetError(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.PUT("/instances/:id/error", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
-			return
-		}
-		if token.IsAdmin() {
-		}
-		err, code := ctrl.SetInstanceError(token, params.ByName("id"))
-		if err != nil {
-			http.Error(writer, err.Error(), code)
-			return
-		}
-		writer.WriteHeader(http.StatusOK)
-	})
-}
-
-// SetErrorByProcessInstance godoc
-// @Summary      sets smart-service instance error
-// @Description  sets smart-service instance error
-// @Tags         instances, process-id, error
-// @Accept       json
-// @Param        id path string true "Instance ID"
-// @Param        message body string true "error message"
-// @Success      200
-// @Failure      500
-// @Failure      401
-// @Router       /instances-by-process-id/{id}/error [put]
-func (this *Instances) SetErrorByProcessInstance(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.PUT("/instances-by-process-id/:id/error", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)

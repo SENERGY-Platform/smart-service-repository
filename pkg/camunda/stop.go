@@ -27,7 +27,7 @@ import (
 )
 
 func (this *Camunda) StopInstance(smartServiceInstanceId string) error {
-	instances, err := this.getProcessInstanceListByKeyAndUser(smartServiceInstanceId)
+	instances, err := this.getProcessInstanceListByKey(smartServiceInstanceId)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (this *Camunda) deleteInstanceHistory(id string) (err error) {
 	return nil
 }
 
-func (this *Camunda) getProcessInstanceListByKeyAndUser(key string) (result []HistoricProcessInstance, err error) {
+func (this *Camunda) getProcessInstanceListByKey(key string) (result []HistoricProcessInstance, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/history/process-instance?processInstanceBusinessKey="+url.QueryEscape(key), nil)
 	if err != nil {
 		return result, this.filterUrlFromErr(err)

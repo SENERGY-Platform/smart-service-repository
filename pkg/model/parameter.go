@@ -97,5 +97,4 @@ type DeviceGroupSelection struct {
 type ImportSelection struct {
 	Id   string  `json:"id"`
 	Path *string `json:"path"`
-	//TODO
 }

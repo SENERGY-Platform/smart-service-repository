@@ -102,3 +102,14 @@ func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions
 	}
 	return readCursorResult[model.SmartServiceInstance](ctx, cursor)
 }
+
+func (this *Mongo) SetInstanceError(id string, userId string, errMsg string) error {
+	ctx, _ := getTimeoutContext()
+	_, err := this.instanceCollection().UpdateOne(ctx, bson.M{
+		InstanceBson.Id:     id,
+		InstanceBson.UserId: userId,
+	}, bson.M{
+		"$set": bson.M{InstanceBson.Error: errMsg},
+	})
+	return err
+}

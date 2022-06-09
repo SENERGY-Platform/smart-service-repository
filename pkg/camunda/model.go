@@ -33,6 +33,7 @@ type ProcessDefinition struct {
 }
 
 type HistoricProcessInstance struct {
-	Id      string `json:"id"`
-	EndTime string `json:"endTime"`
+	Id          string `json:"id"`
+	EndTime     string `json:"endTime"`
+	BusinessKey string `json:"businessKey"`
 }

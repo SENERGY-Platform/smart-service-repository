@@ -22,7 +22,7 @@ import (
 )
 
 func (this *Camunda) CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool) {
-	instances, err := this.getProcessInstanceListByKeyAndUser(smartServiceInstanceId)
+	instances, err := this.getProcessInstanceListByKey(smartServiceInstanceId)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()

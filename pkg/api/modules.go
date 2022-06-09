@@ -93,21 +93,58 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 	})
 }
 
+// CreateByProcessInstance godoc
+// @Summary      create a smart-service module
+// @Description  creates a smart-service module
+// @Tags         modules
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Process-Instance ID"
+// @Param        message body model.SmartServiceModuleInit true "SmartServiceModuleInit"
+// @Success      200 {object} model.SmartServiceModule
+// @Failure      500
+// @Failure      400
+// @Failure      401
+// @Router       /instances-by-process-id/{id}/modules [post]
+func (this *Modules) CreateByProcessInstance(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.POST("/instances-by-process-id/:id/modules", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		module := model.SmartServiceModuleInit{}
+		err = json.NewDecoder(request.Body).Decode(&module)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+		result, err, code := ctrl.AddModuleForProcessInstance(token, params.ByName("id"), module)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(result)
+	})
+}
+
 // Create godoc
 // @Summary      create a smart-service module
 // @Description  creates a smart-service module
 // @Tags         modules
 // @Accept       json
 // @Produce      json
-// @Param        id path string true "Module ID"
+// @Param        id path string true "Instance ID"
 // @Param        message body model.SmartServiceModuleInit true "SmartServiceModuleInit"
 // @Success      200 {object} model.SmartServiceModule
 // @Failure      500
 // @Failure      400
 // @Failure      401
-// @Router       /modules [post]
+// @Router       /instances/{id}/modules [post]
 func (this *Modules) Create(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.POST("/instances-by-process-id/:id/modules", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.POST("/instances/:id/modules", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)

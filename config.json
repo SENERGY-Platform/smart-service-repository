@@ -18,5 +18,6 @@
     "mongo_table": "smart_services",
     "mongo_collection_design": "designs",
     "mongo_collection_release": "releases",
-    "mongo_collection_instance": "instances"
+    "mongo_collection_instance": "instances",
+    "mongo_collection_module": "modules"
 }

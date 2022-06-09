@@ -21,11 +21,17 @@ import (
 	"fmt"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/google/uuid"
+	"log"
 	"net/http"
+	"runtime/debug"
 )
 
-func (this *Controller) AddModule(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
-	element, err, code := this.prepareModule(token, processInstanceId, module)
+func (this *Controller) AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+	if instanceId == "" {
+		return result, errors.New("missing instance id"), http.StatusBadRequest
+	}
+	element, err, code := this.prepareModule(token, instanceId, module)
 	if err != nil {
 		return result, err, code
 	}
@@ -38,6 +44,17 @@ func (this *Controller) AddModule(token auth.Token, processInstanceId string, mo
 		return result, err, code
 	}
 	return this.db.GetModule(element.Id, token.GetUserId())
+}
+
+func (this *Controller) AddModuleForProcessInstance(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+	if processInstanceId == "" {
+		return result, errors.New("missing process instance id"), http.StatusBadRequest
+	}
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	if err != nil {
+		return result, err, code
+	}
+	return this.AddModule(token, businessKey, module)
 }
 
 func (this *Controller) ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int) {
@@ -59,7 +76,7 @@ func (this *Controller) ValidateModule(token auth.Token, element model.SmartServ
 		if code == http.StatusNotFound {
 			code = http.StatusBadRequest
 		}
-		return fmt.Errorf("referenced smart service instance not found: %w", err), code
+		return fmt.Errorf("referenced smart service instance (%v, %v) not found: %w", element.Id, token.GetUserId(), err), code
 	}
 	if instance.UserId != element.UserId {
 		return errors.New("referenced smart service instance is owned by a different user"), http.StatusForbidden
@@ -67,7 +84,28 @@ func (this *Controller) ValidateModule(token auth.Token, element model.SmartServ
 	return nil, http.StatusOK
 }
 
-func (this *Controller) prepareModule(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
-	//TODO get process instance from camunda; instance.businessKey is module.instance_id; get smart-service-instance (with businessKey as id);  use smart-service-instance info for SmartServiceModule
-	return result, errors.New("not implemented"), http.StatusNotImplemented
+func (this *Controller) prepareModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+	instance, err, code := this.db.GetInstance(instanceId, token.GetUserId())
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", token.GetUserId(), instanceId, err)
+		return result, err, code
+	}
+	result = model.SmartServiceModule{
+		SmartServiceModuleBase: model.SmartServiceModuleBase{
+			Id:         uuid.NewString(),
+			UserId:     token.GetUserId(),
+			InstanceId: instance.Id,
+			DesignId:   instance.DesignId,
+			ReleaseId:  instance.ReleaseId,
+		},
+		SmartServiceModuleInit: module,
+	}
+
+	return result, nil, http.StatusOK
+}
+
+func (this *Controller) useModuleDeleteInfo(info model.ModuleDeleteInfo) error {
+	//TODO
+	panic("not implemented")
 }

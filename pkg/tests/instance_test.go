@@ -252,9 +252,14 @@ func TestInstanceApi(t *testing.T) {
 				Type:  "String",
 				Value: "76e6f65c-c3c1-47c0-a999-4675baace425",
 			},
+			model.CamundaUserIdParameter: {
+				Type:  "String",
+				Value: userId,
+			},
 		}
 		if !reflect.DeepEqual(taskWorkerMsg.Variables, expectedVariables) {
-			t.Error(err)
+			temp, _ := json.Marshal(taskWorkerMsg.Variables)
+			t.Error(string(temp))
 		}
 		count = count + 1
 		if count%2 == 0 {

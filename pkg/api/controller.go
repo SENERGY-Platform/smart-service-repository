@@ -30,7 +30,8 @@ type Controller interface {
 }
 
 type ModulesInterface interface {
-	AddModule(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
+	AddModuleForProcessInstance(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
+	AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
 	ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
 }
 
@@ -53,6 +54,7 @@ type InstancesInterface interface {
 	CreateInstance(token auth.Token, releaseId string, instance model.SmartServiceInstanceInit) (model.SmartServiceInstance, error, int)
 	ListInstances(token auth.Token, query model.InstanceQueryOptions) ([]model.SmartServiceInstance, error, int)
 	GetInstance(token auth.Token, id string) (model.SmartServiceInstance, error, int)
-	DeleteInstance(token auth.Token, id string) (error, int)
-	SetInstanceError(token auth.Token, name string) (error, int)
+	DeleteInstance(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)
+	SetInstanceError(token auth.Token, instanceId string, errMsg string) (error, int)
+	SetInstanceErrorByProcessInstanceId(token auth.Token, processInstanceId string, errMsg string) (error, int)
 }

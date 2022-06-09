@@ -89,7 +89,7 @@ func (this *Controller) GetInstance(token auth.Token, id string) (result model.S
 	return result, err, code
 }
 
-func (this *Controller) DeleteInstance(token auth.Token, id string) (error, int) {
+func (this *Controller) DeleteInstance(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int) {
 	_, err, code := this.db.GetInstance(id, token.GetUserId())
 	if err != nil {
 		if code == http.StatusNotFound {
@@ -101,7 +101,7 @@ func (this *Controller) DeleteInstance(token auth.Token, id string) (error, int)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	err, code = this.handleModuleDeleteReferencesOfInstance(token, id)
+	err, code = this.handleModuleDeleteReferencesOfInstance(token, id, ignoreModuleDeleteError)
 	if err != nil {
 		return err, code
 	}
@@ -141,12 +141,42 @@ func (this *Controller) handleReadyAndErrorField(instance model.SmartServiceInst
 	return instance
 }
 
-func (this *Controller) SetInstanceError(token auth.Token, name string) (error, int) {
-	//TODO: set error of instance by id (without user id) if token matches user or is admin token
+func (this *Controller) SetInstanceError(token auth.Token, instanceId string, errMsg string) (error, int) {
+	if instanceId == "" {
+		return errors.New("missing instance id"), http.StatusBadRequest
+	}
+	err := this.db.SetInstanceError(instanceId, token.GetUserId(), errMsg)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
 	return nil, http.StatusOK
 }
 
-func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token, id string) (error, int) {
-	//TODO: find modules and send resquests definded by ModuleDeleteInfo
+func (this *Controller) SetInstanceErrorByProcessInstanceId(token auth.Token, processInstanceId string, errMsg string) (error, int) {
+	if processInstanceId == "" {
+		return errors.New("missing process instance id"), http.StatusBadRequest
+	}
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	if err != nil {
+		return err, code
+	}
+	return this.SetInstanceError(token, businessKey, errMsg)
+}
+
+func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token, instanceId string, ignoreModuleDeleteErrors bool) (error, int) {
+	modules, err, code := this.db.ListModules(token.GetUserId(), model.ModuleQueryOptions{
+		InstanceIdFilter: &instanceId,
+	})
+	if err != nil {
+		return err, code
+	}
+	for _, m := range modules {
+		if m.DeleteInfo != nil {
+			err = this.useModuleDeleteInfo(*m.DeleteInfo)
+			if err != nil && !ignoreModuleDeleteErrors {
+				return err, http.StatusInternalServerError
+			}
+		}
+	}
 	return nil, http.StatusOK
 }

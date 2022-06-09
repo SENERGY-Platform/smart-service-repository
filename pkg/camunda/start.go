@@ -56,11 +56,6 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 		err = errors.New(buf.String())
 		log.Println("ERROR: ", resp.StatusCode, err)
 		debug.PrintStack()
-
-		//TODO remove debug read
-		debugRead, _ := this.getProcessDefinitionList()
-		temp, _ := json.Marshal(debugRead)
-		log.Println("definitions:", string(temp))
 		return err
 	}
 	return nil
@@ -68,7 +63,9 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 
 func createCamundaStartForm(instance model.SmartServiceInstance) (result CamundaStartForm, err error) {
 	result.BusinessKey = instance.Id
-	result.Variables = map[string]CamundaStartVariable{}
+	result.Variables = map[string]CamundaStartVariable{
+		model.CamundaUserIdParameter: {Value: instance.UserId},
+	}
 	for _, param := range instance.Parameters {
 		result.Variables[param.Id] = CamundaStartVariable{Value: param.Value}
 	}
