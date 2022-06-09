@@ -22,7 +22,6 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -214,6 +213,50 @@ func (this *Instances) SetErrorByProcessInstance(config configuration.Config, ro
 	})
 }
 
+// UpdateInfo godoc
+// @Summary      updates smart-service instance parameter
+// @Description  updates smart-service instance parameter
+// @Tags         instances, parameter
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Instance ID"
+// @Param        message body model.SmartServiceInstanceInfo true "SmartServiceParameter"
+// @Success      200 {object}  model.SmartServiceInstance
+// @Failure      500
+// @Failure      401
+// @Failure      404
+// @Router       /instances/{id}/info [put]
+func (this *Instances) UpdateInfo(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PUT("/instances/:id/info", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		element := model.SmartServiceInstanceInfo{}
+		err = json.NewDecoder(request.Body).Decode(&element)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		result, err, code := ctrl.UpdateInstanceInfo(token, id, element)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(result)
+	})
+}
+
 // Redeploy godoc
 // @Summary      updates smart-service instance parameter
 // @Description  updates smart-service instance parameter
@@ -234,36 +277,25 @@ func (this *Instances) Redeploy(config configuration.Config, router *httprouter.
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
-		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
-	})
-}
-
-// UpdateInfo godoc
-// @Summary      updates smart-service instance parameter
-// @Description  updates smart-service instance parameter
-// @Tags         instances, parameter
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Instance ID"
-// @Param        message body model.SmartServiceInstanceInfo true "SmartServiceParameter"
-// @Success      200 {object}  model.SmartServiceInstance
-// @Failure      500
-// @Failure      401
-// @Router       /instances/{id}/info [put]
-func (this *Instances) UpdateInfo(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.PUT("/instances/:id/info", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
 			return
 		}
 
-		//TODO: replace with real code
-		log.Println(token)
+		parameters := []model.SmartServiceParameters{}
+		err = json.NewDecoder(request.Body).Decode(&parameters)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		result, err, code := ctrl.RedeployInstance(token, id, parameters)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
 		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(model.SmartServiceInstance{})
+		json.NewEncoder(writer).Encode(result)
 	})
 }

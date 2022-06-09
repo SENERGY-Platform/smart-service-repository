@@ -57,4 +57,6 @@ type InstancesInterface interface {
 	DeleteInstance(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)
 	SetInstanceError(token auth.Token, instanceId string, errMsg string) (error, int)
 	SetInstanceErrorByProcessInstanceId(token auth.Token, processInstanceId string, errMsg string) (error, int)
+	UpdateInstanceInfo(token auth.Token, id string, element model.SmartServiceInstanceInfo) (model.SmartServiceInstance, error, int)
+	RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameters) (model.SmartServiceInstance, error, int)
 }

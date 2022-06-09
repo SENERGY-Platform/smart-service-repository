@@ -33,6 +33,247 @@ import (
 	"time"
 )
 
+func TestInstanceEditApi(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, config, err := apiTestEnv(ctx, wg, true, func(err error) {
+		debug.PrintStack()
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	design := model.SmartServiceDesign{}
+	t.Run("create design", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml: resources.ProcessDeploymentBpmn,
+			SvgXml:  resources.ProcessDeploymentSvg,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if design.BpmnXml != resources.ProcessDeploymentBpmn {
+			t.Error(design.BpmnXml)
+			return
+		}
+		if design.SvgXml != resources.ProcessDeploymentSvg {
+			t.Error(design.SvgXml)
+			return
+		}
+		if design.Id == "" {
+			t.Error(design.Id)
+			return
+		}
+	})
+
+	release := model.SmartServiceRelease{}
+	t.Run("create release", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design.Id,
+			Name:        "release name",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	time.Sleep(5 * time.Second) //allow async cqrs
+
+	parameters := []model.SmartServiceExtendedParameter{}
+	t.Run("read params", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/parameters")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&parameters)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	instance := model.SmartServiceInstance{}
+	t.Run("create instance", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/instances", model.SmartServiceInstanceInit{
+			SmartServiceInstanceInfo: model.SmartServiceInstanceInfo{
+				Name:        "instance name",
+				Description: "instance description",
+			},
+			Parameters: fillTestParameter(parameters),
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if instance.Name != "instance name" {
+			t.Error(instance.Name)
+			return
+		}
+		if instance.Description != "instance description" {
+			t.Error(instance.Description)
+			return
+		}
+		if instance.UserId != userId {
+			t.Error(instance.UserId, userId)
+			return
+		}
+		if instance.DesignId != design.Id {
+			t.Error(instance.DesignId)
+			return
+		}
+		if instance.ReleaseId != release.Id {
+			t.Error(instance.ReleaseId)
+			return
+		}
+		if instance.Ready != false {
+			t.Error(instance.Ready)
+			return
+		}
+		if instance.Error != "" {
+			t.Error(instance.Error)
+			return
+		}
+	})
+
+	t.Run("read instance not ready", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if instance.Name != "instance name" {
+			t.Error(instance.Name)
+			return
+		}
+		if instance.Description != "instance description" {
+			t.Error(instance.Description)
+			return
+		}
+		if instance.UserId != userId {
+			t.Error(instance.UserId)
+			return
+		}
+		if instance.DesignId != design.Id {
+			t.Error(instance.DesignId)
+			return
+		}
+		if instance.ReleaseId != release.Id {
+			t.Error(instance.ReleaseId)
+			return
+		}
+		if instance.Ready != false {
+			t.Error(instance.Ready)
+			return
+		}
+	})
+
+	count := 0
+	mocks.NewModuleWorker(ctx, wg, apiUrl, config, func(taskWorkerMsg mocks.ModuleWorkerMessage) (err error) {
+		expectedVariables := map[string]mocks.CamundaVariable{
+			"Task_foo.parameter": {
+				Type:  "String",
+				Value: "{\"inputs.on\": true, \"inputs.hex\": #ff00ff}",
+			},
+			"Task_foo.selection": {
+				Type:  "String",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+			},
+			"color_hex": {
+				Type:  "String",
+				Value: "#ff00ff",
+			},
+			"device_selection": {
+				Type:  "String",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+			},
+			"process_model_id": {
+				Type:  "String",
+				Value: "76e6f65c-c3c1-47c0-a999-4675baace425",
+			},
+			model.CamundaUserIdParameter: {
+				Type:  "String",
+				Value: userId,
+			},
+		}
+		if !reflect.DeepEqual(taskWorkerMsg.Variables, expectedVariables) {
+			temp, _ := json.Marshal(taskWorkerMsg.Variables)
+			t.Error(string(temp))
+		}
+		count = count + 1
+		if count%2 == 0 {
+			err = errors.New("test-error")
+		}
+		return err
+	})
+
+	//TODO
+	t.Run("check edit", func(t *testing.T) {
+		t.Error("TODO")
+	})
+}
+
 func TestInstanceApi(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()

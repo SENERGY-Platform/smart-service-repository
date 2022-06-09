@@ -72,6 +72,50 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 	return result, nil, http.StatusOK
 }
 
+func (this *Controller) UpdateInstanceInfo(token auth.Token, id string, element model.SmartServiceInstanceInfo) (result model.SmartServiceInstance, err error, code int) {
+	if element.Name == "" {
+		return result, errors.New("missing name"), http.StatusBadRequest
+	}
+	result, err, code = this.db.GetInstance(id, token.GetUserId())
+	if err != nil {
+		return result, err, code
+	}
+	result.SmartServiceInstanceInfo = element
+	err, code = this.db.SetInstance(result)
+	return result, err, code
+}
+
+func (this *Controller) RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameters) (result model.SmartServiceInstance, err error, code int) {
+	result, err, code = this.db.GetInstance(id, token.GetUserId())
+	if err != nil {
+		return result, err, code
+	}
+	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, result.ReleaseId, "x")
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	if !access {
+		return result, errors.New("missing release access"), http.StatusForbidden
+	}
+	err, code = this.DeleteInstance(token, id, false)
+	if err != nil {
+		return result, err, code
+	}
+	result.Ready = false
+	result.Error = ""
+	err, code = this.db.SetInstance(result)
+	if err != nil {
+		return result, err, code
+	}
+	err = this.camunda.Start(result)
+	if err != nil {
+		result.Error = err.Error()
+		return result, err, http.StatusInternalServerError
+	}
+
+	return result, nil, http.StatusOK
+}
+
 func (this *Controller) ListInstances(token auth.Token, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, err error, code int) {
 	result, err, code = this.db.ListInstances(token.GetUserId(), query)
 	if err != nil {
