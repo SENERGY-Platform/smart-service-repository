@@ -71,12 +71,12 @@ func (this *Controller) ValidateModule(token auth.Token, element model.SmartServ
 	if element.InstanceId == "" {
 		return errors.New("missing instance id"), http.StatusBadRequest
 	}
-	instance, err, code := this.db.GetInstance(element.Id, token.GetUserId())
+	instance, err, code := this.db.GetInstance(element.InstanceId, token.GetUserId())
 	if err != nil {
 		if code == http.StatusNotFound {
 			code = http.StatusBadRequest
 		}
-		return fmt.Errorf("referenced smart service instance (%v, %v) not found: %w", element.Id, token.GetUserId(), err), code
+		return fmt.Errorf("referenced smart service instance (%v, %v) not found: %w", element.InstanceId, token.GetUserId(), err), code
 	}
 	if instance.UserId != element.UserId {
 		return errors.New("referenced smart service instance is owned by a different user"), http.StatusForbidden
