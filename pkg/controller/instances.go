@@ -20,6 +20,7 @@ import (
 	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/notification"
 	"github.com/google/uuid"
 	"log"
 	"net/http"
@@ -145,6 +146,11 @@ func (this *Controller) SetInstanceError(token auth.Token, instanceId string, er
 	if instanceId == "" {
 		return errors.New("missing instance id"), http.StatusBadRequest
 	}
+	_ = notification.Send(this.config.NotificationUrl, notification.Message{
+		UserId:  token.GetUserId(),
+		Title:   "Smart-Service-Instance Error (Instance-ID:" + instanceId + ")",
+		Message: errMsg,
+	})
 	err := this.db.SetInstanceError(instanceId, token.GetUserId(), errMsg)
 	if err != nil {
 		return err, http.StatusInternalServerError
