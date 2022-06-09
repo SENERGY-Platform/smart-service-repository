@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -58,6 +59,7 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 		debug.PrintStack()
 		return err
 	}
+	_, _ = io.ReadAll(resp.Body)
 	return nil
 }
 

@@ -27,24 +27,29 @@ import (
 )
 
 type Config struct {
-	ServerPort                    string   `json:"server_port"`
-	Debug                         bool     `json:"debug"`
-	EnableSwaggerUi               bool     `json:"enable_swagger_ui"`
-	CamundaUrl                    string   `json:"camunda_url" config:"secret"`
-	DeviceSelectionApi            string   `json:"device_selection_api"`
-	PermissionsUrl                string   `json:"permissions_url"`
-	NotificationUrl               string   `json:"notification_url"`
-	KafkaUrl                      string   `json:"kafka_url"`
-	ConsumerGroup                 string   `json:"consumer_group"`
-	KafkaSmartServiceReleaseTopic string   `json:"kafka_smart_service_release_topic"`
-	EditForward                   string   `json:"edit_forward"`
-	ForwardedEndpoints            []string `json:"forwarded_endpoints"`
-	MongoUrl                      string   `json:"mongo_url"`
-	MongoTable                    string   `json:"mongo_table"`
-	MongoCollectionDesign         string   `json:"mongo_collection_design"`
-	MongoCollectionRelease        string   `json:"mongo_collection_release"`
-	MongoCollectionInstance       string   `json:"mongo_collection_instance"`
-	MongoCollectionModule         string   `json:"mongo_collection_module"`
+	ServerPort                           string   `json:"server_port"`
+	Debug                                bool     `json:"debug"`
+	EnableSwaggerUi                      bool     `json:"enable_swagger_ui"`
+	CamundaUrl                           string   `json:"camunda_url" config:"secret"`
+	DeviceSelectionApi                   string   `json:"device_selection_api"`
+	PermissionsUrl                       string   `json:"permissions_url"`
+	NotificationUrl                      string   `json:"notification_url"`
+	KafkaUrl                             string   `json:"kafka_url"`
+	ConsumerGroup                        string   `json:"consumer_group"`
+	KafkaSmartServiceReleaseTopic        string   `json:"kafka_smart_service_release_topic"`
+	EditForward                          string   `json:"edit_forward"`
+	ForwardedEndpoints                   []string `json:"forwarded_endpoints"`
+	MongoUrl                             string   `json:"mongo_url"`
+	MongoTable                           string   `json:"mongo_table"`
+	MongoCollectionDesign                string   `json:"mongo_collection_design"`
+	MongoCollectionRelease               string   `json:"mongo_collection_release"`
+	MongoCollectionInstance              string   `json:"mongo_collection_instance"`
+	MongoCollectionModule                string   `json:"mongo_collection_module"`
+	AuthEndpoint                         string   `json:"auth_endpoint"`
+	AuthClientId                         string   `json:"auth_client_id" config:"secret"`
+	AuthClientSecret                     string   `json:"auth_client_secret" config:"secret"`
+	TokenCacheDefaultExpirationInSeconds int      `json:"token_cache_default_expiration_in_seconds"`
+	TokenCacheSizeInMb                   int      `json:"token_cache_size_in_mb"`
 }
 
 //loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)
@@ -89,7 +94,7 @@ func handleEnvironmentVars(config *Config) {
 			if !strings.Contains(fieldConfig, "secret") {
 				fmt.Println("use environment variable: ", envName, " = ", envValue)
 			}
-			if configValue.FieldByName(fieldName).Kind() == reflect.Int64 {
+			if configValue.FieldByName(fieldName).Kind() == reflect.Int64 || configValue.FieldByName(fieldName).Kind() == reflect.Int {
 				i, _ := strconv.ParseInt(envValue, 10, 64)
 				configValue.FieldByName(fieldName).SetInt(i)
 			}

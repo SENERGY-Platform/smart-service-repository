@@ -19,6 +19,7 @@ package pkg
 import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/camunda"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
@@ -42,6 +43,7 @@ func Start(ctx context.Context, config configuration.Config) error {
 		selectables.New(config),
 		kafka.NewConsumer,
 		controller.NewProducerFactory(kafka.NewProducer),
+		auth.GetCachedTokenProvider(config),
 	)
 	if err != nil {
 		return err

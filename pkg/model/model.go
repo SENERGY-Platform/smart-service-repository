@@ -87,6 +87,6 @@ type SmartServiceModuleInit struct {
 }
 
 type ModuleDeleteInfo struct {
-	Url    string `json:"url" bson:"url"` //url receives a DELETE request and responds with a status code < 300 if ok; 404 is successful delete
+	Url    string `json:"url" bson:"url"` //url receives a DELETE request and responds with a status code < 300 || code == 404 if ok
 	UserId string `json:"user_id" bson:"user_id"`
 }

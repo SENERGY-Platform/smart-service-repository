@@ -19,5 +19,12 @@
     "mongo_collection_design": "designs",
     "mongo_collection_release": "releases",
     "mongo_collection_instance": "instances",
-    "mongo_collection_module": "modules"
+    "mongo_collection_module": "modules",
+
+
+    "auth_endpoint": "",
+    "auth_client_id": "",
+    "auth_client_secret": "",
+    "token_cache_default_expiration_in_seconds": 60,
+    "token_cache_size_in_mb": 20
 }

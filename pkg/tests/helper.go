@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/camunda"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
@@ -142,7 +143,9 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 
 	selectablesMock := mocks.NewSelectables(resources.SelectionsResponse1Obj)
 
-	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, consumer, producer)
+	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
+
+	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, consumer, producer, auth.GetCachedTokenProvider(config))
 	if err != nil {
 		return "", config, err
 	}

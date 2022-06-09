@@ -66,6 +66,7 @@ func (this *Camunda) removeDeployment(deplId string) error {
 		debug.PrintStack()
 		return err
 	}
+	_, _ = io.ReadAll(resp.Body)
 	return nil
 }
 

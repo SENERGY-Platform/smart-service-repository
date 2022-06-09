@@ -27,12 +27,13 @@ import (
 )
 
 type Controller struct {
-	config           configuration.Config
-	db               Database
-	camunda          Camunda
-	releasesProducer Producer
-	permissions      Permissions
-	selectables      Selectables
+	config            configuration.Config
+	db                Database
+	camunda           Camunda
+	releasesProducer  Producer
+	permissions       Permissions
+	selectables       Selectables
+	userTokenProvider UserTokenProvider
 }
 
 type Producer interface {
@@ -57,17 +58,20 @@ type Selectables interface {
 	Get(token auth.Token, searchedEntities []string, criteria []model.Criteria) (result []model.Selectable, err error, code int)
 }
 
+type UserTokenProvider = func(userid string) (token auth.Token, err error)
+
 type GenericProducerFactory[T Producer] func(ctx context.Context, config configuration.Config, topic string) (T, error)
 type ProducerFactory = GenericProducerFactory[Producer]
 type Consumer = func(ctx context.Context, config configuration.Config, topic string, listener func(delivery []byte) error) error
 
-func New(ctx context.Context, config configuration.Config, db *mongo.Mongo, permissions Permissions, camunda Camunda, selectables Selectables, consumer Consumer, producer ProducerFactory) (ctrl *Controller, err error) {
+func New(ctx context.Context, config configuration.Config, db *mongo.Mongo, permissions Permissions, camunda Camunda, selectables Selectables, consumer Consumer, producer ProducerFactory, userTokenProvider UserTokenProvider) (ctrl *Controller, err error) {
 	ctrl = &Controller{
-		config:      config,
-		db:          db,
-		permissions: permissions,
-		camunda:     camunda,
-		selectables: selectables,
+		config:            config,
+		db:                db,
+		permissions:       permissions,
+		camunda:           camunda,
+		selectables:       selectables,
+		userTokenProvider: userTokenProvider,
 	}
 	if config.EditForward == "" || config.EditForward == "-" {
 		ctrl.releasesProducer, err = producer(ctx, config, config.KafkaSmartServiceReleaseTopic)
