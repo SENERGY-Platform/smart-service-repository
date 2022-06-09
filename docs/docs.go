@@ -262,6 +262,26 @@ const docTemplate = `{
                     "instances"
                 ],
                 "summary": "returns a list of smart-service instances",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limits size of result; 0 means unlimited",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset to be used in combination with limit",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "describes the sorting in the form of name.asc",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -271,6 +291,99 @@ const docTemplate = `{
                                 "$ref": "#/definitions/model.SmartServiceInstance"
                             }
                         }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances-by-process-id/{id}/error": {
+            "put": {
+                "description": "sets smart-service instance error",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "process-id",
+                    "error"
+                ],
+                "summary": "sets smart-service instance error",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process-Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "error message (json encoded)",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances-by-process-id/{id}/modules": {
+            "post": {
+                "description": "creates a smart-service module",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "create a smart-service module",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process-Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SmartServiceModuleInit",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceModuleInit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceModule"
+                        }
+                    },
+                    "400": {
+                        "description": ""
                     },
                     "401": {
                         "description": ""
@@ -343,6 +456,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/instances/{id}/error": {
+            "put": {
+                "description": "sets smart-service instance error",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "error"
+                ],
+                "summary": "sets smart-service instance error",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "error message (json encoded)",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/instances/{id}/info": {
             "put": {
                 "description": "updates smart-service instance parameter",
@@ -381,6 +536,56 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.SmartServiceInstance"
                         }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/modules": {
+            "post": {
+                "description": "creates a smart-service module",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "create a smart-service module",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SmartServiceModuleInit",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceModuleInit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceModule"
+                        }
+                    },
+                    "400": {
+                        "description": ""
                     },
                     "401": {
                         "description": ""
@@ -487,54 +692,6 @@ const docTemplate = `{
                                 "$ref": "#/definitions/model.SmartServiceModule"
                             }
                         }
-                    },
-                    "401": {
-                        "description": ""
-                    },
-                    "500": {
-                        "description": ""
-                    }
-                }
-            },
-            "post": {
-                "description": "creates a smart-service module",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "modules"
-                ],
-                "summary": "create a smart-service module",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Module ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "SmartServiceModule",
-                        "name": "message",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceModule"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.SmartServiceModule"
-                        }
-                    },
-                    "400": {
-                        "description": ""
                     },
                     "401": {
                         "description": ""
@@ -806,7 +963,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "url": {
-                    "description": "url receives a DELETE request and responds with a status code \u003c 300 if ok; 404 is successful delete",
+                    "description": "url receives a DELETE request and responds with a status code \u003c 300 || code == 404 if ok",
                     "type": "string"
                 },
                 "user_id": {
@@ -887,6 +1044,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "design_id": {
+                    "type": "string"
+                },
+                "error": {
+                    "description": "is set if module-worker notifies the repository about a error",
                     "type": "string"
                 },
                 "id": {
@@ -970,6 +1131,22 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SmartServiceModuleInit": {
+            "type": "object",
+            "properties": {
+                "delete_info": {
+                    "$ref": "#/definitions/model.ModuleDeleteInfo"
+                },
+                "module_data": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "module_type": {
+                    "description": "\"process-deployment\" | \"analytics\" ...",
                     "type": "string"
                 }
             }

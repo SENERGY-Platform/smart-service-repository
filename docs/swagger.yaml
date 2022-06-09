@@ -4,7 +4,7 @@ definitions:
     properties:
       url:
         description: url receives a DELETE request and responds with a status code
-          < 300 if ok; 404 is successful delete
+          < 300 || code == 404 if ok
         type: string
       user_id:
         type: string
@@ -60,6 +60,9 @@ definitions:
         type: string
       design_id:
         type: string
+      error:
+        description: is set if module-worker notifies the repository about a error
+        type: string
       id:
         type: string
       incomplete_delete:
@@ -114,6 +117,17 @@ definitions:
       release_id:
         type: string
       user_id:
+        type: string
+    type: object
+  model.SmartServiceModuleInit:
+    properties:
+      delete_info:
+        $ref: '#/definitions/model.ModuleDeleteInfo'
+      module_data:
+        additionalProperties: true
+        type: object
+      module_type:
+        description: '"process-deployment" | "analytics" ...'
         type: string
     type: object
   model.SmartServiceParameter:
@@ -304,6 +318,19 @@ paths:
   /instances:
     get:
       description: returns a list of smart-service instances
+      parameters:
+      - description: limits size of result; 0 means unlimited
+        in: query
+        name: limit
+        type: integer
+      - description: offset to be used in combination with limit
+        in: query
+        name: offset
+        type: integer
+      - description: describes the sorting in the form of name.asc
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
@@ -320,6 +347,68 @@ paths:
       summary: returns a list of smart-service instances
       tags:
       - instances
+  /instances-by-process-id/{id}/error:
+    put:
+      consumes:
+      - application/json
+      description: sets smart-service instance error
+      parameters:
+      - description: Process-Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: error message (json encoded)
+        in: body
+        name: message
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: sets smart-service instance error
+      tags:
+      - instances
+      - process-id
+      - error
+  /instances-by-process-id/{id}/modules:
+    post:
+      consumes:
+      - application/json
+      description: creates a smart-service module
+      parameters:
+      - description: Process-Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceModuleInit
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceModuleInit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceModule'
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: create a smart-service module
+      tags:
+      - modules
   /instances/{id}:
     delete:
       description: removes a smart-service instance with all modules
@@ -361,6 +450,34 @@ paths:
       summary: returns a smart-service instance
       tags:
       - instances
+  /instances/{id}/error:
+    put:
+      consumes:
+      - application/json
+      description: sets smart-service instance error
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: error message (json encoded)
+        in: body
+        name: message
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: sets smart-service instance error
+      tags:
+      - instances
+      - error
   /instances/{id}/info:
     put:
       consumes:
@@ -393,6 +510,39 @@ paths:
       tags:
       - instances
       - parameter
+  /instances/{id}/modules:
+    post:
+      consumes:
+      - application/json
+      description: creates a smart-service module
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SmartServiceModuleInit
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceModuleInit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceModule'
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: create a smart-service module
+      tags:
+      - modules
   /instances/{id}/parameters:
     put:
       consumes:
@@ -461,38 +611,6 @@ paths:
         "500":
           description: ""
       summary: returns a list of smart-service models
-      tags:
-      - modules
-    post:
-      consumes:
-      - application/json
-      description: creates a smart-service module
-      parameters:
-      - description: Module ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: SmartServiceModule
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/model.SmartServiceModule'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.SmartServiceModule'
-        "400":
-          description: ""
-        "401":
-          description: ""
-        "500":
-          description: ""
-      summary: create a smart-service module
       tags:
       - modules
   /releases:
