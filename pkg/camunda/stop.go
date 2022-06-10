@@ -32,15 +32,15 @@ func (this *Camunda) StopInstance(smartServiceInstanceId string) error {
 		return err
 	}
 	for _, instance := range instances {
-		if instance.EndTime != "" {
+		if instance.EndTime == "" {
 			err = this.deleteInstance(instance.Id)
 			if err != nil {
 				return err
 			}
-			err = this.deleteInstanceHistory(instance.Id)
-			if err != nil {
-				return err
-			}
+		}
+		err = this.deleteInstanceHistory(instance.Id)
+		if err != nil {
+			return err
 		}
 	}
 	return nil

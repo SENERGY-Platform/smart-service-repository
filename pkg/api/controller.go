@@ -58,5 +58,5 @@ type InstancesInterface interface {
 	SetInstanceError(token auth.Token, instanceId string, errMsg string) (error, int)
 	SetInstanceErrorByProcessInstanceId(token auth.Token, processInstanceId string, errMsg string) (error, int)
 	UpdateInstanceInfo(token auth.Token, id string, element model.SmartServiceInstanceInfo) (model.SmartServiceInstance, error, int)
-	RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameters) (model.SmartServiceInstance, error, int)
+	RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameter) (model.SmartServiceInstance, error, int)
 }

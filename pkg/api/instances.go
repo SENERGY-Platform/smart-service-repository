@@ -283,7 +283,7 @@ func (this *Instances) Redeploy(config configuration.Config, router *httprouter.
 			return
 		}
 
-		parameters := []model.SmartServiceParameters{}
+		parameters := []model.SmartServiceParameter{}
 		err = json.NewDecoder(request.Body).Decode(&parameters)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)

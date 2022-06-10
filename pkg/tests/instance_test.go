@@ -185,7 +185,7 @@ func TestInstanceEditApi(t *testing.T) {
 		}
 	})
 
-	t.Run("read instance not ready", func(t *testing.T) {
+	t.Run("read instance", func(t *testing.T) {
 		resp, err := get(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id))
 		if err != nil {
 			t.Error(err)
@@ -229,8 +229,159 @@ func TestInstanceEditApi(t *testing.T) {
 		}
 	})
 
-	count := 0
+	t.Run("update instance name", func(t *testing.T) {
+		resp, err := put(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id)+"/info", model.SmartServiceInstanceInfo{
+			Name:        "instance name update",
+			Description: "instance description update",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if instance.Name != "instance name update" {
+			t.Error(instance.Name)
+			return
+		}
+		if instance.Description != "instance description update" {
+			t.Error(instance.Description)
+			return
+		}
+		if instance.UserId != userId {
+			t.Error(instance.UserId, userId)
+			return
+		}
+		if instance.DesignId != design.Id {
+			t.Error(instance.DesignId)
+			return
+		}
+		if instance.ReleaseId != release.Id {
+			t.Error(instance.ReleaseId)
+			return
+		}
+		if instance.Ready != false {
+			t.Error(instance.Ready)
+			return
+		}
+		if instance.Error != "" {
+			t.Error(instance.Error)
+			return
+		}
+	})
+
+	t.Run("read instance update", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if instance.Name != "instance name update" {
+			t.Error(instance.Name)
+			return
+		}
+		if instance.Description != "instance description update" {
+			t.Error(instance.Description)
+			return
+		}
+		if instance.UserId != userId {
+			t.Error(instance.UserId)
+			return
+		}
+		if instance.DesignId != design.Id {
+			t.Error(instance.DesignId)
+			return
+		}
+		if instance.ReleaseId != release.Id {
+			t.Error(instance.ReleaseId)
+			return
+		}
+		if instance.Ready != false {
+			t.Error(instance.Ready)
+			return
+		}
+	})
+
+	t.Run("update instance parameter", func(t *testing.T) {
+		p := fillTestParameter(parameters)
+		p = append(p, model.SmartServiceParameter{
+			Id:    "update",
+			Value: "foo",
+		})
+		resp, err := put(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id)+"/parameters", p)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if instance.Name != "instance name update" {
+			t.Error(instance.Name)
+			return
+		}
+		if instance.Description != "instance description update" {
+			t.Error(instance.Description)
+			return
+		}
+		if instance.UserId != userId {
+			t.Error(instance.UserId, userId)
+			return
+		}
+		if instance.DesignId != design.Id {
+			t.Error(instance.DesignId)
+			return
+		}
+		if instance.ReleaseId != release.Id {
+			t.Error(instance.ReleaseId)
+			return
+		}
+		if instance.Ready != false {
+			t.Error(instance.Ready)
+			return
+		}
+		if instance.Error != "" {
+			t.Error(instance.Error)
+			return
+		}
+	})
+
+	//time.Sleep(2 * time.Second)
+
+	called := false
 	mocks.NewModuleWorker(ctx, wg, apiUrl, config, func(taskWorkerMsg mocks.ModuleWorkerMessage) (err error) {
+		called = true
 		expectedVariables := map[string]mocks.CamundaVariable{
 			"Task_foo.parameter": {
 				Type:  "String",
@@ -252,25 +403,30 @@ func TestInstanceEditApi(t *testing.T) {
 				Type:  "String",
 				Value: "76e6f65c-c3c1-47c0-a999-4675baace425",
 			},
+			"update": {
+				Type:  "String",
+				Value: "foo",
+			},
 			model.CamundaUserIdParameter: {
 				Type:  "String",
 				Value: userId,
 			},
 		}
+		temp, _ := json.Marshal(taskWorkerMsg.Variables)
+		t.Log("worker call:", string(temp))
 		if !reflect.DeepEqual(taskWorkerMsg.Variables, expectedVariables) {
-			temp, _ := json.Marshal(taskWorkerMsg.Variables)
 			t.Error(string(temp))
 		}
-		count = count + 1
-		if count%2 == 0 {
-			err = errors.New("test-error")
-		}
-		return err
+		return nil
 	})
 
-	//TODO
-	t.Run("check edit", func(t *testing.T) {
-		t.Error("TODO")
+	time.Sleep(2 * time.Second)
+
+	t.Run("check updated params", func(t *testing.T) {
+		//real check of new parameter is in worker
+		if !called {
+			t.Error("missing worker call")
+		}
 	})
 }
 

@@ -85,7 +85,7 @@ func (this *Controller) UpdateInstanceInfo(token auth.Token, id string, element 
 	return result, err, code
 }
 
-func (this *Controller) RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameters) (result model.SmartServiceInstance, err error, code int) {
+func (this *Controller) RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameter) (result model.SmartServiceInstance, err error, code int) {
 	result, err, code = this.db.GetInstance(id, token.GetUserId())
 	if err != nil {
 		return result, err, code
@@ -103,6 +103,7 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 	}
 	result.Ready = false
 	result.Error = ""
+	result.Parameters = parameters
 	err, code = this.db.SetInstance(result)
 	if err != nil {
 		return result, err, code
