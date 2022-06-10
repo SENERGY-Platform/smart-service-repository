@@ -36,7 +36,7 @@ func (this ModuleQueryOptions) GetOffset() int64 {
 
 func (this ModuleQueryOptions) GetSort() string {
 	if this.Sort == "" {
-		return "name.asc"
+		return "id.asc"
 	}
 	return this.Sort
 }

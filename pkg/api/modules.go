@@ -80,7 +80,7 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 		}
 		query.Sort = request.URL.Query().Get("sort")
 		if query.Sort == "" {
-			query.Sort = "name.asc"
+			query.Sort = "id.asc"
 		}
 
 		result, err, code := ctrl.ListModules(token, query)

@@ -666,7 +666,7 @@ func TestInstanceApi(t *testing.T) {
 	})
 
 	names := []string{"a", "b", "c", "d", "e", "f"}
-	t.Run("create list releases", func(t *testing.T) {
+	t.Run("create list instances", func(t *testing.T) {
 		for _, name := range names {
 			resp, err := post(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/instances", model.SmartServiceInstanceInit{
 				SmartServiceInstanceInfo: model.SmartServiceInstanceInfo{
