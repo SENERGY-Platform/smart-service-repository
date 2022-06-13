@@ -52,7 +52,6 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 		DesignId:                 release.DesignId,
 		ReleaseId:                release.Id,
 		Ready:                    false,
-		IncompleteDelete:         false,
 		Error:                    "",
 	}
 	err, code = this.db.SetInstance(result)
@@ -149,6 +148,7 @@ func (this *Controller) DeleteInstance(token auth.Token, id string, ignoreModule
 	}
 	err, code = this.handleModuleDeleteReferencesOfInstance(token, id, ignoreModuleDeleteError)
 	if err != nil {
+		this.SetInstanceError(token, id, err.Error())
 		return err, code
 	}
 	return this.db.DeleteInstance(id, token.GetUserId())

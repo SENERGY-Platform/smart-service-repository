@@ -357,7 +357,7 @@ func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.S
 			if iot != "" {
 				typeFilter = strings.Split(iot, ",")
 			}
-			criteria := []model.Criteria{}
+			criteria := model.Criteria{}
 			if criteriaStr, hasCriteria := properties["criteria"]; hasCriteria {
 				err = json.Unmarshal([]byte(criteriaStr), &criteria)
 				if err != nil {

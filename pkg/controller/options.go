@@ -41,7 +41,7 @@ func (this *Controller) getParamOptions(token auth.Token, desc model.ParameterDe
 }
 
 func (this *Controller) getIotOptions(token auth.Token, description *model.IotDescription) ([]model.Option, error, int) {
-	selectables, err, code := this.selectables.Get(token, description.TypeFilter, description.Criteria)
+	selectables, err, code := this.selectables.Get(token, description.TypeFilter, []model.Criteria{description.Criteria})
 	if err != nil {
 		return nil, err, code
 	}

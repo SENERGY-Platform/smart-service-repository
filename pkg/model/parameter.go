@@ -33,7 +33,7 @@ type ParameterDescription struct {
 
 type IotDescription struct {
 	TypeFilter []FilterPossibility `json:"type_filter" bson:"type_filter"`
-	Criteria   []Criteria          `json:"criteria" bson:"criteria"`
+	Criteria   Criteria            `json:"criteria" bson:"criteria"`
 }
 
 type Criteria struct {

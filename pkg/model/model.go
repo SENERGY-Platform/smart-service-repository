@@ -53,7 +53,6 @@ type SmartServiceInstance struct {
 	DesignId                 string `json:"design_id" bson:"design_id"`
 	ReleaseId                string `json:"release_id" bson:"release_id"`
 	Ready                    bool   `json:"ready" bson:"ready"`
-	IncompleteDelete         bool   `json:"incomplete_delete" bson:"incomplete_delete"`
 	Error                    string `json:"error,omitempty" bson:"error"` //is set if module-worker notifies the repository about a error
 }
 
