@@ -407,10 +407,6 @@ func TestInstanceEditApi(t *testing.T) {
 				Type:  "String",
 				Value: "foo",
 			},
-			model.CamundaUserIdParameter: {
-				Type:  "String",
-				Value: userId,
-			},
 		}
 		temp, _ := json.Marshal(taskWorkerMsg.Variables)
 		t.Log("worker call:", string(temp))
@@ -648,10 +644,6 @@ func TestInstanceApi(t *testing.T) {
 			"process_model_id": {
 				Type:  "String",
 				Value: "76e6f65c-c3c1-47c0-a999-4675baace425",
-			},
-			model.CamundaUserIdParameter: {
-				Type:  "String",
-				Value: userId,
 			},
 		}
 		if !reflect.DeepEqual(taskWorkerMsg.Variables, expectedVariables) {

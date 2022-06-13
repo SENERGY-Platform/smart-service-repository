@@ -36,6 +36,11 @@ func init() {
 			debug.PrintStack()
 			return err
 		}
+		err = db.ensureIndex(collection, "instance_id_index", InstanceBson.Id, true, true)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
 		return nil
 	})
 }
@@ -46,7 +51,11 @@ func (this *Mongo) instanceCollection() *mongo.Collection {
 
 func (this *Mongo) GetInstance(id string, userId string) (result model.SmartServiceInstance, err error, code int) {
 	ctx, _ := getTimeoutContext()
-	temp := this.instanceCollection().FindOne(ctx, bson.M{InstanceBson.Id: id, InstanceBson.UserId: userId})
+	filter := bson.M{InstanceBson.Id: id}
+	if userId != "" {
+		filter[InstanceBson.UserId] = userId
+	}
+	temp := this.instanceCollection().FindOne(ctx, filter)
 	err = temp.Err()
 	if err == mongo.ErrNoDocuments {
 		return result, err, http.StatusNotFound

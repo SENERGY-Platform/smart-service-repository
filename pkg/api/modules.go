@@ -113,6 +113,10 @@ func (this *Modules) CreateByProcessInstance(config configuration.Config, router
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
+		if !token.IsAdmin() {
+			http.Error(writer, "only admins may ask for instance user-id", http.StatusForbidden)
+			return
+		}
 
 		module := model.SmartServiceModuleInit{}
 		err = json.NewDecoder(request.Body).Decode(&module)
@@ -120,7 +124,7 @@ func (this *Modules) CreateByProcessInstance(config configuration.Config, router
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.AddModuleForProcessInstance(token, params.ByName("id"), module)
+		result, err, code := ctrl.AddModuleForProcessInstance(params.ByName("id"), module)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

@@ -29,14 +29,18 @@ import (
 )
 
 func (this *Controller) AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+	return this.addModule(token.GetUserId(), instanceId, module)
+}
+
+func (this *Controller) addModule(userId string, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
 	if instanceId == "" {
 		return result, errors.New("missing instance id"), http.StatusBadRequest
 	}
-	element, err, code := this.prepareModule(token, instanceId, module)
+	element, err, code := this.prepareModule(userId, instanceId, module)
 	if err != nil {
 		return result, err, code
 	}
-	err, code = this.ValidateModule(token, element)
+	err, code = this.ValidateModule(userId, element)
 	if err != nil {
 		return result, err, code
 	}
@@ -44,10 +48,10 @@ func (this *Controller) AddModule(token auth.Token, instanceId string, module mo
 	if err != nil {
 		return result, err, code
 	}
-	return this.db.GetModule(element.Id, token.GetUserId())
+	return this.db.GetModule(element.Id, userId)
 }
 
-func (this *Controller) AddModuleForProcessInstance(token auth.Token, processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+func (this *Controller) AddModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
 	if processInstanceId == "" {
 		return result, errors.New("missing process instance id"), http.StatusBadRequest
 	}
@@ -55,14 +59,18 @@ func (this *Controller) AddModuleForProcessInstance(token auth.Token, processIns
 	if err != nil {
 		return result, err, code
 	}
-	return this.AddModule(token, businessKey, module)
+	userId, err, code := this.getInstanceUserId(businessKey)
+	if err != nil {
+		return result, err, code
+	}
+	return this.addModule(userId, businessKey, module)
 }
 
 func (this *Controller) ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int) {
 	return this.db.ListModules(token.GetUserId(), query)
 }
 
-func (this *Controller) ValidateModule(token auth.Token, element model.SmartServiceModule) (error, int) {
+func (this *Controller) ValidateModule(userId string, element model.SmartServiceModule) (error, int) {
 	if element.Id == "" {
 		return errors.New("missing id"), http.StatusBadRequest
 	}
@@ -72,12 +80,12 @@ func (this *Controller) ValidateModule(token auth.Token, element model.SmartServ
 	if element.InstanceId == "" {
 		return errors.New("missing instance id"), http.StatusBadRequest
 	}
-	instance, err, code := this.db.GetInstance(element.InstanceId, token.GetUserId())
+	instance, err, code := this.db.GetInstance(element.InstanceId, userId)
 	if err != nil {
 		if code == http.StatusNotFound {
 			code = http.StatusBadRequest
 		}
-		return fmt.Errorf("referenced smart service instance (%v, %v) not found: %w", element.InstanceId, token.GetUserId(), err), code
+		return fmt.Errorf("referenced smart service instance (%v, %v) not found: %w", element.InstanceId, userId, err), code
 	}
 	if instance.UserId != element.UserId {
 		return errors.New("referenced smart service instance is owned by a different user"), http.StatusForbidden
@@ -85,17 +93,17 @@ func (this *Controller) ValidateModule(token auth.Token, element model.SmartServ
 	return nil, http.StatusOK
 }
 
-func (this *Controller) prepareModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
-	instance, err, code := this.db.GetInstance(instanceId, token.GetUserId())
+func (this *Controller) prepareModule(userId string, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+	instance, err, code := this.db.GetInstance(instanceId, userId)
 	if err != nil {
 		debug.PrintStack()
-		log.Println("ERROR:", token.GetUserId(), instanceId, err)
+		log.Println("ERROR:", userId, instanceId, err)
 		return result, err, code
 	}
 	result = model.SmartServiceModule{
 		SmartServiceModuleBase: model.SmartServiceModuleBase{
 			Id:         uuid.NewString(),
-			UserId:     token.GetUserId(),
+			UserId:     userId,
 			InstanceId: instance.Id,
 			DesignId:   instance.DesignId,
 			ReleaseId:  instance.ReleaseId,

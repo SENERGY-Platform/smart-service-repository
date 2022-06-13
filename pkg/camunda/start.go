@@ -66,7 +66,7 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 func createCamundaStartForm(instance model.SmartServiceInstance) (result CamundaStartForm, err error) {
 	result.BusinessKey = instance.Id
 	result.Variables = map[string]CamundaStartVariable{
-		model.CamundaUserIdParameter: {Value: instance.UserId},
+		//model.CamundaUserIdParameter: {Value: instance.UserId},
 	}
 	for _, param := range instance.Parameters {
 		result.Variables[param.Id] = CamundaStartVariable{Value: param.Value}

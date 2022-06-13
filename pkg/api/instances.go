@@ -180,6 +180,37 @@ func (this *Instances) SetError(config configuration.Config, router *httprouter.
 	})
 }
 
+// GetInstanceUserId godoc
+// @Summary      get smart-service instance user-id
+// @Description  get smart-service instance user-id
+// @Tags         instances, process-id, user-id
+// @Param        id path string true "Process-Instance ID"
+// @Produce      json
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /instances-by-process-id/{id}/user-id [get]
+func (this *Instances) GetInstanceUserId(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/instances-by-process-id/:id/user-id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		if !token.IsAdmin() {
+			http.Error(writer, "only admins may ask for instance user-id", http.StatusForbidden)
+			return
+		}
+		userId, err, code := ctrl.GetInstanceUserIdByProcessInstanceId(params.ByName("id"))
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(userId)
+	})
+}
+
 // SetErrorByProcessInstance godoc
 // @Summary      sets smart-service instance error
 // @Description  sets smart-service instance error
@@ -198,13 +229,17 @@ func (this *Instances) SetErrorByProcessInstance(config configuration.Config, ro
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
+		if !token.IsAdmin() {
+			http.Error(writer, "only admins may ask for instance user-id", http.StatusForbidden)
+			return
+		}
 		errMsg := ""
 		err = json.NewDecoder(request.Body).Decode(&errMsg)
 		if err != nil {
 			http.Error(writer, "expect json encoded string in body", http.StatusBadRequest)
 			return
 		}
-		err, code := ctrl.SetInstanceErrorByProcessInstanceId(token, params.ByName("id"), errMsg)
+		err, code := ctrl.SetInstanceErrorByProcessInstanceId(params.ByName("id"), errMsg)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

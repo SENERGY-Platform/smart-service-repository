@@ -188,22 +188,26 @@ func (this *Controller) handleReadyAndErrorField(instance model.SmartServiceInst
 }
 
 func (this *Controller) SetInstanceError(token auth.Token, instanceId string, errMsg string) (error, int) {
+	return this.setInstanceError(token.GetUserId(), instanceId, errMsg)
+}
+
+func (this *Controller) setInstanceError(userId string, instanceId string, errMsg string) (error, int) {
 	if instanceId == "" {
 		return errors.New("missing instance id"), http.StatusBadRequest
 	}
 	_ = notification.Send(this.config.NotificationUrl, notification.Message{
-		UserId:  token.GetUserId(),
+		UserId:  userId,
 		Title:   "Smart-Service-Instance Error (Instance-ID:" + instanceId + ")",
 		Message: errMsg,
 	})
-	err := this.db.SetInstanceError(instanceId, token.GetUserId(), errMsg)
+	err := this.db.SetInstanceError(instanceId, userId, errMsg)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
 	return nil, http.StatusOK
 }
 
-func (this *Controller) SetInstanceErrorByProcessInstanceId(token auth.Token, processInstanceId string, errMsg string) (error, int) {
+func (this *Controller) SetInstanceErrorByProcessInstanceId(processInstanceId string, errMsg string) (error, int) {
 	if processInstanceId == "" {
 		return errors.New("missing process instance id"), http.StatusBadRequest
 	}
@@ -211,7 +215,27 @@ func (this *Controller) SetInstanceErrorByProcessInstanceId(token auth.Token, pr
 	if err != nil {
 		return err, code
 	}
-	return this.SetInstanceError(token, businessKey, errMsg)
+	userId, err, code := this.getInstanceUserId(businessKey)
+	if err != nil {
+		return err, code
+	}
+	return this.setInstanceError(userId, businessKey, errMsg)
+}
+
+func (this *Controller) GetInstanceUserIdByProcessInstanceId(processInstanceId string) (string, error, int) {
+	if processInstanceId == "" {
+		return "", errors.New("missing process instance id"), http.StatusBadRequest
+	}
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	if err != nil {
+		return "", err, code
+	}
+	return this.getInstanceUserId(businessKey)
+}
+
+func (this *Controller) getInstanceUserId(instanceId string) (userId string, err error, code int) {
+	instance, err, code := this.db.GetInstance(instanceId, "")
+	return instance.UserId, err, code
 }
 
 func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token, instanceId string, ignoreModuleDeleteErrors bool) (error, int) {

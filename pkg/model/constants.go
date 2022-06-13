@@ -25,4 +25,4 @@ const (
 	Boolean Type = "https://schema.org/Boolean"
 )
 
-var CamundaUserIdParameter string = "_user_id"
+//var CamundaUserIdParameter string = "_user_id"
