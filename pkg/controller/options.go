@@ -41,17 +41,17 @@ func (this *Controller) getParamOptions(token auth.Token, desc model.ParameterDe
 }
 
 func (this *Controller) getIotOptions(token auth.Token, description *model.IotDescription) ([]model.Option, error, int) {
-	selectables, err, code := this.selectables.Get(token, description.TypeFilter, []model.Criteria{description.Criteria})
+	selectables, err, code := this.selectables.Get(token, description.TypeFilter, description.Criteria)
 	if err != nil {
 		return nil, err, code
 	}
-	return this.selectablesToOptions(selectables)
+	return this.selectablesToOptions(selectables, description.EntityOnly, description.NeedsSameEntityIdInParameter)
 }
 
-func (this *Controller) selectablesToOptions(selectables []model.Selectable) (result []model.Option, err error, code int) {
+func (this *Controller) selectablesToOptions(selectables []model.Selectable, entityOnly bool, sameEntityInParameter string) (result []model.Option, err error, code int) {
 	for _, selectable := range selectables {
 		if selectable.Device != nil {
-			options, err, code := this.selectableToDeviceOptions(selectable)
+			options, err, code := this.selectableToDeviceOptions(selectable, entityOnly, sameEntityInParameter)
 			if err != nil {
 				return nil, err, code
 			}
@@ -59,7 +59,9 @@ func (this *Controller) selectablesToOptions(selectables []model.Selectable) (re
 		}
 		if selectable.DeviceGroup != nil {
 			option := model.Option{
-				Kind: "Device-Groups",
+				Kind:                         "Device-Groups",
+				EntityId:                     selectable.DeviceGroup.Id,
+				NeedsSameEntityIdInParameter: sameEntityInParameter,
 			}
 			option.Label, option.Value, err, code = this.deviceGroupToOptionInfo(*selectable.DeviceGroup)
 			if err != nil {
@@ -68,7 +70,7 @@ func (this *Controller) selectablesToOptions(selectables []model.Selectable) (re
 			result = append(result, option)
 		}
 		if selectable.Import != nil {
-			options, err, code := this.selectableToImportOptions(selectable)
+			options, err, code := this.selectableToImportOptions(selectable, entityOnly, sameEntityInParameter)
 			if err != nil {
 				return nil, err, code
 			}
@@ -78,7 +80,14 @@ func (this *Controller) selectablesToOptions(selectables []model.Selectable) (re
 	return result, nil, http.StatusOK
 }
 
-func (this *Controller) selectableToDeviceOptions(selectable model.Selectable) (result []model.Option, err error, code int) {
+func (this *Controller) selectableToDeviceOptions(selectable model.Selectable, entityOnly bool, sameEntityInParameter string) (result []model.Option, err error, code int) {
+	if entityOnly {
+		option, err := optionFromDeviceServiceAndPath(*selectable.Device, model.Service{}, 0, "", 0, sameEntityInParameter)
+		if err != nil {
+			return nil, err, http.StatusInternalServerError
+		}
+		return []model.Option{option}, nil, http.StatusOK
+	}
 	withServices := false
 	serviceCount := len(selectable.Services)
 	for _, service := range selectable.Services {
@@ -87,14 +96,14 @@ func (this *Controller) selectableToDeviceOptions(selectable model.Selectable) (
 		pathCount := len(selectable.ServicePathOptions[service.Id])
 		for _, path := range selectable.ServicePathOptions[service.Id] {
 			withPaths = true
-			option, err := optionFromDeviceServiceAndPath(*selectable.Device, service, serviceCount, path.Path, pathCount)
+			option, err := optionFromDeviceServiceAndPath(*selectable.Device, service, serviceCount, path.Path, pathCount, sameEntityInParameter)
 			if err != nil {
 				return nil, err, http.StatusInternalServerError
 			}
 			result = append(result, option)
 		}
 		if !withPaths {
-			option, err := optionFromDeviceServiceAndPath(*selectable.Device, service, serviceCount, "", 0)
+			option, err := optionFromDeviceServiceAndPath(*selectable.Device, service, serviceCount, "", 0, sameEntityInParameter)
 			if err != nil {
 				return nil, err, http.StatusInternalServerError
 			}
@@ -102,7 +111,7 @@ func (this *Controller) selectableToDeviceOptions(selectable model.Selectable) (
 		}
 	}
 	if !withServices {
-		option, err := optionFromDeviceServiceAndPath(*selectable.Device, model.Service{}, 0, "", 0)
+		option, err := optionFromDeviceServiceAndPath(*selectable.Device, model.Service{}, 0, "", 0, sameEntityInParameter)
 		if err != nil {
 			return nil, err, http.StatusInternalServerError
 		}
@@ -111,19 +120,26 @@ func (this *Controller) selectableToDeviceOptions(selectable model.Selectable) (
 	return result, nil, http.StatusOK
 }
 
-func (this *Controller) selectableToImportOptions(selectable model.Selectable) (result []model.Option, err error, code int) {
+func (this *Controller) selectableToImportOptions(selectable model.Selectable, entityOnly bool, sameEntityInParameter string) (result []model.Option, err error, code int) {
+	if entityOnly {
+		option, err := optionFromImport(*selectable.Import, "", 0, sameEntityInParameter)
+		if err != nil {
+			return nil, err, http.StatusInternalServerError
+		}
+		return []model.Option{option}, nil, http.StatusOK
+	}
 	withPaths := false
 	pathCount := len(selectable.ServicePathOptions[selectable.Import.ImportTypeId])
 	for _, path := range selectable.ServicePathOptions[selectable.Import.ImportTypeId] {
 		withPaths = true
-		option, err := optionFromImport(*selectable.Import, path.Path, pathCount)
+		option, err := optionFromImport(*selectable.Import, path.Path, pathCount, sameEntityInParameter)
 		if err != nil {
 			return nil, err, http.StatusInternalServerError
 		}
 		result = append(result, option)
 	}
 	if !withPaths {
-		option, err := optionFromImport(*selectable.Import, "", 0)
+		option, err := optionFromImport(*selectable.Import, "", 0, sameEntityInParameter)
 		if err != nil {
 			return nil, err, http.StatusInternalServerError
 		}
@@ -132,9 +148,11 @@ func (this *Controller) selectableToImportOptions(selectable model.Selectable) (
 	return result, nil, http.StatusOK
 }
 
-func optionFromImport(importOption model.Import, path string, lenPaths int) (option model.Option, err error) {
+func optionFromImport(importOption model.Import, path string, lenPaths int, sameEntityInParameter string) (option model.Option, err error) {
 	option.Kind = "Imports"
+	option.EntityId = importOption.Id
 	option.Label = importOption.Name
+	option.NeedsSameEntityIdInParameter = sameEntityInParameter
 	importSelection := model.ImportSelection{
 		Id: importOption.Id,
 	}
@@ -153,9 +171,11 @@ func optionFromImport(importOption model.Import, path string, lenPaths int) (opt
 	return option, nil
 }
 
-func optionFromDeviceServiceAndPath(device model.Device, service model.Service, lenServices int, path string, lenPaths int) (option model.Option, err error) {
+func optionFromDeviceServiceAndPath(device model.Device, service model.Service, lenServices int, path string, lenPaths int, sameEntityInParameter string) (option model.Option, err error) {
 	option.Kind = "Devices"
+	option.EntityId = device.Id
 	option.Label = device.DisplayName
+	option.NeedsSameEntityIdInParameter = sameEntityInParameter
 	if option.Label == "" {
 		option.Label = device.Name
 	}

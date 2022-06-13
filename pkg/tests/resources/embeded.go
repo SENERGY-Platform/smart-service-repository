@@ -42,6 +42,12 @@ var ProcessDeploymentBpmn string
 //go:embed process_deployment.svg
 var ProcessDeploymentSvg string
 
+//go:embed complex_selection.bpmn
+var ComplexSelectionBpmn string
+
+//go:embed complex_selection.svg
+var ComplexSelectionSvg string
+
 //go:embed selections_response_1.json
 var SelectionsResponse1 []byte
 var SelectionsResponse1Obj []model.Selectable

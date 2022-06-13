@@ -11,10 +11,17 @@ definitions:
     type: object
   model.Option:
     properties:
+      entity_id:
+        description: to be used in combination with needs_same_entity_id_in_parameter
+        type: string
       kind:
-        description: optional helper for ui/app to group options
+        description: optional helper for frontend to group options
         type: string
       label:
+        type: string
+      needs_same_entity_id_in_parameter:
+        description: optional, frontend should filter this option depending on selection
+          in referenced parameter
         type: string
       value: {}
     type: object
@@ -50,6 +57,8 @@ definitions:
         items:
           $ref: '#/definitions/model.Option'
         type: array
+      order:
+        type: integer
       type:
         type: string
       value: {}
@@ -65,8 +74,6 @@ definitions:
         type: string
       id:
         type: string
-      incomplete_delete:
-        type: boolean
       name:
         type: string
       parameters:
@@ -409,6 +416,29 @@ paths:
       summary: create a smart-service module
       tags:
       - modules
+  /instances-by-process-id/{id}/user-id:
+    get:
+      description: get smart-service instance user-id
+      parameters:
+      - description: Process-Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: get smart-service instance user-id
+      tags:
+      - instances
+      - process-id
+      - user-id
   /instances/{id}:
     delete:
       description: removes a smart-service instance with all modules
@@ -503,6 +533,8 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceInstance'
         "401":
+          description: ""
+        "404":
           description: ""
         "500":
           description: ""

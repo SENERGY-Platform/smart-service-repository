@@ -1,534 +1,626 @@
 [
     {
-        "id":"device",
-        "value":null,
-        "label":"Device Selection",
-        "description":"select a device",
-        "default_value":null,
-        "type":"https://schema.org/Text",
-        "options":[
+        "default_value": null,
+        "description": "select a device",
+        "id": "device",
+        "label": "Device Selection",
+        "multiple": false,
+        "options": [
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
-                "label":"Device 1: one service, no paths",
-                "kind":"Devices"
+                "entity_id": "device_1",
+                "kind": "Devices",
+                "label": "Device 1: one service, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_2\",\"service_id\":\"s2\",\"path\":\"root.value\"}}",
-                "label":"Device 2: one service, one path",
-                "kind":"Devices"
+                "entity_id": "device_2",
+                "kind": "Devices",
+                "label": "Device 2: one service, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_2\",\"service_id\":\"s2\",\"path\":\"root.value\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value1\"}}",
-                "label":"Device 3: one service, two paths / root.value1",
-                "kind":"Devices"
+                "entity_id": "device_3",
+                "kind": "Devices",
+                "label": "Device 3: one service, two paths / root.value1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value2\"}}",
-                "label":"Device 3: one service, two paths / root.value2",
-                "kind":"Devices"
+                "entity_id": "device_3",
+                "kind": "Devices",
+                "label": "Device 3: one service, two paths / root.value2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s4\",\"path\":null}}",
-                "label":"Device 4: two services, no paths / Service 4, no paths",
-                "kind":"Devices"
+                "entity_id": "device_4",
+                "kind": "Devices",
+                "label": "Device 4: two services, no paths / Service 4, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s4\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s5\",\"path\":null}}",
-                "label":"Device 4: two services, no paths / Service 5, no paths",
-                "kind":"Devices"
+                "entity_id": "device_4",
+                "kind": "Devices",
+                "label": "Device 4: two services, no paths / Service 5, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s5\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s6\",\"path\":\"root.value_s6\"}}",
-                "label":"Device 5: two services, one path / Service 6, one path",
-                "kind":"Devices"
+                "entity_id": "device_5",
+                "kind": "Devices",
+                "label": "Device 5: two services, one path / Service 6, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s6\",\"path\":\"root.value_s6\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s7\",\"path\":\"root.value_s7\"}}",
-                "label":"Device 5: two services, one path / Service 7, one path",
-                "kind":"Devices"
+                "entity_id": "device_5",
+                "kind": "Devices",
+                "label": "Device 5: two services, one path / Service 7, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s7\",\"path\":\"root.value_s7\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v1\"}}",
-                "label":"Device 6: two services, two paths / Service 8, two paths / root.value_s8.v1",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 8, two paths / root.value_s8.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v2\"}}",
-                "label":"Device 6: two services, two paths / Service 8, two paths / root.value_s8.v2",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 8, two paths / root.value_s8.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v1\"}}",
-                "label":"Device 6: two services, two paths / Service 9, two paths / root.value_s9.v1",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 9, two paths / root.value_s9.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v2\"}}",
-                "label":"Device 6: two services, two paths / Service 9, two paths / root.value_s9.v2",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 9, two paths / root.value_s9.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s10\",\"path\":null}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 10, no paths",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 10, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s10\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s11\",\"path\":\"root.value_s11.v1\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 11, one path",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 11, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s11\",\"path\":\"root.value_s11.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v1\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v1",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v2\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v2",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v2\"}}"
             }
         ],
-        "multiple":false
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": null
     },
     {
-        "id":"group",
-        "value":null,
-        "label":"group",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Text",
-        "options":[
+        "default_value": null,
+        "description": "",
+        "id": "group",
+        "label": "group",
+        "multiple": false,
+        "options": [
             {
-                "value":"{\"device_group_selection\":{\"id\":\"group_1\"}}",
-                "label":"Group 1",
-                "kind":"Device-Groups"
+                "entity_id": "group_1",
+                "kind": "Device-Groups",
+                "label": "Group 1",
+                "value": "{\"device_group_selection\":{\"id\":\"group_1\"}}"
             },
             {
-                "value":"{\"device_group_selection\":{\"id\":\"group_2\"}}",
-                "label":"Group 2",
-                "kind":"Device-Groups"
+                "entity_id": "group_2",
+                "kind": "Device-Groups",
+                "label": "Group 2",
+                "value": "{\"device_group_selection\":{\"id\":\"group_2\"}}"
             }
         ],
-        "multiple":false
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": null
     },
     {
-        "id":"import",
-        "value":null,
-        "label":"import",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Text",
-        "options":[
+        "default_value": null,
+        "description": "",
+        "id": "import",
+        "label": "import",
+        "multiple": false,
+        "options": [
             {
-                "value":"{\"import_selection\":{\"id\":\"import_1\",\"path\":null}}",
-                "label":"Import 1: without paths",
-                "kind":"Imports"
+                "entity_id": "import_1",
+                "kind": "Imports",
+                "label": "Import 1: without paths",
+                "value": "{\"import_selection\":{\"id\":\"import_1\",\"path\":null}}"
             },
             {
-                "value":"{\"import_selection\":{\"id\":\"import_2\",\"path\":\"root.value\"}}",
-                "label":"Import 2: with one path",
-                "kind":"Imports"
+                "entity_id": "import_2",
+                "kind": "Imports",
+                "label": "Import 2: with one path",
+                "value": "{\"import_selection\":{\"id\":\"import_2\",\"path\":\"root.value\"}}"
             },
             {
-                "value":"{\"import_selection\":{\"id\":\"import_3\",\"path\":\"root.value1\"}}",
-                "label":"Import 3: with two paths / root.value1",
-                "kind":"Imports"
+                "entity_id": "import_3",
+                "kind": "Imports",
+                "label": "Import 3: with two paths / root.value1",
+                "value": "{\"import_selection\":{\"id\":\"import_3\",\"path\":\"root.value1\"}}"
             },
             {
-                "value":"{\"import_selection\":{\"id\":\"import_3\",\"path\":\"root.value2\"}}",
-                "label":"Import 3: with two paths / root.value2",
-                "kind":"Imports"
+                "entity_id": "import_3",
+                "kind": "Imports",
+                "label": "Import 3: with two paths / root.value2",
+                "value": "{\"import_selection\":{\"id\":\"import_3\",\"path\":\"root.value2\"}}"
             }
         ],
-        "multiple":false
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": null
     },
     {
-        "id":"iot",
-        "value":null,
-        "label":"iot",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Text",
-        "options":[
+        "default_value": null,
+        "description": "",
+        "id": "iot",
+        "label": "iot",
+        "multiple": false,
+        "options": [
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
-                "label":"Device 1: one service, no paths",
-                "kind":"Devices"
+                "entity_id": "device_1",
+                "kind": "Devices",
+                "label": "Device 1: one service, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_2\",\"service_id\":\"s2\",\"path\":\"root.value\"}}",
-                "label":"Device 2: one service, one path",
-                "kind":"Devices"
+                "entity_id": "device_2",
+                "kind": "Devices",
+                "label": "Device 2: one service, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_2\",\"service_id\":\"s2\",\"path\":\"root.value\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value1\"}}",
-                "label":"Device 3: one service, two paths / root.value1",
-                "kind":"Devices"
+                "entity_id": "device_3",
+                "kind": "Devices",
+                "label": "Device 3: one service, two paths / root.value1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value2\"}}",
-                "label":"Device 3: one service, two paths / root.value2",
-                "kind":"Devices"
+                "entity_id": "device_3",
+                "kind": "Devices",
+                "label": "Device 3: one service, two paths / root.value2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s4\",\"path\":null}}",
-                "label":"Device 4: two services, no paths / Service 4, no paths",
-                "kind":"Devices"
+                "entity_id": "device_4",
+                "kind": "Devices",
+                "label": "Device 4: two services, no paths / Service 4, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s4\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s5\",\"path\":null}}",
-                "label":"Device 4: two services, no paths / Service 5, no paths",
-                "kind":"Devices"
+                "entity_id": "device_4",
+                "kind": "Devices",
+                "label": "Device 4: two services, no paths / Service 5, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s5\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s6\",\"path\":\"root.value_s6\"}}",
-                "label":"Device 5: two services, one path / Service 6, one path",
-                "kind":"Devices"
+                "entity_id": "device_5",
+                "kind": "Devices",
+                "label": "Device 5: two services, one path / Service 6, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s6\",\"path\":\"root.value_s6\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s7\",\"path\":\"root.value_s7\"}}",
-                "label":"Device 5: two services, one path / Service 7, one path",
-                "kind":"Devices"
+                "entity_id": "device_5",
+                "kind": "Devices",
+                "label": "Device 5: two services, one path / Service 7, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s7\",\"path\":\"root.value_s7\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v1\"}}",
-                "label":"Device 6: two services, two paths / Service 8, two paths / root.value_s8.v1",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 8, two paths / root.value_s8.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v2\"}}",
-                "label":"Device 6: two services, two paths / Service 8, two paths / root.value_s8.v2",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 8, two paths / root.value_s8.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v1\"}}",
-                "label":"Device 6: two services, two paths / Service 9, two paths / root.value_s9.v1",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 9, two paths / root.value_s9.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v2\"}}",
-                "label":"Device 6: two services, two paths / Service 9, two paths / root.value_s9.v2",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 9, two paths / root.value_s9.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s10\",\"path\":null}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 10, no paths",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 10, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s10\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s11\",\"path\":\"root.value_s11.v1\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 11, one path",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 11, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s11\",\"path\":\"root.value_s11.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v1\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v1",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v2\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v2",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v2\"}}"
             },
             {
-                "value":"{\"device_group_selection\":{\"id\":\"group_1\"}}",
-                "label":"Group 1",
-                "kind":"Device-Groups"
+                "entity_id": "group_1",
+                "kind": "Device-Groups",
+                "label": "Group 1",
+                "value": "{\"device_group_selection\":{\"id\":\"group_1\"}}"
             },
             {
-                "value":"{\"device_group_selection\":{\"id\":\"group_2\"}}",
-                "label":"Group 2",
-                "kind":"Device-Groups"
+                "entity_id": "group_2",
+                "kind": "Device-Groups",
+                "label": "Group 2",
+                "value": "{\"device_group_selection\":{\"id\":\"group_2\"}}"
             },
             {
-                "value":"{\"import_selection\":{\"id\":\"import_1\",\"path\":null}}",
-                "label":"Import 1: without paths",
-                "kind":"Imports"
+                "entity_id": "import_1",
+                "kind": "Imports",
+                "label": "Import 1: without paths",
+                "value": "{\"import_selection\":{\"id\":\"import_1\",\"path\":null}}"
             },
             {
-                "value":"{\"import_selection\":{\"id\":\"import_2\",\"path\":\"root.value\"}}",
-                "label":"Import 2: with one path",
-                "kind":"Imports"
+                "entity_id": "import_2",
+                "kind": "Imports",
+                "label": "Import 2: with one path",
+                "value": "{\"import_selection\":{\"id\":\"import_2\",\"path\":\"root.value\"}}"
             },
             {
-                "value":"{\"import_selection\":{\"id\":\"import_3\",\"path\":\"root.value1\"}}",
-                "label":"Import 3: with two paths / root.value1",
-                "kind":"Imports"
+                "entity_id": "import_3",
+                "kind": "Imports",
+                "label": "Import 3: with two paths / root.value1",
+                "value": "{\"import_selection\":{\"id\":\"import_3\",\"path\":\"root.value1\"}}"
             },
             {
-                "value":"{\"import_selection\":{\"id\":\"import_3\",\"path\":\"root.value2\"}}",
-                "label":"Import 3: with two paths / root.value2",
-                "kind":"Imports"
+                "entity_id": "import_3",
+                "kind": "Imports",
+                "label": "Import 3: with two paths / root.value2",
+                "value": "{\"import_selection\":{\"id\":\"import_3\",\"path\":\"root.value2\"}}"
             }
         ],
-        "multiple":false
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": null
     },
     {
-        "id":"freeStr",
-        "value":null,
-        "label":"freeStr",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Text",
-        "options":null,
-        "multiple":false
+        "default_value": null,
+        "description": "",
+        "id": "freeStr",
+        "label": "freeStr",
+        "multiple": false,
+        "options": null,
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": null
     },
     {
-        "id":"freeNum",
-        "value":null,
-        "label":"freeNum",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Integer",
-        "options":null,
-        "multiple":false
+        "default_value": null,
+        "description": "",
+        "id": "freeNum",
+        "label": "freeNum",
+        "multiple": false,
+        "options": null,
+        "order": 0,
+        "type": "https://schema.org/Integer",
+        "value": null
     },
     {
-        "id":"freeStrDefault",
-        "value":"default string",
-        "label":"freeStrDefault",
-        "description":"",
-        "default_value":"default string",
-        "type":"https://schema.org/Text",
-        "options":null,
-        "multiple":false
+        "default_value": "default string",
+        "description": "",
+        "id": "freeStrDefault",
+        "label": "freeStrDefault",
+        "multiple": false,
+        "options": null,
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": "default string"
     },
     {
-        "id":"freeNumDefault",
-        "value":42,
-        "label":"freeNumDefault",
-        "description":"",
-        "default_value":42,
-        "type":"https://schema.org/Integer",
-        "options":null,
-        "multiple":false
+        "default_value": 42,
+        "description": "",
+        "id": "freeNumDefault",
+        "label": "freeNumDefault",
+        "multiple": false,
+        "options": null,
+        "order": 0,
+        "type": "https://schema.org/Integer",
+        "value": 42
     },
     {
-        "id":"select",
-        "value":null,
-        "label":"select",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Text",
-        "options":[
+        "default_value": null,
+        "description": "",
+        "id": "select",
+        "label": "select",
+        "multiple": false,
+        "options": [
             {
-                "value":"value",
-                "label":"label",
-                "kind":""
+                "entity_id": "",
+                "kind": "",
+                "label": "label",
+                "value": "value"
             }
         ],
-        "multiple":false
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": null
     },
     {
-        "id":"multiple",
-        "value":null,
-        "label":"multiple",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Integer",
-        "options":null,
-        "multiple":true
+        "default_value": null,
+        "description": "",
+        "id": "multiple",
+        "label": "multiple",
+        "multiple": true,
+        "options": null,
+        "order": 0,
+        "type": "https://schema.org/Integer",
+        "value": null
     },
     {
-        "id":"device_or_group",
-        "value":null,
-        "label":"device_or_group",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Text",
-        "options":[
+        "default_value": null,
+        "description": "",
+        "id": "device_or_group",
+        "label": "device_or_group",
+        "multiple": false,
+        "options": [
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
-                "label":"Device 1: one service, no paths",
-                "kind":"Devices"
+                "entity_id": "device_1",
+                "kind": "Devices",
+                "label": "Device 1: one service, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_2\",\"service_id\":\"s2\",\"path\":\"root.value\"}}",
-                "label":"Device 2: one service, one path",
-                "kind":"Devices"
+                "entity_id": "device_2",
+                "kind": "Devices",
+                "label": "Device 2: one service, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_2\",\"service_id\":\"s2\",\"path\":\"root.value\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value1\"}}",
-                "label":"Device 3: one service, two paths / root.value1",
-                "kind":"Devices"
+                "entity_id": "device_3",
+                "kind": "Devices",
+                "label": "Device 3: one service, two paths / root.value1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value2\"}}",
-                "label":"Device 3: one service, two paths / root.value2",
-                "kind":"Devices"
+                "entity_id": "device_3",
+                "kind": "Devices",
+                "label": "Device 3: one service, two paths / root.value2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s4\",\"path\":null}}",
-                "label":"Device 4: two services, no paths / Service 4, no paths",
-                "kind":"Devices"
+                "entity_id": "device_4",
+                "kind": "Devices",
+                "label": "Device 4: two services, no paths / Service 4, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s4\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s5\",\"path\":null}}",
-                "label":"Device 4: two services, no paths / Service 5, no paths",
-                "kind":"Devices"
+                "entity_id": "device_4",
+                "kind": "Devices",
+                "label": "Device 4: two services, no paths / Service 5, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s5\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s6\",\"path\":\"root.value_s6\"}}",
-                "label":"Device 5: two services, one path / Service 6, one path",
-                "kind":"Devices"
+                "entity_id": "device_5",
+                "kind": "Devices",
+                "label": "Device 5: two services, one path / Service 6, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s6\",\"path\":\"root.value_s6\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s7\",\"path\":\"root.value_s7\"}}",
-                "label":"Device 5: two services, one path / Service 7, one path",
-                "kind":"Devices"
+                "entity_id": "device_5",
+                "kind": "Devices",
+                "label": "Device 5: two services, one path / Service 7, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s7\",\"path\":\"root.value_s7\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v1\"}}",
-                "label":"Device 6: two services, two paths / Service 8, two paths / root.value_s8.v1",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 8, two paths / root.value_s8.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v2\"}}",
-                "label":"Device 6: two services, two paths / Service 8, two paths / root.value_s8.v2",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 8, two paths / root.value_s8.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v1\"}}",
-                "label":"Device 6: two services, two paths / Service 9, two paths / root.value_s9.v1",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 9, two paths / root.value_s9.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v2\"}}",
-                "label":"Device 6: two services, two paths / Service 9, two paths / root.value_s9.v2",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 9, two paths / root.value_s9.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s10\",\"path\":null}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 10, no paths",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 10, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s10\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s11\",\"path\":\"root.value_s11.v1\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 11, one path",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 11, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s11\",\"path\":\"root.value_s11.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v1\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v1",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v2\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v2",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v2\"}}"
             },
             {
-                "value":"{\"device_group_selection\":{\"id\":\"group_1\"}}",
-                "label":"Group 1",
-                "kind":"Device-Groups"
+                "entity_id": "group_1",
+                "kind": "Device-Groups",
+                "label": "Group 1",
+                "value": "{\"device_group_selection\":{\"id\":\"group_1\"}}"
             },
             {
-                "value":"{\"device_group_selection\":{\"id\":\"group_2\"}}",
-                "label":"Group 2",
-                "kind":"Device-Groups"
+                "entity_id": "group_2",
+                "kind": "Device-Groups",
+                "label": "Group 2",
+                "value": "{\"device_group_selection\":{\"id\":\"group_2\"}}"
             }
         ],
-        "multiple":false
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": null
     },
     {
-        "id":"devices_multiple",
-        "value":null,
-        "label":"devices_multiple",
-        "description":"",
-        "default_value":null,
-        "type":"https://schema.org/Text",
-        "options":[
+        "default_value": null,
+        "description": "",
+        "id": "devices_multiple",
+        "label": "devices_multiple",
+        "multiple": true,
+        "options": [
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
-                "label":"Device 1: one service, no paths",
-                "kind":"Devices"
+                "entity_id": "device_1",
+                "kind": "Devices",
+                "label": "Device 1: one service, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_2\",\"service_id\":\"s2\",\"path\":\"root.value\"}}",
-                "label":"Device 2: one service, one path",
-                "kind":"Devices"
+                "entity_id": "device_2",
+                "kind": "Devices",
+                "label": "Device 2: one service, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_2\",\"service_id\":\"s2\",\"path\":\"root.value\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value1\"}}",
-                "label":"Device 3: one service, two paths / root.value1",
-                "kind":"Devices"
+                "entity_id": "device_3",
+                "kind": "Devices",
+                "label": "Device 3: one service, two paths / root.value1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value2\"}}",
-                "label":"Device 3: one service, two paths / root.value2",
-                "kind":"Devices"
+                "entity_id": "device_3",
+                "kind": "Devices",
+                "label": "Device 3: one service, two paths / root.value2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_3\",\"service_id\":\"s3\",\"path\":\"root.value2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s4\",\"path\":null}}",
-                "label":"Device 4: two services, no paths / Service 4, no paths",
-                "kind":"Devices"
+                "entity_id": "device_4",
+                "kind": "Devices",
+                "label": "Device 4: two services, no paths / Service 4, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s4\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s5\",\"path\":null}}",
-                "label":"Device 4: two services, no paths / Service 5, no paths",
-                "kind":"Devices"
+                "entity_id": "device_4",
+                "kind": "Devices",
+                "label": "Device 4: two services, no paths / Service 5, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_4\",\"service_id\":\"s5\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s6\",\"path\":\"root.value_s6\"}}",
-                "label":"Device 5: two services, one path / Service 6, one path",
-                "kind":"Devices"
+                "entity_id": "device_5",
+                "kind": "Devices",
+                "label": "Device 5: two services, one path / Service 6, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s6\",\"path\":\"root.value_s6\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s7\",\"path\":\"root.value_s7\"}}",
-                "label":"Device 5: two services, one path / Service 7, one path",
-                "kind":"Devices"
+                "entity_id": "device_5",
+                "kind": "Devices",
+                "label": "Device 5: two services, one path / Service 7, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_5\",\"service_id\":\"s7\",\"path\":\"root.value_s7\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v1\"}}",
-                "label":"Device 6: two services, two paths / Service 8, two paths / root.value_s8.v1",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 8, two paths / root.value_s8.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v2\"}}",
-                "label":"Device 6: two services, two paths / Service 8, two paths / root.value_s8.v2",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 8, two paths / root.value_s8.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s8\",\"path\":\"root.value_s8.v2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v1\"}}",
-                "label":"Device 6: two services, two paths / Service 9, two paths / root.value_s9.v1",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 9, two paths / root.value_s9.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v2\"}}",
-                "label":"Device 6: two services, two paths / Service 9, two paths / root.value_s9.v2",
-                "kind":"Devices"
+                "entity_id": "device_6",
+                "kind": "Devices",
+                "label": "Device 6: two services, two paths / Service 9, two paths / root.value_s9.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_6\",\"service_id\":\"s9\",\"path\":\"root.value_s9.v2\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s10\",\"path\":null}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 10, no paths",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 10, no paths",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s10\",\"path\":null}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s11\",\"path\":\"root.value_s11.v1\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 11, one path",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 11, one path",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s11\",\"path\":\"root.value_s11.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v1\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v1",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v1",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v1\"}}"
             },
             {
-                "value":"{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v2\"}}",
-                "label":"Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v2",
-                "kind":"Devices"
+                "entity_id": "device_7",
+                "kind": "Devices",
+                "label": "Device 7: 3 services, mixed paths arrangements / Service 12, two paths / root.value_s12.v2",
+                "value": "{\"device_selection\":{\"device_id\":\"device_7\",\"service_id\":\"s12\",\"path\":\"root.value_s12.v2\"}}"
             }
         ],
-        "multiple":true
+        "order": 0,
+        "type": "https://schema.org/Text",
+        "value": null
     },
     {
-        "id":"boolean",
-        "value":null,
-        "label":"boolean",
-        "description":"",
-        "default_value":null,
-        "type":"boolean",
-        "options":null,
-        "multiple":false
+        "default_value": null,
+        "description": "",
+        "id": "boolean",
+        "label": "boolean",
+        "multiple": false,
+        "options": null,
+        "order": 0,
+        "type": "boolean",
+        "value": null
     }
 ]

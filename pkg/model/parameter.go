@@ -29,11 +29,14 @@ type ParameterDescription struct {
 	Multiple       bool                   `json:"multiple" bson:"multiple"`
 	Options        map[string]interface{} `json:"options,omitempty" bson:"options,omitempty"`
 	IotDescription *IotDescription        `json:"iot_description" bson:"iot_description"`
+	Order          int                    `json:"order" bson:"order"`
 }
 
 type IotDescription struct {
-	TypeFilter []FilterPossibility `json:"type_filter" bson:"type_filter"`
-	Criteria   Criteria            `json:"criteria" bson:"criteria"`
+	TypeFilter                   []FilterPossibility `json:"type_filter" bson:"type_filter"`
+	Criteria                     []Criteria          `json:"criteria" bson:"criteria"`
+	EntityOnly                   bool                `json:"entity_only" bson:"entity_only"`
+	NeedsSameEntityIdInParameter string              `json:"needs_same_entity_id_in_parameter" bson:"needs_same_entity_id_in_parameter"`
 }
 
 type Criteria struct {
@@ -70,12 +73,15 @@ type SmartServiceExtendedParameter struct {
 	Type         Type        `json:"type"`
 	Options      []Option    `json:"options"`  //if null -> "free text/number/etc"
 	Multiple     bool        `json:"multiple"` //if true: Value = new([]Type); if false: Value = new(Type);
+	Order        int         `json:"order"`
 }
 
 type Option struct {
-	Value interface{} `json:"value"`
-	Label string      `json:"label"`
-	Kind  string      `json:"kind"` //optional helper for ui/app to group options
+	Value                        interface{} `json:"value"`
+	Label                        string      `json:"label"`
+	Kind                         string      `json:"kind"`                                        //optional helper for frontend to group options
+	EntityId                     string      `json:"entity_id"`                                   //to be used in combination with needs_same_entity_id_in_parameter
+	NeedsSameEntityIdInParameter string      `json:"needs_same_entity_id_in_parameter,omitempty"` //optional, frontend should filter this option depending on selection in referenced parameter
 }
 
 type IotOption struct {

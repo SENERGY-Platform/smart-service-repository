@@ -394,6 +394,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/instances-by-process-id/{id}/user-id": {
+            "get": {
+                "description": "get smart-service instance user-id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "process-id",
+                    "user-id"
+                ],
+                "summary": "get smart-service instance user-id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process-Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/instances/{id}": {
             "get": {
                 "description": "returns a smart-service instance",
@@ -538,6 +572,9 @@ const docTemplate = `{
                         }
                     },
                     "401": {
+                        "description": ""
+                    },
+                    "404": {
                         "description": ""
                     },
                     "500": {
@@ -974,11 +1011,19 @@ const docTemplate = `{
         "model.Option": {
             "type": "object",
             "properties": {
+                "entity_id": {
+                    "description": "to be used in combination with needs_same_entity_id_in_parameter",
+                    "type": "string"
+                },
                 "kind": {
-                    "description": "optional helper for ui/app to group options",
+                    "description": "optional helper for frontend to group options",
                     "type": "string"
                 },
                 "label": {
+                    "type": "string"
+                },
+                "needs_same_entity_id_in_parameter": {
+                    "description": "optional, frontend should filter this option depending on selection in referenced parameter",
                     "type": "string"
                 },
                 "value": {}
@@ -1031,6 +1076,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/model.Option"
                     }
                 },
+                "order": {
+                    "type": "integer"
+                },
                 "type": {
                     "type": "string"
                 },
@@ -1052,9 +1100,6 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
-                },
-                "incomplete_delete": {
-                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"

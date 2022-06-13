@@ -27,6 +27,7 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -184,6 +185,7 @@ func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result
 			DefaultValue: paramDesc.DefaultValue,
 			Type:         getSchemaOrgType(paramDesc.Type),
 			Multiple:     paramDesc.Multiple,
+			Order:        paramDesc.Order,
 		}
 		param.Options, err, code = this.getParamOptions(token, paramDesc)
 		if err != nil {
@@ -191,6 +193,9 @@ func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result
 		}
 		result = append(result, param)
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Order < result[j].Order
+	})
 	return result, nil, http.StatusOK
 }
 
@@ -336,6 +341,12 @@ func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.S
 			Type:         fieldType,
 			DefaultValue: defaultValue,
 		}
+		if order, ok := properties["order"]; ok {
+			param.Order, err = strconv.Atoi(order)
+			if err != nil {
+				return result, fmt.Errorf("invalid order property for formField %v: %w", id, err)
+			}
+		}
 		if options, ok := properties["options"]; ok {
 			err = json.Unmarshal([]byte(options), &param.Options)
 			if err != nil {
@@ -357,16 +368,34 @@ func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.S
 			if iot != "" {
 				typeFilter = strings.Split(iot, ",")
 			}
-			criteria := model.Criteria{}
+			criteria := []model.Criteria{}
 			if criteriaStr, hasCriteria := properties["criteria"]; hasCriteria {
+				temp := model.Criteria{}
+				err = json.Unmarshal([]byte(criteriaStr), &temp)
+				if err != nil {
+					return result, fmt.Errorf("invalid criteria property for formField %v: %w", id, err)
+				}
+				criteria = []model.Criteria{temp}
+			}
+			if criteriaStr, hasCriteria := properties["criteria_list"]; hasCriteria {
 				err = json.Unmarshal([]byte(criteriaStr), &criteria)
 				if err != nil {
 					return result, fmt.Errorf("invalid criteria property for formField %v: %w", id, err)
 				}
 			}
+
+			entityOnly := false
+			if entityOnlyStr, hasEntityOnly := properties["entity_only"]; hasEntityOnly {
+				entityOnly, _ = strconv.ParseBool(entityOnlyStr)
+			}
+
+			sameEntity := properties["same_entity"]
+
 			param.IotDescription = &model.IotDescription{
-				TypeFilter: typeFilter,
-				Criteria:   criteria,
+				TypeFilter:                   typeFilter,
+				Criteria:                     criteria,
+				EntityOnly:                   entityOnly,
+				NeedsSameEntityIdInParameter: sameEntity,
 			}
 		}
 		result.ParameterDescriptions = append(result.ParameterDescriptions, param)
