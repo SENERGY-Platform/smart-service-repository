@@ -40,7 +40,7 @@ func TestInstanceEditApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, func(err error) {
+	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -433,7 +433,7 @@ func TestInstanceApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, func(err error) {
+	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})

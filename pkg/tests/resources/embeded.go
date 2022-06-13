@@ -56,6 +56,14 @@ var SelectionsResponse1Obj []model.Selectable
 var ExpectedParams1 []byte
 var ExpectedParams1Obj []model.SmartServiceExtendedParameter
 
+//go:embed selections_response_2.json
+var SelectionsResponse2 []byte
+var SelectionsResponse2Obj []model.Selectable
+
+//go:embed expected_params_2.json
+var ExpectedParams2 []byte
+var ExpectedParams2Obj []model.SmartServiceExtendedParameter
+
 func init() {
 	err := json.Unmarshal(SelectionsResponse1, &SelectionsResponse1Obj)
 	if err != nil {
@@ -64,6 +72,19 @@ func init() {
 		panic(err)
 	}
 	err = json.Unmarshal(ExpectedParams1, &ExpectedParams1Obj)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", err)
+		panic(err)
+	}
+
+	err = json.Unmarshal(SelectionsResponse2, &SelectionsResponse2Obj)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", err)
+		panic(err)
+	}
+	err = json.Unmarshal(ExpectedParams2, &ExpectedParams2Obj)
 	if err != nil {
 		debug.PrintStack()
 		log.Println("ERROR:", err)

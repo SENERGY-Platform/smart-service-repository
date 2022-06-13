@@ -65,6 +65,10 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 	if err != nil {
 		return result, fmt.Errorf("unable to parse design xml for release: %w", err), http.StatusBadRequest
 	}
+	err = this.validateParsedReleaseInfos(parsedInfo)
+	if err != nil {
+		return result, err, http.StatusBadRequest
+	}
 
 	msg, err := json.Marshal(ReleaseCommand{
 		Command: "PUT",
@@ -401,4 +405,19 @@ func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.S
 		result.ParameterDescriptions = append(result.ParameterDescriptions, param)
 	}
 	return result, nil
+}
+
+func (this *Controller) validateParsedReleaseInfos(info model.SmartServiceReleaseInfo) error {
+	for _, param := range info.ParameterDescriptions {
+		if param.IotDescription != nil {
+			if param.IotDescription.NeedsSameEntityIdInParameter != "" {
+				if !ListContains(info.ParameterDescriptions, func(p model.ParameterDescription) bool {
+					return p.Id == param.IotDescription.NeedsSameEntityIdInParameter
+				}) {
+					return fmt.Errorf("parameter property \"entity_only\" references unknown parameter \"%v\"", param.IotDescription.NeedsSameEntityIdInParameter)
+				}
+			}
+		}
+	}
+	return nil
 }

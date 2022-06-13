@@ -29,7 +29,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
-	"runtime/debug"
 	"sync"
 	"testing"
 	"time"
@@ -42,8 +41,7 @@ func TestModuleApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, func(err error) {
-		debug.PrintStack()
+	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		t.Error(err)
 	})
 	if err != nil {

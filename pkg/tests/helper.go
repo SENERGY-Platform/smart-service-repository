@@ -27,6 +27,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
@@ -42,7 +43,11 @@ import (
 	"time"
 )
 
-func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, errHandler func(error)) (apiUrl string, config configuration.Config, err error) {
+func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, selectionResp []model.Selectable, errHandler func(error)) (apiUrl string, config configuration.Config, err error) {
+	if selectionResp == nil {
+		selectionResp = resources.SelectionsResponse1Obj
+	}
+
 	config, err = configuration.Load("../../config.json")
 	if err != nil {
 		return "", config, err
@@ -141,7 +146,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 		config.CamundaUrl = camundaMock.URL
 	}
 
-	selectablesMock := mocks.NewSelectables(resources.SelectionsResponse1Obj)
+	selectablesMock := mocks.NewSelectables(selectionResp)
 
 	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
 
