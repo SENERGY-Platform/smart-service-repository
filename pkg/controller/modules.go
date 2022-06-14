@@ -29,14 +29,36 @@ import (
 )
 
 func (this *Controller) AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
-	return this.addModule(token.GetUserId(), instanceId, module)
+	return this.addModule(token.GetUserId(), instanceId, module, uuid.NewString())
 }
 
-func (this *Controller) addModule(userId string, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+func (this *Controller) AddModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+	return this.SetModuleForProcessInstance(processInstanceId, module, uuid.NewString())
+}
+
+func (this *Controller) SetModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit, moduleId string) (result model.SmartServiceModule, err error, code int) {
+	if moduleId == "" {
+		return result, errors.New("missing moduleId"), http.StatusBadRequest
+	}
+	if processInstanceId == "" {
+		return result, errors.New("missing process instance id"), http.StatusBadRequest
+	}
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	if err != nil {
+		return result, err, code
+	}
+	userId, err, code := this.getInstanceUserId(businessKey)
+	if err != nil {
+		return result, err, code
+	}
+	return this.addModule(userId, businessKey, module, moduleId)
+}
+
+func (this *Controller) addModule(userId string, instanceId string, module model.SmartServiceModuleInit, moduleId string) (result model.SmartServiceModule, err error, code int) {
 	if instanceId == "" {
 		return result, errors.New("missing instance id"), http.StatusBadRequest
 	}
-	element, err, code := this.prepareModule(userId, instanceId, module)
+	element, err, code := this.prepareModule(userId, instanceId, module, moduleId)
 	if err != nil {
 		return result, err, code
 	}
@@ -49,21 +71,6 @@ func (this *Controller) addModule(userId string, instanceId string, module model
 		return result, err, code
 	}
 	return this.db.GetModule(element.Id, userId)
-}
-
-func (this *Controller) AddModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
-	if processInstanceId == "" {
-		return result, errors.New("missing process instance id"), http.StatusBadRequest
-	}
-	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
-	if err != nil {
-		return result, err, code
-	}
-	userId, err, code := this.getInstanceUserId(businessKey)
-	if err != nil {
-		return result, err, code
-	}
-	return this.addModule(userId, businessKey, module)
 }
 
 func (this *Controller) AddModules(token auth.Token, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
@@ -133,16 +140,19 @@ func (this *Controller) ValidateModule(userId string, element model.SmartService
 	return nil, http.StatusOK
 }
 
-func (this *Controller) prepareModule(userId string, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
+func (this *Controller) prepareModule(userId string, instanceId string, module model.SmartServiceModuleInit, moduleId string) (result model.SmartServiceModule, err error, code int) {
 	instance, err, code := this.db.GetInstance(instanceId, userId)
 	if err != nil {
 		debug.PrintStack()
 		log.Println("ERROR:", userId, instanceId, err)
 		return result, err, code
 	}
+	if moduleId == "" {
+		moduleId = uuid.NewString()
+	}
 	result = model.SmartServiceModule{
 		SmartServiceModuleBase: model.SmartServiceModuleBase{
-			Id:         uuid.NewString(),
+			Id:         moduleId,
 			UserId:     userId,
 			InstanceId: instance.Id,
 			DesignId:   instance.DesignId,

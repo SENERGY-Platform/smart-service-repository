@@ -30,6 +30,7 @@ type Controller interface {
 }
 
 type ModulesInterface interface {
+	SetModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit, moduleId string) (model.SmartServiceModule, error, int)
 	AddModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
 	AddModulesForProcessInstance(processInstanceId string, module []model.SmartServiceModuleInit) ([]model.SmartServiceModule, error, int)
 	AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
