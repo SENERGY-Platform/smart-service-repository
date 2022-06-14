@@ -416,6 +416,83 @@ paths:
       summary: create a smart-service module
       tags:
       - modules
+  /instances-by-process-id/{id}/modules/{moduleId}:
+    put:
+      consumes:
+      - application/json
+      description: set a smart-service module; existing modules will be updated, missing
+        modules will be created
+      parameters:
+      - description: Process-Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Module ID
+        in: path
+        name: moduleId
+        required: true
+        type: string
+      - description: SmartServiceModuleInit
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.SmartServiceModuleInit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceModule'
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: set a smart-service module
+      tags:
+      - modules
+  /instances-by-process-id/{id}/modules/bulk:
+    post:
+      consumes:
+      - application/json
+      description: creates smart-service modules; only usable if config.json mongo_url
+        points to a mongodb capable of transactions (replication-set)
+      parameters:
+      - description: Process-Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: list of SmartServiceModuleInit
+        in: body
+        name: message
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.SmartServiceModuleInit'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceModule'
+            type: array
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: create smart-service modules
+      tags:
+      - modules
   /instances-by-process-id/{id}/user-id:
     get:
       description: get smart-service instance user-id

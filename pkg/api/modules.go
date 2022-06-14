@@ -176,47 +176,6 @@ func (this *Modules) SetByProcessInstance(config configuration.Config, router *h
 	})
 }
 
-// CreateBulkByProcessInstance godoc
-// @Summary      create smart-service modules
-// @Description  creates smart-service modules; only usable if config.json mongo_url points to a mongodb capable of transactions (replication-set)
-// @Tags         modules
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Process-Instance ID"
-// @Param        message body model.SmartServiceModuleInitList true "list of SmartServiceModuleInit"
-// @Success      200 {array} model.SmartServiceModule
-// @Failure      500
-// @Failure      400
-// @Failure      401
-// @Router       /instances-by-process-id/{id}/modules/bulk [post]
-func (this *Modules) CreateBulkByProcessInstance(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.POST("/instances-by-process-id/:id/modules/bulk", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		token, err := auth.GetParsedToken(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
-			return
-		}
-		if !token.IsAdmin() {
-			http.Error(writer, "only admins may ask for instance user-id", http.StatusForbidden)
-			return
-		}
-
-		modules := []model.SmartServiceModuleInit{}
-		err = json.NewDecoder(request.Body).Decode(&modules)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusBadRequest)
-			return
-		}
-		result, err, code := ctrl.AddModulesForProcessInstance(params.ByName("id"), modules)
-		if err != nil {
-			http.Error(writer, err.Error(), code)
-			return
-		}
-		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(result)
-	})
-}
-
 // Create godoc
 // @Summary      create a smart-service module
 // @Description  creates a smart-service module

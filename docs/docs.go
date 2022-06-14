@@ -394,6 +394,119 @@ const docTemplate = `{
                 }
             }
         },
+        "/instances-by-process-id/{id}/modules/bulk": {
+            "post": {
+                "description": "creates smart-service modules; only usable if config.json mongo_url points to a mongodb capable of transactions (replication-set)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "create smart-service modules",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process-Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "list of SmartServiceModuleInit",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceModuleInit"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceModule"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances-by-process-id/{id}/modules/{moduleId}": {
+            "put": {
+                "description": "set a smart-service module; existing modules will be updated, missing modules will be created",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "set a smart-service module",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process-Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Module ID",
+                        "name": "moduleId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SmartServiceModuleInit",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceModuleInit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceModule"
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/instances-by-process-id/{id}/user-id": {
             "get": {
                 "description": "get smart-service instance user-id",
