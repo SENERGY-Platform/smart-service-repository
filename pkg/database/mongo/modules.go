@@ -92,6 +92,41 @@ func (this *Mongo) SetModule(element model.SmartServiceModule) (error, int) {
 	return nil, http.StatusOK
 }
 
+func (this *Mongo) SetModules(elements []model.SmartServiceModule) (error, int) {
+	if len(elements) == 0 {
+		return nil, http.StatusOK //nothing to add -> ok
+	}
+	if len(elements) == 1 {
+		return this.SetModule(elements[0]) //no need for transactions
+	}
+	ctx, _ := getTimeoutContext()
+	session, err := this.client.StartSession()
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	defer session.EndSession(ctx)
+	_, err = session.WithTransaction(ctx, func(sessionContext mongo.SessionContext) (transactionResult interface{}, err error) {
+		for _, element := range elements {
+			transactionResult, err = this.moduleCollection().ReplaceOne(
+				sessionContext,
+				bson.M{
+					ModuleBson.Id:     element.Id,
+					ModuleBson.UserId: element.UserId,
+				},
+				element,
+				options.Replace().SetUpsert(true))
+			if err != nil {
+				return transactionResult, err
+			}
+		}
+		return transactionResult, err
+	})
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	return nil, http.StatusOK
+}
+
 func (this *Mongo) DeleteModule(id string, userId string) (error, int) {
 	ctx, _ := getTimeoutContext()
 	_, err := this.moduleCollection().DeleteOne(ctx, bson.M{

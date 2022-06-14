@@ -66,6 +66,46 @@ func (this *Controller) AddModuleForProcessInstance(processInstanceId string, mo
 	return this.addModule(userId, businessKey, module)
 }
 
+func (this *Controller) AddModules(token auth.Token, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
+	return this.addModules(token.GetUserId(), instanceId, modules)
+}
+
+func (this *Controller) addModules(userId string, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
+	if instanceId == "" {
+		return result, errors.New("missing instance id"), http.StatusBadRequest
+	}
+	elements, err, code := this.prepareModules(userId, instanceId, modules)
+	if err != nil {
+		return result, err, code
+	}
+	for _, element := range elements {
+		err, code = this.ValidateModule(userId, element)
+		if err != nil {
+			return result, err, code
+		}
+	}
+	err, code = this.db.SetModules(elements)
+	if err != nil {
+		return result, err, code
+	}
+	return elements, nil, http.StatusOK
+}
+
+func (this *Controller) AddModulesForProcessInstance(processInstanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
+	if processInstanceId == "" {
+		return result, errors.New("missing process instance id"), http.StatusBadRequest
+	}
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	if err != nil {
+		return result, err, code
+	}
+	userId, err, code := this.getInstanceUserId(businessKey)
+	if err != nil {
+		return result, err, code
+	}
+	return this.addModules(userId, businessKey, modules)
+}
+
 func (this *Controller) ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int) {
 	return this.db.ListModules(token.GetUserId(), query)
 }
@@ -111,6 +151,28 @@ func (this *Controller) prepareModule(userId string, instanceId string, module m
 		SmartServiceModuleInit: module,
 	}
 
+	return result, nil, http.StatusOK
+}
+
+func (this *Controller) prepareModules(userId string, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
+	instance, err, code := this.db.GetInstance(instanceId, userId)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", userId, instanceId, err)
+		return result, err, code
+	}
+	for _, module := range modules {
+		result = append(result, model.SmartServiceModule{
+			SmartServiceModuleBase: model.SmartServiceModuleBase{
+				Id:         uuid.NewString(),
+				UserId:     userId,
+				InstanceId: instance.Id,
+				DesignId:   instance.DesignId,
+				ReleaseId:  instance.ReleaseId,
+			},
+			SmartServiceModuleInit: module,
+		})
+	}
 	return result, nil, http.StatusOK
 }
 

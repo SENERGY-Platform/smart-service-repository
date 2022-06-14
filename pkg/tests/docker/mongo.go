@@ -30,6 +30,9 @@ import (
 
 func Mongo(ctx context.Context, wg *sync.WaitGroup) (hostPort string, ipAddress string, err error) {
 	pool, err := dockertest.NewPool("")
+	if err != nil {
+		return "", "", err
+	}
 	container, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "mongo",
 		Tag:        "4.1.11",

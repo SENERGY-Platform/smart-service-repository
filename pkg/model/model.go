@@ -79,6 +79,8 @@ type SmartServiceModule struct {
 	SmartServiceModuleInit `bson:",inline"`
 }
 
+type SmartServiceModuleInitList = []SmartServiceModuleInit
+
 type SmartServiceModuleInit struct {
 	DeleteInfo *ModuleDeleteInfo      `json:"delete_info" bson:"delete_info"`
 	ModuleType string                 `json:"module_type" bson:"module_type"` //"process-deployment" | "analytics" ...

@@ -242,16 +242,6 @@ func completeTask(api string, taskId string) (err error) {
 	return
 }
 
-type TaskInfo struct {
-	WorkerId            string `json:"worker_id"`
-	TaskId              string `json:"task_id"`
-	ProcessInstanceId   string `json:"process_instance_id"`
-	ProcessDefinitionId string `json:"process_definition_id"`
-	CompletionStrategy  string `json:"completion_strategy"`
-	Time                string `json:"time"`
-	TenantId            string `json:"tenant_id"`
-}
-
 type CamundaCompleteRequest struct {
 	WorkerId string `json:"workerId,omitempty"`
 }
