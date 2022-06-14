@@ -467,20 +467,6 @@ func TestModulePutApi(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	t.Run("check instance user", func(t *testing.T) {
-		//other modules are set by the worker mock
-		module := model.SmartServiceModuleInit{
-			ModuleType: "test-module-old",
-			ModuleData: map[string]interface{}{
-				"foo": "bar",
-			},
-		}
-
-		body := new(bytes.Buffer)
-		err := json.NewEncoder(body).Encode(module)
-		if err != nil {
-			t.Error(err)
-			return
-		}
 		req, err := http.NewRequest("GET", apiUrl+"/instances-by-process-id/"+url.PathEscape(processInstanceId)+"/user-id", nil)
 		if err != nil {
 			t.Error(err)
