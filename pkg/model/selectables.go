@@ -60,5 +60,6 @@ type ImportType struct {
 }
 
 type PathOption struct {
-	Path string `json:"path"`
+	Path             string `json:"path"`
+	CharacteristicId string `json:"characteristicId"`
 }

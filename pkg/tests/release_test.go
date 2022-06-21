@@ -259,6 +259,120 @@ func TestReleaseOptionsApi(t *testing.T) {
 	})
 }
 
+func TestReleaseOptionsWithCharacteristicApi(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, _, err := apiTestEnv(ctx, wg, false, resources.SelectionsResponse3Obj, func(err error) {
+		debug.PrintStack()
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	design := model.SmartServiceDesign{}
+	t.Run("create design", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml:     resources.ParamsBpmn,
+			SvgXml:      resources.ParamsSvg,
+			Description: "test description",
+			Name:        "test name",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if design.BpmnXml != resources.ParamsBpmn {
+			t.Error(design.BpmnXml)
+			return
+		}
+		if design.SvgXml != resources.ParamsSvg {
+			t.Error(design.SvgXml)
+			return
+		}
+		if design.Id == "" {
+			t.Error(design.Id)
+			return
+		}
+		if design.Description != "test description" {
+			t.Error(design.Description)
+			return
+		}
+		if design.Name != "test name" {
+			t.Error(design.Name)
+			return
+		}
+	})
+
+	release := model.SmartServiceRelease{}
+	t.Run("create release", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design.Id,
+			Name:        "release name",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	time.Sleep(2 * time.Second)
+
+	t.Run("read params", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/parameters")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		parameters := []model.SmartServiceExtendedParameter{}
+		err = json.NewDecoder(resp.Body).Decode(&parameters)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if !reflect.DeepEqual(resources.ExpectedParams3Obj, parameters) {
+			temp1, _ := json.Marshal(parameters)
+			temp2, _ := json.Marshal(resources.ExpectedParams3Obj)
+			t.Error("\n", string(temp1), "\n", string(temp2))
+		}
+	})
+}
+
 func TestReleaseApi(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
