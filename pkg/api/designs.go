@@ -173,7 +173,6 @@ func (this *Designs) Update(config configuration.Config, router *httprouter.Rout
 // @Tags         designs
 // @Accept       json
 // @Produce      json
-// @Param        id path string true "Design ID"
 // @Param        message body model.SmartServiceDesign true "SmartServiceDesign"
 // @Success      200 {object} model.SmartServiceDesign
 // @Failure      500
