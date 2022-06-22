@@ -82,7 +82,7 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 		buf.ReadFrom(resp.Body)
 		return result, errors.New(buf.String()), http.StatusInternalServerError
 	}
-	err = json.NewDecoder(resp.Body).Decode(result)
+	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		log.Println("ERROR: ", err)
 		debug.PrintStack()
