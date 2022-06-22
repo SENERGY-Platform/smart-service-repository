@@ -43,7 +43,7 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
-	var query url.Values
+	var query url.Values = map[string][]string{}
 	if len(searchedEntities) == 0 {
 		query.Set("include_devices", "true")
 		query.Set("include_groups", "true")
