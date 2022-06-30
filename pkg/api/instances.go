@@ -119,6 +119,7 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 // @Description  removes a smart-service instance with all modules
 // @Tags         instances
 // @Param        id path string true "Instance ID"
+// @Param        ignore_module_delete_errors query bool false "used if module delete information are invalid"
 // @Success      200
 // @Failure      500
 // @Failure      401

@@ -96,13 +96,6 @@ const docTemplate = `{
                 "summary": "creates a smart-service designs",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Design ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "SmartServiceDesign",
                         "name": "message",
                         "in": "body",
@@ -588,6 +581,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "used if module delete information are invalid",
+                        "name": "ignore_module_delete_errors",
+                        "in": "query"
                     }
                 ],
                 "responses": {

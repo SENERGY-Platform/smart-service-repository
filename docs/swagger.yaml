@@ -215,11 +215,6 @@ paths:
       - application/json
       description: creates a smart-service designs
       parameters:
-      - description: Design ID
-        in: path
-        name: id
-        required: true
-        type: string
       - description: SmartServiceDesign
         in: body
         name: message
@@ -525,6 +520,10 @@ paths:
         name: id
         required: true
         type: string
+      - description: used if module delete information are invalid
+        in: query
+        name: ignore_module_delete_errors
+        type: boolean
       responses:
         "200":
           description: ""
