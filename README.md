@@ -6,6 +6,10 @@ examples can be found in ./pkg/tests/resources
 
 ### description
 
+- property name: `description`
+- description: sets the description of the parameter
+- value: string
+- value example: `some discription text`
 
 ### iot
 
