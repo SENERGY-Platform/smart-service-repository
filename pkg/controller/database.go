@@ -36,6 +36,7 @@ type ModuleInterface interface {
 	SetModule(element model.SmartServiceModule) (error, int)
 	SetModules(element []model.SmartServiceModule) (error, int)
 	GetModule(id string, userId string) (model.SmartServiceModule, error, int)
+	DeleteModule(id string, userId string) (error, int)
 	ListModules(userId string, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
 	SetInstanceError(id string, userId string, errMsg string) error
 }

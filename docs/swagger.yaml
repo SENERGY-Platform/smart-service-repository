@@ -721,6 +721,29 @@ paths:
       summary: returns a list of smart-service models
       tags:
       - modules
+  /modules/{id}:
+    delete:
+      description: removes a smart-service module
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: used if stored module delete information are invalid
+        in: query
+        name: ignore_module_delete_errors
+        type: boolean
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: removes a smart-service module
+      tags:
+      - modules
   /releases:
     get:
       description: returns a list of smart-service releases

@@ -212,3 +212,37 @@ func (this *Modules) Create(config configuration.Config, router *httprouter.Rout
 		json.NewEncoder(writer).Encode(result)
 	})
 }
+
+// Delete godoc
+// @Summary      removes a smart-service module
+// @Description  removes a smart-service module
+// @Tags         modules
+// @Param        id path string true "Module ID"
+// @Param        ignore_module_delete_errors query bool false "used if stored module delete information are invalid"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /modules/{id} [delete]
+func (this *Modules) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.DELETE("/modules/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		ignoreModuleDeleteErrors, _ := strconv.ParseBool(request.URL.Query().Get("ignore_module_delete_errors"))
+
+		err, code := ctrl.DeleteModule(token, id, ignoreModuleDeleteErrors)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
+	})
+}

@@ -151,3 +151,20 @@ func (this *Controller) useModuleDeleteInfo(info model.ModuleDeleteInfo) error {
 	_, _ = io.ReadAll(resp.Body)
 	return nil
 }
+
+func (this *Controller) DeleteModule(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int) {
+	module, err, code := this.db.GetModule(id, token.GetUserId())
+	if err != nil {
+		if code == http.StatusNotFound {
+			return nil, http.StatusOK //module is already none-existent
+		}
+		return err, code
+	}
+	if module.DeleteInfo != nil {
+		err = this.useModuleDeleteInfo(*module.DeleteInfo)
+		if err != nil && !ignoreModuleDeleteError {
+			return err, http.StatusInternalServerError
+		}
+	}
+	return this.db.DeleteModule(id, token.GetUserId())
+}

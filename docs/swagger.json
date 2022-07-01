@@ -843,6 +843,41 @@
                 }
             }
         },
+        "/modules/{id}": {
+            "delete": {
+                "description": "removes a smart-service module",
+                "tags": [
+                    "modules"
+                ],
+                "summary": "removes a smart-service module",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Module ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "used if stored module delete information are invalid",
+                        "name": "ignore_module_delete_errors",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/releases": {
             "get": {
                 "description": "returns a list of smart-service releases",
