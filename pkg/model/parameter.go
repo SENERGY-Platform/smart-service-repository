@@ -88,6 +88,15 @@ type IotOption struct {
 	DeviceSelection      *DeviceSelection      `json:"device_selection,omitempty"`
 	DeviceGroupSelection *DeviceGroupSelection `json:"device_group_selection,omitempty"`
 	ImportSelection      *ImportSelection      `json:"import_selection,omitempty"`
+	GenericEventSource   *GenericEventSource   `json:"generic_event_source,omitempty"`
+}
+
+type GenericEventSource struct {
+	FilterType       string  `json:"filter_type"`
+	FilterIds        string  `json:"filter_ids"`
+	Topic            string  `json:"topic"`
+	Path             string  `json:"path"`
+	CharacteristicId *string `json:"characteristic_id,omitempty"`
 }
 
 type DeviceSelection struct {
