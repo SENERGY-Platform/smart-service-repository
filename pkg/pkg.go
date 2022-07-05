@@ -50,8 +50,9 @@ func Start(ctx context.Context, config configuration.Config) error {
 	if err != nil {
 		return err
 	}
-	if config.CleanupCycle != "" && config.CleanupCycle != "-" {
-		cmd.Cleanup(false)
+	if config.EditForward == "" && config.CleanupCycle != "" && config.CleanupCycle != "-" {
+		cleanupResult := cmd.Cleanup(false)
+		log.Println("cleanup result =", cleanupResult)
 		duration, err := time.ParseDuration(config.CleanupCycle)
 		if err != nil {
 			log.Println("ERROR: unable to start cleanup cycle")
@@ -64,7 +65,8 @@ func Start(ctx context.Context, config configuration.Config) error {
 						ticker.Stop()
 						return
 					case <-ticker.C:
-						cmd.Cleanup(false)
+						cleanupResult := cmd.Cleanup(false)
+						log.Println("cleanup result =", cleanupResult)
 					}
 				}
 			}()
