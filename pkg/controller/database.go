@@ -38,6 +38,7 @@ type ModuleInterface interface {
 	GetModule(id string, userId string) (model.SmartServiceModule, error, int)
 	DeleteModule(id string, userId string) (error, int)
 	ListModules(userId string, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
+	ListAllModules(query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int)
 	SetInstanceError(id string, userId string, errMsg string) error
 }
 

@@ -27,6 +27,8 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/selectables"
+	"log"
+	"time"
 )
 
 func Start(ctx context.Context, config configuration.Config) error {
@@ -48,5 +50,26 @@ func Start(ctx context.Context, config configuration.Config) error {
 	if err != nil {
 		return err
 	}
+	if config.CleanupCycle != "" && config.CleanupCycle != "-" {
+		cmd.Cleanup(false)
+		duration, err := time.ParseDuration(config.CleanupCycle)
+		if err != nil {
+			log.Println("ERROR: unable to start cleanup cycle")
+		} else {
+			ticker := time.NewTicker(duration)
+			go func() {
+				for {
+					select {
+					case <-ctx.Done():
+						ticker.Stop()
+						return
+					case <-ticker.C:
+						cmd.Cleanup(false)
+					}
+				}
+			}()
+		}
+	}
+
 	return api.Start(ctx, config, cmd)
 }

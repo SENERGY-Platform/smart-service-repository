@@ -19,6 +19,7 @@ package camunda
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"io"
 	"log"
 	"net/http"
@@ -32,16 +33,24 @@ func (this *Camunda) StopInstance(smartServiceInstanceId string) error {
 		return err
 	}
 	for _, instance := range instances {
-		if instance.EndTime == "" {
-			err = this.deleteInstance(instance.Id)
-			if err != nil {
-				return err
-			}
-		}
-		err = this.deleteInstanceHistory(instance.Id)
+		err = this.DeleteInstance(instance)
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (this *Camunda) DeleteInstance(instance model.HistoricProcessInstance) (err error) {
+	if instance.EndTime == "" {
+		err = this.deleteInstance(instance.Id)
+		if err != nil {
+			return err
+		}
+	}
+	err = this.deleteInstanceHistory(instance.Id)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -86,7 +95,7 @@ func (this *Camunda) deleteInstanceHistory(id string) (err error) {
 	return nil
 }
 
-func (this *Camunda) getProcessInstanceListByKey(key string) (result []HistoricProcessInstance, err error) {
+func (this *Camunda) getProcessInstanceListByKey(key string) (result []model.HistoricProcessInstance, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/history/process-instance?processInstanceBusinessKey="+url.QueryEscape(key), nil)
 	if err != nil {
 		return result, this.filterUrlFromErr(err)

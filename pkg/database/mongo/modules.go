@@ -121,6 +121,17 @@ func (this *Mongo) ListModules(userId string, query model.ModuleQueryOptions) (r
 	return readCursorResult[model.SmartServiceModule](ctx, cursor)
 }
 
+func (this *Mongo) ListAllModules(query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int) {
+	opt := createFindOptions(query)
+	ctx, _ := getTimeoutContext()
+	filter := bson.M{}
+	cursor, err := this.moduleCollection().Find(ctx, filter, opt)
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	return readCursorResult[model.SmartServiceModule](ctx, cursor)
+}
+
 func (this *Mongo) RemoveModulesOfInstance(instanceId string, userId string) (error, int) {
 	ctx, _ := getTimeoutContext()
 	_, err := this.moduleCollection().DeleteOne(ctx, bson.M{

@@ -160,11 +160,15 @@ func (this *Controller) DeleteModule(token auth.Token, id string, ignoreModuleDe
 		}
 		return err, code
 	}
+	return this.deleteModule(module, ignoreModuleDeleteError)
+}
+
+func (this *Controller) deleteModule(module model.SmartServiceModule, ignoreModuleDeleteError bool) (err error, code int) {
 	if module.DeleteInfo != nil {
 		err = this.useModuleDeleteInfo(*module.DeleteInfo)
 		if err != nil && !ignoreModuleDeleteError {
 			return err, http.StatusInternalServerError
 		}
 	}
-	return this.db.DeleteModule(id, token.GetUserId())
+	return this.db.DeleteModule(module.UserId, module.UserId)
 }

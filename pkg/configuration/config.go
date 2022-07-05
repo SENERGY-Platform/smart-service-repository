@@ -50,6 +50,7 @@ type Config struct {
 	AuthClientSecret                     string   `json:"auth_client_secret" config:"secret"`
 	TokenCacheDefaultExpirationInSeconds int      `json:"token_cache_default_expiration_in_seconds"`
 	TokenCacheSizeInMb                   int      `json:"token_cache_size_in_mb"`
+	CleanupCycle                         string   `json:"cleanup_cycle"`
 }
 
 //loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)

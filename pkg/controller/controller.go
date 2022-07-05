@@ -49,9 +49,11 @@ type Camunda interface {
 	DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool)
 	RemoveRelease(id string) error
 	Start(result model.SmartServiceInstance) error
-	CheckInstanceReady(instanceId string) (finished bool, missing bool)
-	StopInstance(instanceId string) error
+	CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool)
+	StopInstance(smartServiceInstanceId string) error
+	DeleteInstance(instance model.HistoricProcessInstance) (err error)
 	GetProcessInstanceBusinessKey(processInstanceId string) (string, error, int)
+	GetProcessInstanceList() (result []model.HistoricProcessInstance, err error)
 }
 
 type Selectables interface {
