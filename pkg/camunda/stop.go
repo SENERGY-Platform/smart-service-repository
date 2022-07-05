@@ -56,7 +56,7 @@ func (this *Camunda) DeleteInstance(instance model.HistoricProcessInstance) (err
 }
 
 func (this *Camunda) deleteInstance(id string) (err error) {
-	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/process-instance/"+url.PathEscape(id), nil)
+	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/process-instance/"+url.PathEscape(id)+"?skipIoMappings=true", nil)
 	if err != nil {
 		return this.filterUrlFromErr(err)
 	}
