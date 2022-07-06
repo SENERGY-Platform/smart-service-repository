@@ -56,7 +56,7 @@ func (this *Camunda) DeleteInstance(instance model.HistoricProcessInstance) (err
 }
 
 func (this *Camunda) deleteInstance(id string) (err error) {
-	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/process-instance/"+url.PathEscape(id)+"?skipIoMappings=true", nil)
+	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/process-instance/"+url.PathEscape(id)+"?skipIoMappings=true&failIfNotExists=false", nil)
 	if err != nil {
 		return this.filterUrlFromErr(err)
 	}
@@ -68,7 +68,7 @@ func (this *Camunda) deleteInstance(id string) (err error) {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode >= 300 && resp.StatusCode != 404 {
+	if resp.StatusCode >= 300 {
 		temp, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("unable to delete process-instance: %v, %v", resp.StatusCode, string(temp))
 	}
@@ -76,7 +76,7 @@ func (this *Camunda) deleteInstance(id string) (err error) {
 }
 
 func (this *Camunda) deleteInstanceHistory(id string) (err error) {
-	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/history/process-instance/"+url.PathEscape(id), nil)
+	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/history/process-instance/"+url.PathEscape(id)+"?failIfNotExists=false", nil)
 	if err != nil {
 		return this.filterUrlFromErr(err)
 	}
@@ -88,7 +88,7 @@ func (this *Camunda) deleteInstanceHistory(id string) (err error) {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode >= 300 && resp.StatusCode != 404 {
+	if resp.StatusCode >= 300 {
 		temp, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("unable to delete process-instance: %v, %v", resp.StatusCode, string(temp))
 	}
