@@ -30,6 +30,123 @@ import (
 	"testing"
 )
 
+func TestDesignSearch(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, _, err := apiTestEnv(ctx, wg, false, nil, func(err error) {
+		debug.PrintStack()
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	designs := []model.SmartServiceDesign{
+		{
+			Name:        "foo bar batz",
+			Description: "unrelated",
+			BpmnXml:     resources.NamedDescBpmn,
+			SvgXml:      resources.NamedDescSvg,
+		},
+		{
+			Name:        "foo",
+			Description: "bar",
+			BpmnXml:     resources.NamedDescBpmn,
+			SvgXml:      resources.NamedDescSvg,
+		},
+		{
+			Name:        "42",
+			Description: "batz something",
+			BpmnXml:     resources.NamedDescBpmn,
+			SvgXml:      resources.NamedDescSvg,
+		},
+		{
+			Name:        "bar",
+			Description: "something 42",
+			BpmnXml:     resources.NamedDescBpmn,
+			SvgXml:      resources.NamedDescSvg,
+		},
+	}
+
+	t.Run("create", func(t *testing.T) {
+		for _, design := range designs {
+			resp, err := post(userToken, apiUrl+"/designs", design)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+		}
+	})
+
+	expectedSearchCount := map[string]int{
+		"foo":     2,
+		"foo bar": 3, //finds elements that contain foo or bar
+		"bar":     3,
+		"42":      2,
+		"batz":    2,
+	}
+
+	for key, val := range expectedSearchCount {
+		t.Run("asc search "+key, func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/designs?sort=name.asc&search="+url.QueryEscape(key))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			result := []model.SmartServiceDesign{}
+			err = json.NewDecoder(resp.Body).Decode(&result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if len(result) != val {
+				t.Error(key, val, len(result), result)
+			}
+		})
+	}
+
+	for key, val := range expectedSearchCount {
+		t.Run("desc search "+key, func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/designs?sort=name.desc&search="+url.QueryEscape(key))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			result := []model.SmartServiceDesign{}
+			err = json.NewDecoder(resp.Body).Decode(&result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if len(result) != val {
+				t.Error(key, val, len(result), result)
+			}
+		})
+	}
+}
+
 func TestDesignApi(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()

@@ -62,6 +62,12 @@ const docTemplate = `{
                         "description": "describes the sorting in the form of name.asc",
                         "name": "sort",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "optional text search (mongo text index behavior)",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -913,6 +919,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "describes the sorting in the form of name.asc",
                         "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "optional text search (permission-search/elastic-search behavior)",
+                        "name": "search",
                         "in": "query"
                     }
                 ],

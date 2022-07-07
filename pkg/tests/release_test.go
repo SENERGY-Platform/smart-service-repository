@@ -31,6 +31,146 @@ import (
 	"time"
 )
 
+func TestReleaseSearch(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+		debug.PrintStack()
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	design := model.SmartServiceDesign{}
+	t.Run("create design", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml:     resources.ComplexSelectionBpmn,
+			SvgXml:      resources.ComplexSelectionSvg,
+			Description: "test description",
+			Name:        "test name",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	releases := []model.SmartServiceRelease{
+		{
+			Name:        "foo bar batz",
+			Description: "unrelated",
+			DesignId:    design.Id,
+		},
+		{
+			Name:        "foo",
+			Description: "bar",
+			DesignId:    design.Id,
+		},
+		{
+			Name:        "42",
+			Description: "batz something",
+			DesignId:    design.Id,
+		},
+		{
+			Name:        "bar",
+			Description: "something 42",
+			DesignId:    design.Id,
+		},
+	}
+
+	t.Run("create releases", func(t *testing.T) {
+		for _, release := range releases {
+			resp, err := post(userToken, apiUrl+"/releases", release)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+		}
+	})
+
+	expectedSearchCount := map[string]int{
+		"foo":     2,
+		"foo bar": 2, //finds elements that contain foo and bar
+		"bar":     3,
+		"42":      2,
+		"batz":    2,
+	}
+
+	time.Sleep(2 * time.Second)
+
+	for key, val := range expectedSearchCount {
+		t.Run("asc search "+key, func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/releases?sort=name.asc&search="+url.QueryEscape(key))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			result := []model.SmartServiceDesign{}
+			err = json.NewDecoder(resp.Body).Decode(&result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if len(result) != val {
+				t.Error(key, val, len(result), result)
+			}
+		})
+	}
+
+	for key, val := range expectedSearchCount {
+		t.Run("desc search "+key, func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/releases?sort=name.desc&search="+url.QueryEscape(key))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			result := []model.SmartServiceReleaseExtended{}
+			err = json.NewDecoder(resp.Body).Decode(&result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if len(result) != val {
+				t.Error(key, val, len(result), result)
+			}
+		})
+	}
+}
+
 func TestReleaseOptionsApi2(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()

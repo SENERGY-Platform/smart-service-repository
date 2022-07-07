@@ -148,6 +148,7 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 // @Param        limit query integer false "limits size of result"
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
+// @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceRelease
 // @Failure      500
@@ -184,6 +185,8 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 		if query.Sort == "" {
 			query.Sort = "name.asc"
 		}
+		query.Search = request.URL.Query().Get("search")
+
 		result, err, code := ctrl.ListReleases(token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)

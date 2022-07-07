@@ -122,6 +122,7 @@ func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryO
 				SortBy:   query.GetSortField(),
 				SortDesc: !query.GetSortAsc(),
 			},
+			Search: query.Search,
 		},
 	}, &idWrapperList)
 	if err != nil {

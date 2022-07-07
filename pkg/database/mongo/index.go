@@ -124,3 +124,19 @@ func (this *Mongo) ensureIndex(collection *mongo.Collection, indexname string, i
 	})
 	return err
 }
+
+func (this *Mongo) ensureTextIndex(collection *mongo.Collection, indexname string, indexKeys ...string) error {
+	if len(indexKeys) == 0 {
+		return errors.New("expect at least one key")
+	}
+	keys := bsonx.Doc{}
+	for _, key := range indexKeys {
+		keys = append(keys, bsonx.Elem{Key: key, Value: bsonx.String("text")})
+	}
+	ctx, _ := getTimeoutContext()
+	_, err := collection.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    keys,
+		Options: options.Index().SetName(indexname),
+	})
+	return err
+}

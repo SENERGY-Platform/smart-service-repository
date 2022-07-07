@@ -21,6 +21,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 	"net/http"
 	"runtime/debug"
 )
@@ -36,7 +37,17 @@ func init() {
 			debug.PrintStack()
 			return err
 		}
-		return nil
+
+		ctx, _ := getTimeoutContext()
+		_, err = collection.Indexes().CreateOne(ctx, mongo.IndexModel{
+			Keys: bsonx.Doc([]bsonx.Elem{
+				{Key: DesignBson.UserId, Value: bsonx.Int32(1)},
+				{Key: DesignBson.Name, Value: bsonx.String("text")},
+				{Key: DesignBson.Description, Value: bsonx.String("text")},
+			}),
+			Options: options.Index().SetName("design_search_with_user_compound_index"),
+		})
+		return err
 	})
 }
 
@@ -92,7 +103,11 @@ func (this *Mongo) DeleteDesign(id string, userId string) (error, int) {
 func (this *Mongo) ListDesigns(userId string, query model.DesignQueryOptions) (result []model.SmartServiceDesign, err error, code int) {
 	opt := createFindOptions(query)
 	ctx, _ := getTimeoutContext()
-	cursor, err := this.designCollection().Find(ctx, bson.M{DesignBson.UserId: userId}, opt)
+	filter := bson.M{DesignBson.UserId: userId}
+	if query.Search != "" {
+		filter["$text"] = bson.M{"$search": query.Search}
+	}
+	cursor, err := this.designCollection().Find(ctx, filter, opt)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}

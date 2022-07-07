@@ -45,6 +45,7 @@ type DesignQueryOptions struct {
 	Limit  int
 	Offset int
 	Sort   string
+	Search string
 }
 
 func (this DesignQueryOptions) GetLimit() int64 {
@@ -66,6 +67,7 @@ type ReleaseQueryOptions struct {
 	Limit  int
 	Offset int
 	Sort   string
+	Search string
 }
 
 func (this ReleaseQueryOptions) GetLimit() int64 {

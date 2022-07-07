@@ -194,6 +194,10 @@ paths:
         in: query
         name: sort
         type: string
+      - description: optional text search (mongo text index behavior)
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -759,6 +763,10 @@ paths:
       - description: describes the sorting in the form of name.asc
         in: query
         name: sort
+        type: string
+      - description: optional text search (permission-search/elastic-search behavior)
+        in: query
+        name: search
         type: string
       produces:
       - application/json
