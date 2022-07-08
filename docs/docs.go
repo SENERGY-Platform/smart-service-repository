@@ -237,6 +237,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/extended-releases": {
+            "get": {
+                "description": "returns a list of smart-service releases",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases"
+                ],
+                "summary": "returns a list of smart-service releases",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limits size of result",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset to be used in combination with limit",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "describes the sorting in the form of name.asc",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "optional text search (permission-search/elastic-search behavior)",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceReleaseExtended"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "checks health and reachability of the service",
@@ -1155,6 +1210,46 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.Criteria": {
+            "type": "object",
+            "properties": {
+                "aspect_id": {
+                    "type": "string"
+                },
+                "device_class_id": {
+                    "type": "string"
+                },
+                "function_id": {
+                    "type": "string"
+                },
+                "interaction": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.IotDescription": {
+            "type": "object",
+            "properties": {
+                "criteria": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Criteria"
+                    }
+                },
+                "entity_only": {
+                    "type": "boolean"
+                },
+                "needs_same_entity_id_in_parameter": {
+                    "type": "string"
+                },
+                "type_filter": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "model.ModuleDeleteInfo": {
             "type": "object",
             "properties": {
@@ -1186,6 +1281,37 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {}
+            }
+        },
+        "model.ParameterDescription": {
+            "type": "object",
+            "properties": {
+                "default_value": {},
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "iot_description": {
+                    "$ref": "#/definitions/model.IotDescription"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "multiple": {
+                    "type": "boolean"
+                },
+                "options": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
             }
         },
         "model.PermissionsInfo": {
@@ -1400,10 +1526,55 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "model.SmartServiceReleaseExtended": {
+            "type": "object",
+            "properties": {
+                "bpmn_xml": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "unix timestamp, set by service on creation",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "design_id": {
+                    "type": "string"
+                },
+                "error": {
+                    "description": "is set if errors occurred while releasing",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parsed_info": {
+                    "$ref": "#/definitions/model.SmartServiceReleaseInfo"
                 },
                 "permissions_info": {
                     "description": "optional, set if query parameter permissions_info=true",
                     "$ref": "#/definitions/model.PermissionsInfo"
+                },
+                "svg_xml": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SmartServiceReleaseInfo": {
+            "type": "object",
+            "properties": {
+                "parameter_descriptions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ParameterDescription"
+                    }
                 }
             }
         }

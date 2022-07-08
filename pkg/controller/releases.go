@@ -113,6 +113,17 @@ type PermissionsWrapper struct {
 }
 
 func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceRelease, err error, code int) {
+	temp, err, code := this.ListExtendedReleases(token, query)
+	if err != nil {
+		return nil, err, code
+	}
+	for _, release := range temp {
+		result = append(result, release.SmartServiceRelease)
+	}
+	return result, nil, http.StatusOK
+}
+
+func (this *Controller) ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, err error, code int) {
 	permWrapper := []PermissionsWrapper{}
 	err, _ = this.permissions.Query(token.Jwt(), permissions.QueryMessage{
 		Resource: this.config.KafkaSmartServiceReleaseTopic,
@@ -138,20 +149,16 @@ func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryO
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
-	permissionsInfoIndex := map[string]*model.PermissionsInfo{}
-	if query.WithPermissionsInfo {
-		for _, perm := range permWrapper {
-			permissionsInfoIndex[perm.Id] = &model.PermissionsInfo{
-				Shared:      perm.Shared,
-				Permissions: perm.Permissions,
-			}
+	permissionsInfoIndex := map[string]model.PermissionsInfo{}
+	for _, perm := range permWrapper {
+		permissionsInfoIndex[perm.Id] = model.PermissionsInfo{
+			Shared:      perm.Shared,
+			Permissions: perm.Permissions,
 		}
 	}
 	for _, release := range temp {
-		if query.WithPermissionsInfo {
-			release.PermissionsInfo = permissionsInfoIndex[release.Id]
-		}
-		result = append(result, release.SmartServiceRelease)
+		release.PermissionsInfo = permissionsInfoIndex[release.Id]
+		result = append(result, release)
 	}
 	return result, nil, http.StatusOK
 }

@@ -1,5 +1,31 @@
 basePath: /
 definitions:
+  model.Criteria:
+    properties:
+      aspect_id:
+        type: string
+      device_class_id:
+        type: string
+      function_id:
+        type: string
+      interaction:
+        type: string
+    type: object
+  model.IotDescription:
+    properties:
+      criteria:
+        items:
+          $ref: '#/definitions/model.Criteria'
+        type: array
+      entity_only:
+        type: boolean
+      needs_same_entity_id_in_parameter:
+        type: string
+      type_filter:
+        items:
+          type: string
+        type: array
+    type: object
   model.ModuleDeleteInfo:
     properties:
       url:
@@ -24,6 +50,27 @@ definitions:
           in referenced parameter
         type: string
       value: {}
+    type: object
+  model.ParameterDescription:
+    properties:
+      default_value: {}
+      description:
+        type: string
+      id:
+        type: string
+      iot_description:
+        $ref: '#/definitions/model.IotDescription'
+      label:
+        type: string
+      multiple:
+        type: boolean
+      options:
+        additionalProperties: true
+        type: object
+      order:
+        type: integer
+      type:
+        type: string
     type: object
   model.PermissionsInfo:
     properties:
@@ -168,9 +215,39 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  model.SmartServiceReleaseExtended:
+    properties:
+      bpmn_xml:
+        type: string
+      created_at:
+        description: unix timestamp, set by service on creation
+        type: integer
+      description:
+        type: string
+      design_id:
+        type: string
+      error:
+        description: is set if errors occurred while releasing
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      parsed_info:
+        $ref: '#/definitions/model.SmartServiceReleaseInfo'
       permissions_info:
         $ref: '#/definitions/model.PermissionsInfo'
         description: optional, set if query parameter permissions_info=true
+      svg_xml:
+        type: string
+    type: object
+  model.SmartServiceReleaseInfo:
+    properties:
+      parameter_descriptions:
+        items:
+          $ref: '#/definitions/model.ParameterDescription'
+        type: array
     type: object
 host: localhost:8080
 info:
@@ -324,6 +401,42 @@ paths:
       summary: updates a smart-service designs
       tags:
       - designs
+  /extended-releases:
+    get:
+      description: returns a list of smart-service releases
+      parameters:
+      - description: limits size of result
+        in: query
+        name: limit
+        type: integer
+      - description: offset to be used in combination with limit
+        in: query
+        name: offset
+        type: integer
+      - description: describes the sorting in the form of name.asc
+        in: query
+        name: sort
+        type: string
+      - description: optional text search (permission-search/elastic-search behavior)
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceReleaseExtended'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a list of smart-service releases
+      tags:
+      - releases
   /health:
     get:
       description: checks health and reachability of the service

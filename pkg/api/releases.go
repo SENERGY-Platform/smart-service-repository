@@ -149,7 +149,6 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
-// &Param		 permissions_info query bool false "if set to true, the permissions_info contains permission info; default = false"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceRelease
 // @Failure      500
@@ -188,20 +187,69 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 		}
 		query.Search = request.URL.Query().Get("search")
 
-		withPermissionsInfoStr := request.URL.Query().Get("permissions_info")
-		if withPermissionsInfoStr != "" {
-			query.WithPermissionsInfo, err = strconv.ParseBool(withPermissionsInfoStr)
-			if err != nil {
-				http.Error(writer, err.Error(), http.StatusBadRequest)
-				return
-			}
-		}
-
 		result, err, code := ctrl.ListReleases(token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
 		}
+
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(result)
+	})
+}
+
+// ListExtended godoc
+// @Summary      returns a list of smart-service releases
+// @Description  returns a list of smart-service releases
+// @Tags         releases
+// @Param        limit query integer false "limits size of result"
+// @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        sort query string false "describes the sorting in the form of name.asc"
+// @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
+// @Produce      json
+// @Success      200 {array} model.SmartServiceReleaseExtended
+// @Failure      500
+// @Failure      401
+// @Router       /extended-releases [get]
+func (this *Releases) ListExtended(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/extended-releases", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		query := model.ReleaseQueryOptions{
+			Limit: 100,
+		}
+		limit := request.URL.Query().Get("limit")
+		if limit != "" {
+			query.Limit, err = strconv.Atoi(limit)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		offset := request.URL.Query().Get("offset")
+		if offset != "" {
+			query.Offset, err = strconv.Atoi(offset)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		query.Sort = request.URL.Query().Get("sort")
+		if query.Sort == "" {
+			query.Sort = "name.asc"
+		}
+		query.Search = request.URL.Query().Get("search")
+
+		result, err, code := ctrl.ListExtendedReleases(token, query)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+
 		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(result)
 	})

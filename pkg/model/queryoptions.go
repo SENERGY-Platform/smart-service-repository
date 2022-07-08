@@ -64,11 +64,10 @@ func (this DesignQueryOptions) GetSort() string {
 }
 
 type ReleaseQueryOptions struct {
-	Limit               int
-	Offset              int
-	Sort                string
-	Search              string
-	WithPermissionsInfo bool
+	Limit  int
+	Offset int
+	Sort   string
+	Search string
 }
 
 func (this ReleaseQueryOptions) GetLimit() int64 {
