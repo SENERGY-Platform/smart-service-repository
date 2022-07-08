@@ -1188,6 +1188,20 @@ const docTemplate = `{
                 "value": {}
             }
         },
+        "model.PermissionsInfo": {
+            "type": "object",
+            "properties": {
+                "permissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "boolean"
+                    }
+                },
+                "shared": {
+                    "type": "boolean"
+                }
+            }
+        },
         "model.SmartServiceDesign": {
             "type": "object",
             "properties": {
@@ -1386,6 +1400,10 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "permissions_info": {
+                    "description": "optional, set if query parameter permissions_info=true",
+                    "$ref": "#/definitions/model.PermissionsInfo"
                 }
             }
         }

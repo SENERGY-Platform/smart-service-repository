@@ -25,6 +25,15 @@ definitions:
         type: string
       value: {}
     type: object
+  model.PermissionsInfo:
+    properties:
+      permissions:
+        additionalProperties:
+          type: boolean
+        type: object
+      shared:
+        type: boolean
+    type: object
   model.SmartServiceDesign:
     properties:
       bpmn_xml:
@@ -159,6 +168,9 @@ definitions:
         type: string
       name:
         type: string
+      permissions_info:
+        $ref: '#/definitions/model.PermissionsInfo'
+        description: optional, set if query parameter permissions_info=true
     type: object
 host: localhost:8080
 info:

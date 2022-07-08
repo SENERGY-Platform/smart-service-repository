@@ -149,6 +149,7 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
+// &Param		 permissions_info query bool false "if set to true, the permissions_info contains permission info; default = false"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceRelease
 // @Failure      500
@@ -186,6 +187,15 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 			query.Sort = "name.asc"
 		}
 		query.Search = request.URL.Query().Get("search")
+
+		withPermissionsInfoStr := request.URL.Query().Get("permissions_info")
+		if withPermissionsInfoStr != "" {
+			query.WithPermissionsInfo, err = strconv.ParseBool(withPermissionsInfoStr)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
 
 		result, err, code := ctrl.ListReleases(token, query)
 		if err != nil {
