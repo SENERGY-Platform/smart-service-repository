@@ -23,6 +23,7 @@ type SmartServiceDesign struct {
 	Description string `json:"description"`
 	BpmnXml     string `json:"bpmn_xml" bson:"bpmn_xml"`
 	SvgXml      string `json:"svg_xml" bson:"svg_xml"`
+	UpdatedAt   int64  `json:"updated_at" bson:"updated_at"` //unix timestamp, set by service on creation
 }
 
 //cqrs
@@ -60,6 +61,8 @@ type SmartServiceInstance struct {
 	ReleaseId                string `json:"release_id" bson:"release_id"`
 	Ready                    bool   `json:"ready" bson:"ready"`
 	Error                    string `json:"error,omitempty" bson:"error"` //is set if module-worker notifies the repository about a error
+	CreatedAt                int64  `json:"created_at" bson:"created_at"` //unix timestamp, set by service on creation
+	UpdatedAt                int64  `json:"updated_at" bson:"updated_at"` //unix timestamp, set by service on creation
 }
 
 type SmartServiceInstanceInit struct {

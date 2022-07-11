@@ -25,6 +25,7 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 func (this *Controller) CreateInstance(token auth.Token, releaseId string, instanceInfo model.SmartServiceInstanceInit) (result model.SmartServiceInstance, err error, code int) {
@@ -53,7 +54,10 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 		ReleaseId:                release.Id,
 		Ready:                    false,
 		Error:                    "",
+		UpdatedAt:                time.Now().Unix(),
+		CreatedAt:                time.Now().Unix(),
 	}
+	result.UpdatedAt = time.Now().Unix()
 	err, code = this.db.SetInstance(result)
 	if err != nil {
 		return result, err, code
@@ -80,6 +84,7 @@ func (this *Controller) UpdateInstanceInfo(token auth.Token, id string, element 
 		return result, err, code
 	}
 	result.SmartServiceInstanceInfo = element
+	result.UpdatedAt = time.Now().Unix()
 	err, code = this.db.SetInstance(result)
 	return result, err, code
 }
@@ -103,6 +108,7 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 	result.Ready = false
 	result.Error = ""
 	result.Parameters = parameters
+	result.UpdatedAt = time.Now().Unix()
 	err, code = this.db.SetInstance(result)
 	if err != nil {
 		return result, err, code

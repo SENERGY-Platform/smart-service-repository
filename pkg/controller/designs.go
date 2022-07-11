@@ -25,6 +25,7 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 func (this *Controller) ListDesigns(token auth.Token, query model.DesignQueryOptions) ([]model.SmartServiceDesign, error, int) {
@@ -48,6 +49,7 @@ func (this *Controller) SetDesign(token auth.Token, element model.SmartServiceDe
 			return result, err, http.StatusBadRequest
 		}
 	}
+	element.UpdatedAt = time.Now().Unix()
 	err, code = this.ValidateDesign(token, element)
 	if err != nil {
 		return result, err, code
