@@ -205,8 +205,8 @@ func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result
 			SmartServiceParameter: model.SmartServiceParameter{
 				Id:    paramDesc.Id,
 				Value: paramDesc.DefaultValue,
+				Label: paramDesc.Label,
 			},
-			Label:        paramDesc.Label,
 			Description:  paramDesc.Description,
 			DefaultValue: paramDesc.DefaultValue,
 			Type:         getSchemaOrgType(paramDesc.Type),
@@ -327,6 +327,9 @@ func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.S
 			return result, errors.New("missing id in camunda:formField")
 		}
 		label := formField.SelectAttrValue("label", id)
+		if label == "" {
+			label = id
+		}
 		fieldType := formField.SelectAttrValue("type", "")
 		if id == "" {
 			return result, errors.New("missing type in camunda:formField")

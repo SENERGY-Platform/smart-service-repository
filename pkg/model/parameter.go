@@ -61,13 +61,14 @@ const (
 type SmartServiceParameters []SmartServiceParameter
 
 type SmartServiceParameter struct {
-	Id    string      `json:"id"`
-	Value interface{} `json:"value"`
+	Id         string      `json:"id"`
+	Value      interface{} `json:"value"`
+	Label      string      `json:"label"`
+	ValueLabel string      `json:"value_label,omitempty"`
 }
 
 type SmartServiceExtendedParameter struct {
 	SmartServiceParameter
-	Label        string      `json:"label"`
 	Description  string      `json:"description"`
 	DefaultValue interface{} `json:"default_value"`
 	Type         Type        `json:"type"`
