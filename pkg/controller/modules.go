@@ -170,5 +170,5 @@ func (this *Controller) deleteModule(module model.SmartServiceModule, ignoreModu
 			return err, http.StatusInternalServerError
 		}
 	}
-	return this.db.DeleteModule(module.UserId, module.UserId)
+	return this.db.DeleteModule(module.Id, module.UserId)
 }
