@@ -37,6 +37,7 @@ type Config struct {
 	KafkaUrl                             string   `json:"kafka_url"`
 	ConsumerGroup                        string   `json:"consumer_group"`
 	KafkaSmartServiceReleaseTopic        string   `json:"kafka_smart_service_release_topic"`
+	KafkaCharacteristicsTopic            string   `json:"kafka_characteristics_topic"` //used for permissions-search-query
 	EditForward                          string   `json:"edit_forward"`
 	ForwardedEndpoints                   []string `json:"forwarded_endpoints"`
 	MongoUrl                             string   `json:"mongo_url"`

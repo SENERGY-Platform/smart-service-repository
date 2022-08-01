@@ -61,7 +61,7 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 		element.Id = this.GetNewId()
 	}
 
-	parsedInfo, err := this.parseDesignXmlForReleaseInfo(design.BpmnXml)
+	parsedInfo, err := this.parseDesignXmlForReleaseInfo(token, design.BpmnXml)
 	if err != nil {
 		return result, fmt.Errorf("unable to parse design xml for release: %w", err), http.StatusBadRequest
 	}
@@ -207,11 +207,13 @@ func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result
 				Value: paramDesc.DefaultValue,
 				Label: paramDesc.Label,
 			},
-			Description:  paramDesc.Description,
-			DefaultValue: paramDesc.DefaultValue,
-			Type:         getSchemaOrgType(paramDesc.Type),
-			Multiple:     paramDesc.Multiple,
-			Order:        paramDesc.Order,
+			Description:      paramDesc.Description,
+			DefaultValue:     paramDesc.DefaultValue,
+			Type:             getSchemaOrgType(paramDesc.Type),
+			Multiple:         paramDesc.Multiple,
+			Order:            paramDesc.Order,
+			CharacteristicId: paramDesc.CharacteristicId,
+			Characteristic:   paramDesc.Characteristic,
 		}
 		param.Options, err, code = this.getParamOptions(token, paramDesc)
 		if err != nil {
@@ -309,7 +311,7 @@ func (this *Controller) HandleReleaseDelete(id string) error {
 
 //------------ Parsing ----------------
 
-func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.SmartServiceReleaseInfo, err error) {
+func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml string) (result model.SmartServiceReleaseInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
 			log.Printf("%s: %s", r, debug.Stack())
@@ -376,7 +378,17 @@ func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.S
 				return result, fmt.Errorf("invalid order property for formField %v: %w", id, err)
 			}
 		}
+		if chId, ok := properties["characteristics_id"]; ok {
+			param.CharacteristicId = &chId
+			param.Characteristic, err = this.GetCharacteristic(token.Jwt(), chId)
+			if err != nil {
+				return result, fmt.Errorf("unable to find characteristics_id for formField %v: %w", id, err)
+			}
+		}
 		if options, ok := properties["options"]; ok {
+			if _, containsCharacteristic := properties["characteristics_id"]; containsCharacteristic {
+				return result, fmt.Errorf("invalid characteristics_id/options property for formField %v: %v", id, "options and characteristics_id are mutual exclusive")
+			}
 			err = json.Unmarshal([]byte(options), &param.Options)
 			if err != nil {
 				return result, fmt.Errorf("invalid options property for formField %v: %w", id, err)
@@ -391,6 +403,9 @@ func (this *Controller) parseDesignXmlForReleaseInfo(xml string) (result model.S
 		if iot, ok := properties["iot"]; ok {
 			if _, containsOptions := properties["options"]; containsOptions {
 				return result, fmt.Errorf("invalid options/iot property for formField %v: %v", id, "iot and options are mutual exclusive")
+			}
+			if _, containsCharacteristic := properties["characteristics_id"]; containsCharacteristic {
+				return result, fmt.Errorf("invalid characteristics_id/iot property for formField %v: %v", id, "iot and characteristics_id are mutual exclusive")
 			}
 			typeFilter := []string{}
 			iot = strings.ReplaceAll(iot, " ", "")

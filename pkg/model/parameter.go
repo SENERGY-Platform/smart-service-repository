@@ -21,15 +21,17 @@ package model
 //---------------------------------
 
 type ParameterDescription struct {
-	Id             string                 `json:"id" bson:"id"`
-	Label          string                 `json:"label" bson:"label"`
-	Description    string                 `json:"description" bson:"description"`
-	Type           string                 `json:"type" bson:"type"`
-	DefaultValue   interface{}            `json:"default_value" bson:"default_value"`
-	Multiple       bool                   `json:"multiple" bson:"multiple"`
-	Options        map[string]interface{} `json:"options,omitempty" bson:"options,omitempty"`
-	IotDescription *IotDescription        `json:"iot_description" bson:"iot_description"`
-	Order          int                    `json:"order" bson:"order"`
+	Id               string                 `json:"id" bson:"id"`
+	Label            string                 `json:"label" bson:"label"`
+	Description      string                 `json:"description" bson:"description"`
+	Type             string                 `json:"type" bson:"type"`
+	DefaultValue     interface{}            `json:"default_value" bson:"default_value"`
+	Multiple         bool                   `json:"multiple" bson:"multiple"`
+	Options          map[string]interface{} `json:"options,omitempty" bson:"options,omitempty"`
+	IotDescription   *IotDescription        `json:"iot_description" bson:"iot_description"`
+	Order            int                    `json:"order" bson:"order"`
+	CharacteristicId *string                `json:"characteristic_id,omitempty"`
+	Characteristic   *Characteristic        `json:"characteristic,omitempty"`
 }
 
 type IotDescription struct {
@@ -69,12 +71,14 @@ type SmartServiceParameter struct {
 
 type SmartServiceExtendedParameter struct {
 	SmartServiceParameter
-	Description  string      `json:"description"`
-	DefaultValue interface{} `json:"default_value"`
-	Type         Type        `json:"type"`
-	Options      []Option    `json:"options"`  //if null -> "free text/number/etc"
-	Multiple     bool        `json:"multiple"` //if true: Value = new([]Type); if false: Value = new(Type);
-	Order        int         `json:"order"`
+	Description      string          `json:"description"`
+	DefaultValue     interface{}     `json:"default_value"`
+	Type             Type            `json:"type"`
+	Options          []Option        `json:"options"`  //if null -> "free text/number/etc"
+	Multiple         bool            `json:"multiple"` //if true: Value = new([]Type); if false: Value = new(Type);
+	Order            int             `json:"order"`
+	CharacteristicId *string         `json:"characteristic_id,omitempty"`
+	Characteristic   *Characteristic `json:"characteristic,omitempty"`
 }
 
 type Option struct {
