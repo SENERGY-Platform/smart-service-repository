@@ -67,6 +67,13 @@ examples can be found in ./pkg/tests/resources
 - value: boolean
 - value example: `true`
 
+### characteristic_id
+
+- property name: `characteristic_id`
+- description: sets Characteristc to SmartServiceExtendedParameter as a hint in the result of `GET /releases/:id/parameters` what the data-structure and semantic meaning of the expected json value is.
+- value: string
+- value example: `urn:infai:ses:characteristic:5b4eea52-e8e5-4e80-9455-0382f81a1b43`
+
 ## OpenAPI
 uses https://github.com/swaggo/swag
 

@@ -378,7 +378,7 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 				return result, fmt.Errorf("invalid order property for formField %v: %w", id, err)
 			}
 		}
-		if chId, ok := properties["characteristics_id"]; ok {
+		if chId, ok := properties["characteristic_id"]; ok {
 			param.CharacteristicId = &chId
 			param.Characteristic, err = this.GetCharacteristic(token.Jwt(), chId)
 			if err != nil {
@@ -386,7 +386,7 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 			}
 		}
 		if options, ok := properties["options"]; ok {
-			if _, containsCharacteristic := properties["characteristics_id"]; containsCharacteristic {
+			if _, containsCharacteristic := properties["characteristic_id"]; containsCharacteristic {
 				return result, fmt.Errorf("invalid characteristics_id/options property for formField %v: %v", id, "options and characteristics_id are mutual exclusive")
 			}
 			err = json.Unmarshal([]byte(options), &param.Options)
@@ -404,7 +404,7 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 			if _, containsOptions := properties["options"]; containsOptions {
 				return result, fmt.Errorf("invalid options/iot property for formField %v: %v", id, "iot and options are mutual exclusive")
 			}
-			if _, containsCharacteristic := properties["characteristics_id"]; containsCharacteristic {
+			if _, containsCharacteristic := properties["characteristic_id"]; containsCharacteristic {
 				return result, fmt.Errorf("invalid characteristics_id/iot property for formField %v: %v", id, "iot and characteristics_id are mutual exclusive")
 			}
 			typeFilter := []string{}
