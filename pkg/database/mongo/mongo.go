@@ -19,8 +19,11 @@ package mongo
 import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"reflect"
 	"time"
 )
 
@@ -33,7 +36,8 @@ var CreateCollections = []func(db *Mongo) error{}
 
 func New(conf configuration.Config) (*Mongo, error) {
 	ctx, _ := getTimeoutContext()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoUrl))
+	reg := bson.NewRegistryBuilder().RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{})).Build() //ensure map marshalling to interface
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoUrl), options.Client().SetRegistry(reg))
 	if err != nil {
 		return nil, err
 	}
