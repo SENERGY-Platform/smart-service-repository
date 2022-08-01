@@ -620,7 +620,7 @@
         "multiple": false,
         "options": null,
         "order": 0,
-        "type": "boolean",
+        "type": "https://schema.org/Boolean",
         "value": null
     }
 ]
