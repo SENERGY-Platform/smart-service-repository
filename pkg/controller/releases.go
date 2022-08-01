@@ -229,6 +229,8 @@ func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result
 
 func getSchemaOrgType(t string) model.Type {
 	switch t {
+	case "boolean":
+		return model.Boolean
 	case "string":
 		return model.String
 	case "long":
