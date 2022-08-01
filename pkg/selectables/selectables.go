@@ -19,7 +19,7 @@ package selectables
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
@@ -80,7 +80,10 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 	if resp.StatusCode >= 300 {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
-		return result, errors.New(buf.String()), http.StatusInternalServerError
+		err = fmt.Errorf("unable to load selectables: %v, %v", resp.StatusCode, buf.String())
+		criteriaJson, _ := json.Marshal(criteria)
+		log.Println("ERROR:", err, searchedEntities, string(criteriaJson))
+		return result, err, http.StatusInternalServerError
 	}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
