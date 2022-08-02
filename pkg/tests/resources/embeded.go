@@ -72,6 +72,9 @@ var SelectionsResponse3Obj []model.Selectable
 var ExpectedParams3 []byte
 var ExpectedParams3Obj []model.SmartServiceExtendedParameter
 
+//go:embed json_location_input.bpmn
+var JsonLocationInputBpmn string
+
 func init() {
 	err := json.Unmarshal(SelectionsResponse1, &SelectionsResponse1Obj)
 	if err != nil {

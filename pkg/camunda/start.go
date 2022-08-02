@@ -22,15 +22,22 @@ import (
 	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"runtime/debug"
+	"strings"
 )
 
 func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 	requestBody := new(bytes.Buffer)
-	query, err := createCamundaStartForm(instance)
+	key := idToCNName(instance.ReleaseId)
+	variables, err := this.GetProcessParameters(key)
+	if err != nil {
+		return err
+	}
+	query, err := createCamundaStartForm(instance, variables)
 	if err != nil {
 		return err
 	}
@@ -38,7 +45,6 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 	if err != nil {
 		return err
 	}
-	key := idToCNName(instance.ReleaseId)
 	req, err := http.NewRequest("POST", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(key)+"/submit-form", requestBody)
 	if err != nil {
 		debug.PrintStack()
@@ -63,15 +69,60 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 	return nil
 }
 
-func createCamundaStartForm(instance model.SmartServiceInstance) (result CamundaStartForm, err error) {
+type Variable struct {
+	Value     interface{} `json:"value"`
+	Type      string      `json:"type"`
+	ValueInfo interface{} `json:"valueInfo"`
+}
+
+func (this *Camunda) GetProcessParameters(processDefinitionKey string) (result map[string]Variable, err error) {
+	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(processDefinitionKey)+"/form-variables", nil)
+	if err != nil {
+		return result, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return result, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		temp, _ := ioutil.ReadAll(resp.Body)
+		err = errors.New(resp.Status + " " + string(temp))
+		return
+	}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	return
+}
+
+func createCamundaStartForm(instance model.SmartServiceInstance, variables map[string]Variable) (result CamundaStartForm, err error) {
 	result.BusinessKey = instance.Id
 	result.Variables = map[string]CamundaStartVariable{
 		//model.CamundaUserIdParameter: {Value: instance.UserId},
 	}
 	for _, param := range instance.Parameters {
-		result.Variables[param.Id] = CamundaStartVariable{Value: param.Value}
+		value, err := handleObjectsAsJson(param, variables)
+		if err != nil {
+			return result, err
+		}
+		result.Variables[param.Id] = CamundaStartVariable{Value: value}
 	}
 	return result, nil
+}
+
+func handleObjectsAsJson(param model.SmartServiceParameter, variables map[string]Variable) (result interface{}, err error) {
+	if variable, ok := variables[param.Id]; ok {
+		typeStr := strings.ToLower(variable.Type)
+		if typeStr == "string" || typeStr == "text" {
+			if _, isStr := param.Value.(string); !isStr {
+				temp, err := json.Marshal(param.Value)
+				if err != nil {
+					return result, err
+				}
+				return string(temp), nil
+			}
+		}
+	}
+	return param.Value, nil
 }
 
 type CamundaStartForm struct {
