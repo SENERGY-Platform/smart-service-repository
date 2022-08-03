@@ -256,10 +256,11 @@ func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token,
 	mux := sync.Mutex{}
 	for _, m := range modules {
 		if m.DeleteInfo != nil {
+			deleteInfo := *m.DeleteInfo
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				tempErr := this.useModuleDeleteInfo(*m.DeleteInfo)
+				tempErr := this.useModuleDeleteInfo(deleteInfo)
 				if tempErr != nil && !ignoreModuleDeleteErrors {
 					mux.Lock()
 					defer mux.Unlock()
