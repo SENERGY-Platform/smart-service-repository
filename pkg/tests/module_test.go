@@ -29,6 +29,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"runtime/debug"
 	"sync"
 	"testing"
 	"time"
@@ -615,4 +616,111 @@ func testModuleList(t *testing.T, apiUrl string, query string, expectedCount int
 		}
 		t.Log(element.ModuleData)
 	}
+}
+
+func TestEmptyAnalyticsVariables(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+		debug.PrintStack()
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	topicBackup := mocks.CAMUNDA_MODULE_WORKER_TOPIC
+	defer func() {
+		mocks.CAMUNDA_MODULE_WORKER_TOPIC = topicBackup
+	}()
+	mocks.CAMUNDA_MODULE_WORKER_TOPIC = "analytics"
+
+	mocks.NewModuleWorker(ctx, wg, apiUrl, config, func(taskWorkerMsg mocks.ModuleWorkerMessage) (err error) {
+		temp, _ := json.Marshal(taskWorkerMsg.Variables)
+		t.Log("worker call:", string(temp))
+		return nil
+	})
+
+	design := model.SmartServiceDesign{}
+	t.Run("create design", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml: resources.EmptyAnalyticsTestBpmn,
+			SvgXml:  resources.ProcessDeploymentSvg,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	release := model.SmartServiceRelease{}
+	t.Run("create release", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design.Id,
+			Name:        "release name",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	time.Sleep(5 * time.Second) //allow async cqrs
+
+	instance := model.SmartServiceInstance{}
+	t.Run("create instance", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/instances", model.SmartServiceInstanceInit{
+			SmartServiceInstanceInfo: model.SmartServiceInstanceInfo{
+				Name:        "instance name",
+				Description: "instance description",
+			},
+			Parameters: []model.SmartServiceParameter{},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	time.Sleep(5 * time.Second)
+	t.Log(instance)
 }

@@ -25,6 +25,7 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"sync"
 	"time"
 )
 
@@ -251,13 +252,22 @@ func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token,
 	if err != nil {
 		return err, code
 	}
+	wg := sync.WaitGroup{}
+	mux := sync.Mutex{}
 	for _, m := range modules {
 		if m.DeleteInfo != nil {
-			err = this.useModuleDeleteInfo(*m.DeleteInfo)
-			if err != nil && !ignoreModuleDeleteErrors {
-				return err, http.StatusInternalServerError
-			}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				tempErr := this.useModuleDeleteInfo(*m.DeleteInfo)
+				if tempErr != nil && !ignoreModuleDeleteErrors {
+					mux.Lock()
+					defer mux.Unlock()
+					err = tempErr
+				}
+			}()
 		}
 	}
+	wg.Wait()
 	return nil, http.StatusOK
 }

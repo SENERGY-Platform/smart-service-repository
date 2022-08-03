@@ -75,6 +75,9 @@ var ExpectedParams3Obj []model.SmartServiceExtendedParameter
 //go:embed json_location_input.bpmn
 var JsonLocationInputBpmn string
 
+//go:embed empty-analytics-test.bpmn
+var EmptyAnalyticsTestBpmn string
+
 func init() {
 	err := json.Unmarshal(SelectionsResponse1, &SelectionsResponse1Obj)
 	if err != nil {
