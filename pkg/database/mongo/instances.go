@@ -92,7 +92,7 @@ func (this *Mongo) DeleteInstance(id string, userId string) (err error, code int
 		return err, code
 	}
 	ctx, _ := getTimeoutContext()
-	_, err = this.instanceCollection().DeleteOne(ctx, bson.M{
+	_, err = this.instanceCollection().DeleteMany(ctx, bson.M{
 		InstanceBson.Id:     id,
 		InstanceBson.UserId: userId,
 	})

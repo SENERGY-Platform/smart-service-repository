@@ -142,23 +142,43 @@ func (this *Controller) GetInstance(token auth.Token, id string) (result model.S
 }
 
 func (this *Controller) DeleteInstance(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int) {
-	_, err, code := this.db.GetInstance(id, token.GetUserId())
+	current, err, code := this.db.GetInstance(id, token.GetUserId())
 	if err != nil {
 		if code == http.StatusNotFound {
 			return nil, http.StatusOK //instance is already none-existent
 		}
 		return err, code
 	}
+
+	//mark instance as transitioning while other delete work is done
+	current.Ready = false
+	current.UpdatedAt = time.Now().Unix()
+	err, code = this.db.SetInstance(current)
+	if err != nil {
+		return err, code
+	}
+
+	//stop running instances
 	err = this.camunda.StopInstance(id)
 	if err != nil {
+		this.SetInstanceError(token, id, err.Error())
 		return err, http.StatusInternalServerError
 	}
+
+	//handle module delete infos
 	err, code = this.handleModuleDeleteReferencesOfInstance(token, id, ignoreModuleDeleteError)
 	if err != nil {
 		this.SetInstanceError(token, id, err.Error())
 		return err, code
 	}
-	return this.db.DeleteInstance(id, token.GetUserId())
+
+	//delete instance and modules from database
+	err, code = this.db.DeleteInstance(id, token.GetUserId())
+	if err != nil {
+		this.SetInstanceError(token, id, err.Error())
+		return err, code
+	}
+	return err, code
 }
 
 func (this *Controller) handleReadyAndErrorFields(list []model.SmartServiceInstance) []model.SmartServiceInstance {

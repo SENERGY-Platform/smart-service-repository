@@ -88,7 +88,7 @@ func (this *Mongo) GetRelease(id string) (result model.SmartServiceReleaseExtend
 
 func (this *Mongo) DeleteRelease(id string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.releaseCollection().DeleteOne(ctx, bson.M{
+	_, err := this.releaseCollection().DeleteMany(ctx, bson.M{
 		ReleaseBson.Id: id,
 	})
 	if err != nil {

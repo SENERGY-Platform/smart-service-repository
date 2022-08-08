@@ -94,7 +94,7 @@ func (this *Mongo) SetModule(element model.SmartServiceModule) (error, int) {
 
 func (this *Mongo) DeleteModule(id string, userId string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.moduleCollection().DeleteOne(ctx, bson.M{
+	_, err := this.moduleCollection().DeleteMany(ctx, bson.M{
 		ModuleBson.Id:     id,
 		ModuleBson.UserId: userId,
 	})
@@ -134,7 +134,7 @@ func (this *Mongo) ListAllModules(query model.ModuleQueryOptions) (result []mode
 
 func (this *Mongo) RemoveModulesOfInstance(instanceId string, userId string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.moduleCollection().DeleteOne(ctx, bson.M{
+	_, err := this.moduleCollection().DeleteMany(ctx, bson.M{
 		ModuleBson.InstanceId: instanceId,
 		ModuleBson.UserId:     userId,
 	})

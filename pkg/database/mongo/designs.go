@@ -90,7 +90,7 @@ func (this *Mongo) SetDesign(element model.SmartServiceDesign) (error, int) {
 
 func (this *Mongo) DeleteDesign(id string, userId string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.designCollection().DeleteOne(ctx, bson.M{
+	_, err := this.designCollection().DeleteMany(ctx, bson.M{
 		DesignBson.Id:     id,
 		DesignBson.UserId: userId,
 	})
