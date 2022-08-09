@@ -151,7 +151,7 @@ func (this *Controller) DeleteInstance(token auth.Token, id string, ignoreModule
 	}
 
 	//mark instance as transitioning while other delete work is done
-	current.Ready = false
+	current.Deleting = true
 	current.UpdatedAt = time.Now().Unix()
 	err, code = this.db.SetInstance(current)
 	if err != nil {
