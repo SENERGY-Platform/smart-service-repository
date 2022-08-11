@@ -55,6 +55,7 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 		ReleaseId:                release.Id,
 		Ready:                    false,
 		Error:                    "",
+		NewReleaseId:             release.NewReleaseId,
 		UpdatedAt:                time.Now().Unix(),
 		CreatedAt:                time.Now().Unix(),
 	}
@@ -120,6 +121,7 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 			result.NewReleaseId = ""
 		}
 		result.DesignId = release.DesignId
+		result.NewReleaseId = release.NewReleaseId
 	}
 	err, code = this.db.SetInstance(result)
 	if err != nil {
