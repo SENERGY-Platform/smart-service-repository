@@ -1,5 +1,26 @@
 basePath: /
 definitions:
+  model.Characteristic:
+    properties:
+      allowed_values:
+        items: {}
+        type: array
+      display_unit:
+        type: string
+      id:
+        type: string
+      max_value: {}
+      min_value: {}
+      name:
+        type: string
+      sub_characteristics:
+        items:
+          $ref: '#/definitions/model.Characteristic'
+        type: array
+      type:
+        type: string
+      value: {}
+    type: object
   model.Criteria:
     properties:
       aspect_id:
@@ -53,6 +74,10 @@ definitions:
     type: object
   model.ParameterDescription:
     properties:
+      characteristic:
+        $ref: '#/definitions/model.Characteristic'
+      characteristic_id:
+        type: string
       default_value: {}
       description:
         type: string
@@ -93,11 +118,18 @@ definitions:
         type: string
       svg_xml:
         type: string
+      updated_at:
+        description: unix timestamp, set by service on creation
+        type: integer
       user_id:
         type: string
     type: object
   model.SmartServiceExtendedParameter:
     properties:
+      characteristic:
+        $ref: '#/definitions/model.Characteristic'
+      characteristic_id:
+        type: string
       default_value: {}
       description:
         type: string
@@ -118,9 +150,16 @@ definitions:
       type:
         type: string
       value: {}
+      value_label:
+        type: string
     type: object
   model.SmartServiceInstance:
     properties:
+      created_at:
+        description: unix timestamp, set by service on creation
+        type: integer
+      deleting:
+        type: boolean
       description:
         type: string
       design_id:
@@ -132,6 +171,8 @@ definitions:
         type: string
       name:
         type: string
+      new_release_id:
+        type: string
       parameters:
         items:
           $ref: '#/definitions/model.SmartServiceParameter'
@@ -140,6 +181,9 @@ definitions:
         type: boolean
       release_id:
         type: string
+      updated_at:
+        description: unix timestamp, set by service on creation
+        type: integer
       user_id:
         type: string
     type: object
@@ -197,7 +241,11 @@ definitions:
     properties:
       id:
         type: string
+      label:
+        type: string
       value: {}
+      value_label:
+        type: string
     type: object
   model.SmartServiceRelease:
     properties:
@@ -214,6 +262,8 @@ definitions:
       id:
         type: string
       name:
+        type: string
+      new_release_id:
         type: string
     type: object
   model.SmartServiceReleaseExtended:
@@ -233,6 +283,8 @@ definitions:
       id:
         type: string
       name:
+        type: string
+      new_release_id:
         type: string
       parsed_info:
         $ref: '#/definitions/model.SmartServiceReleaseInfo'
@@ -405,6 +457,10 @@ paths:
     get:
       description: returns a list of smart-service releases
       parameters:
+      - description: returns only newest release of the same design
+        in: query
+        name: latest
+        type: boolean
       - description: limits size of result
         in: query
         name: limit
@@ -786,6 +842,10 @@ paths:
       - application/json
       description: updates smart-service instance parameter
       parameters:
+      - description: sets new release id if set
+        in: query
+        name: release_id
+        type: string
       - description: Instance ID
         in: path
         name: id
@@ -877,6 +937,10 @@ paths:
     get:
       description: returns a list of smart-service releases
       parameters:
+      - description: returns only newest release of the same design
+        in: query
+        name: latest
+        type: boolean
       - description: limits size of result
         in: query
         name: limit

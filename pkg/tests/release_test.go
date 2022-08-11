@@ -671,6 +671,9 @@ func TestReleaseApi(t *testing.T) {
 		t.Run("limit and offset", func(t *testing.T) {
 			testReleaseList(t, apiUrl, "?limit=2&offset=1", names[1:3], "")
 		})
+		t.Run("newest", func(t *testing.T) {
+			testReleaseList(t, apiUrl, "?latest=true", names[len(names)-1:], "")
+		})
 	})
 }
 

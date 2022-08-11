@@ -68,6 +68,7 @@ type ReleaseQueryOptions struct {
 	Offset int
 	Sort   string
 	Search string
+	Latest bool
 }
 
 func (this ReleaseQueryOptions) GetLimit() int64 {

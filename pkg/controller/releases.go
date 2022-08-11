@@ -129,6 +129,16 @@ func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryO
 
 func (this *Controller) ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, err error, code int) {
 	permWrapper := []PermissionsWrapper{}
+	var filter *permissions.Selection
+	if query.Latest {
+		filter = &permissions.Selection{
+			Condition: permissions.ConditionConfig{
+				Feature:   "features.new_release_id",
+				Operation: permissions.QueryEqualOperation,
+				Value:     "",
+			},
+		}
+	}
 	err, _ = this.permissions.Query(token.Jwt(), permissions.QueryMessage{
 		Resource: this.config.KafkaSmartServiceReleaseTopic,
 		Find: &permissions.QueryFind{
@@ -139,6 +149,7 @@ func (this *Controller) ListExtendedReleases(token auth.Token, query model.Relea
 				SortBy:   query.GetSortField(),
 				SortDesc: !query.GetSortAsc(),
 			},
+			Filter: filter,
 			Search: query.Search,
 		},
 	}, &permWrapper)

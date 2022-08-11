@@ -145,6 +145,7 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 // @Summary      returns a list of smart-service releases
 // @Description  returns a list of smart-service releases
 // @Tags         releases
+// @Param        latest query bool false "returns only newest release of the same design"
 // @Param        limit query integer false "limits size of result"
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
@@ -187,6 +188,15 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 		}
 		query.Search = request.URL.Query().Get("search")
 
+		latestStr := request.URL.Query().Get("latest")
+		if latestStr != "" {
+			query.Latest, err = strconv.ParseBool(latestStr)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+
 		result, err, code := ctrl.ListReleases(token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
@@ -202,6 +212,7 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 // @Summary      returns a list of smart-service releases
 // @Description  returns a list of smart-service releases
 // @Tags         releases
+// @Param        latest query bool false "returns only newest release of the same design"
 // @Param        limit query integer false "limits size of result"
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
@@ -243,6 +254,15 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 			query.Sort = "name.asc"
 		}
 		query.Search = request.URL.Query().Get("search")
+
+		latestStr := request.URL.Query().Get("latest")
+		if latestStr != "" {
+			query.Latest, err = strconv.ParseBool(latestStr)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
 
 		result, err, code := ctrl.ListExtendedReleases(token, query)
 		if err != nil {

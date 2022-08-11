@@ -249,6 +249,12 @@ const docTemplate = `{
                 "summary": "returns a list of smart-service releases",
                 "parameters": [
                     {
+                        "type": "boolean",
+                        "description": "returns only newest release of the same design",
+                        "name": "latest",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "description": "limits size of result",
                         "name": "limit",
@@ -823,6 +829,12 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "sets new release id if set",
+                        "name": "release_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Instance ID",
                         "name": "id",
                         "in": "path",
@@ -958,6 +970,12 @@ const docTemplate = `{
                 ],
                 "summary": "returns a list of smart-service releases",
                 "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "returns only newest release of the same design",
+                        "name": "latest",
+                        "in": "query"
+                    },
                     {
                         "type": "integer",
                         "description": "limits size of result",
@@ -1210,6 +1228,36 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.Characteristic": {
+            "type": "object",
+            "properties": {
+                "allowed_values": {
+                    "type": "array",
+                    "items": {}
+                },
+                "display_unit": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "max_value": {},
+                "min_value": {},
+                "name": {
+                    "type": "string"
+                },
+                "sub_characteristics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Characteristic"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
         "model.Criteria": {
             "type": "object",
             "properties": {
@@ -1286,6 +1334,12 @@ const docTemplate = `{
         "model.ParameterDescription": {
             "type": "object",
             "properties": {
+                "characteristic": {
+                    "$ref": "#/definitions/model.Characteristic"
+                },
+                "characteristic_id": {
+                    "type": "string"
+                },
                 "default_value": {},
                 "description": {
                     "type": "string"
@@ -1346,6 +1400,10 @@ const docTemplate = `{
                 "svg_xml": {
                     "type": "string"
                 },
+                "updated_at": {
+                    "description": "unix timestamp, set by service on creation",
+                    "type": "integer"
+                },
                 "user_id": {
                     "type": "string"
                 }
@@ -1354,6 +1412,12 @@ const docTemplate = `{
         "model.SmartServiceExtendedParameter": {
             "type": "object",
             "properties": {
+                "characteristic": {
+                    "$ref": "#/definitions/model.Characteristic"
+                },
+                "characteristic_id": {
+                    "type": "string"
+                },
                 "default_value": {},
                 "description": {
                     "type": "string"
@@ -1381,12 +1445,22 @@ const docTemplate = `{
                 "type": {
                     "type": "string"
                 },
-                "value": {}
+                "value": {},
+                "value_label": {
+                    "type": "string"
+                }
             }
         },
         "model.SmartServiceInstance": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "description": "unix timestamp, set by service on creation",
+                    "type": "integer"
+                },
+                "deleting": {
+                    "type": "boolean"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1403,6 +1477,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "new_release_id": {
+                    "type": "string"
+                },
                 "parameters": {
                     "type": "array",
                     "items": {
@@ -1414,6 +1491,10 @@ const docTemplate = `{
                 },
                 "release_id": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "description": "unix timestamp, set by service on creation",
+                    "type": "integer"
                 },
                 "user_id": {
                     "type": "string"
@@ -1501,7 +1582,13 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "value": {}
+                "label": {
+                    "type": "string"
+                },
+                "value": {},
+                "value_label": {
+                    "type": "string"
+                }
             }
         },
         "model.SmartServiceRelease": {
@@ -1525,6 +1612,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "new_release_id": {
                     "type": "string"
                 }
             }
@@ -1553,6 +1643,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "new_release_id": {
                     "type": "string"
                 },
                 "parsed_info": {
