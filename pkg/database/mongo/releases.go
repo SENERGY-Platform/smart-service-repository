@@ -36,6 +36,16 @@ func init() {
 			debug.PrintStack()
 			return err
 		}
+		err = db.ensureIndex(collection, "release_design_index", ReleaseBson.DesignId, true, false)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
+		err = db.ensureIndex(collection, "release_creation_index", "created_at", true, false)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
 		return nil
 	})
 }
@@ -45,6 +55,7 @@ func (this *Mongo) releaseCollection() *mongo.Collection {
 }
 
 func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended) (error, int) {
+	//store release
 	ctx, _ := getTimeoutContext()
 	_, err := this.releaseCollection().ReplaceOne(
 		ctx,
@@ -56,6 +67,17 @@ func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended) (error,
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
+
+	//set instance new_release_id
+	_, err = this.instanceCollection().UpdateMany(ctx, bson.M{
+		InstanceBson.ReleaseId: element.Id,
+	}, bson.M{
+		"$set": bson.M{InstanceBson.NewReleaseId: element.Id},
+	})
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+
 	return nil, http.StatusOK
 }
 

@@ -299,6 +299,7 @@ func (this *Instances) UpdateInfo(config configuration.Config, router *httproute
 // @Tags         instances, parameter
 // @Accept       json
 // @Produce      json
+// @Param        release_id query string false "sets new release id if set"
 // @Param        id path string true "Instance ID"
 // @Param        message body model.SmartServiceParameters true "SmartServiceParameter"
 // @Success      200 {object}  model.SmartServiceInstance
@@ -319,6 +320,8 @@ func (this *Instances) Redeploy(config configuration.Config, router *httprouter.
 			return
 		}
 
+		releaseId := request.URL.Query().Get("release_id")
+
 		parameters := []model.SmartServiceParameter{}
 		err = json.NewDecoder(request.Body).Decode(&parameters)
 		if err != nil {
@@ -326,7 +329,7 @@ func (this *Instances) Redeploy(config configuration.Config, router *httprouter.
 			return
 		}
 
-		result, err, code := ctrl.RedeployInstance(token, id, parameters)
+		result, err, code := ctrl.RedeployInstance(token, id, parameters, releaseId)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

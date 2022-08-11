@@ -41,6 +41,11 @@ func init() {
 			debug.PrintStack()
 			return err
 		}
+		err = db.ensureIndex(collection, "instance_release_index", InstanceBson.ReleaseId, true, false)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
 		return nil
 	})
 }

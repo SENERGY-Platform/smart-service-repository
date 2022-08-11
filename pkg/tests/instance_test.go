@@ -49,6 +49,45 @@ func TestInstanceEditApi(t *testing.T) {
 		return
 	}
 
+	callCount := 0
+	mocks.NewModuleWorker(ctx, wg, apiUrl, config, func(taskWorkerMsg mocks.ModuleWorkerMessage) (err error) {
+		callCount = callCount + 1
+		expectedVariables := map[string]mocks.CamundaVariable{
+			"Task_foo.parameter": {
+				Type:  "String",
+				Value: "{\"inputs.on\": true, \"inputs.hex\": #ff00ff}",
+			},
+			"Task_foo.selection": {
+				Type:  "String",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+			},
+			"color_hex": {
+				Type:  "String",
+				Value: "#ff00ff",
+			},
+			"device_selection": {
+				Type:  "String",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+			},
+			"process_model_id": {
+				Type:  "String",
+				Value: "76e6f65c-c3c1-47c0-a999-4675baace425",
+			},
+		}
+		if callCount > 1 {
+			expectedVariables["update"] = mocks.CamundaVariable{
+				Type:  "String",
+				Value: "foo",
+			}
+		}
+		temp, _ := json.Marshal(taskWorkerMsg.Variables)
+		t.Log("worker call:", string(temp))
+		if !reflect.DeepEqual(taskWorkerMsg.Variables, expectedVariables) {
+			t.Error(string(temp))
+		}
+		return nil
+	})
+
 	design := model.SmartServiceDesign{}
 	t.Run("create design", func(t *testing.T) {
 		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
@@ -66,6 +105,41 @@ func TestInstanceEditApi(t *testing.T) {
 		}
 		checkContentType(t, resp)
 		err = json.NewDecoder(resp.Body).Decode(&design)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if design.BpmnXml != resources.ProcessDeploymentBpmn {
+			t.Error(design.BpmnXml)
+			return
+		}
+		if design.SvgXml != resources.ProcessDeploymentSvg {
+			t.Error(design.SvgXml)
+			return
+		}
+		if design.Id == "" {
+			t.Error(design.Id)
+			return
+		}
+	})
+
+	design2 := model.SmartServiceDesign{}
+	t.Run("create updated design", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml: resources.ProcessDeploymentBpmn,
+			SvgXml:  resources.ProcessDeploymentSvg,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design2)
 		if err != nil {
 			t.Error(err)
 			return
@@ -102,6 +176,30 @@ func TestInstanceEditApi(t *testing.T) {
 		}
 		checkContentType(t, resp)
 		err = json.NewDecoder(resp.Body).Decode(&release)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	release2 := model.SmartServiceRelease{}
+	t.Run("create updated release", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design2.Id,
+			Name:        "updated release",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release2)
 		if err != nil {
 			t.Error(err)
 			return
@@ -324,6 +422,8 @@ func TestInstanceEditApi(t *testing.T) {
 		}
 	})
 
+	time.Sleep(2 * time.Second)
+
 	t.Run("update instance parameter", func(t *testing.T) {
 		p := fillTestParameter(parameters)
 		p = append(p, model.SmartServiceParameter{
@@ -377,51 +477,111 @@ func TestInstanceEditApi(t *testing.T) {
 		}
 	})
 
-	//time.Sleep(2 * time.Second)
+	time.Sleep(2 * time.Second)
 
-	called := false
-	mocks.NewModuleWorker(ctx, wg, apiUrl, config, func(taskWorkerMsg mocks.ModuleWorkerMessage) (err error) {
-		called = true
-		expectedVariables := map[string]mocks.CamundaVariable{
-			"Task_foo.parameter": {
-				Type:  "String",
-				Value: "{\"inputs.on\": true, \"inputs.hex\": #ff00ff}",
-			},
-			"Task_foo.selection": {
-				Type:  "String",
-				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
-			},
-			"color_hex": {
-				Type:  "String",
-				Value: "#ff00ff",
-			},
-			"device_selection": {
-				Type:  "String",
-				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
-			},
-			"process_model_id": {
-				Type:  "String",
-				Value: "76e6f65c-c3c1-47c0-a999-4675baace425",
-			},
-			"update": {
-				Type:  "String",
-				Value: "foo",
-			},
+	t.Run("update instance release", func(t *testing.T) {
+		p := fillTestParameter(parameters)
+		p = append(p, model.SmartServiceParameter{
+			Id:    "update",
+			Value: "foo",
+		})
+		resp, err := put(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id)+"/parameters?release_id="+url.QueryEscape(release2.Id), p)
+		if err != nil {
+			t.Error(err)
+			return
 		}
-		temp, _ := json.Marshal(taskWorkerMsg.Variables)
-		t.Log("worker call:", string(temp))
-		if !reflect.DeepEqual(taskWorkerMsg.Variables, expectedVariables) {
-			t.Error(string(temp))
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
 		}
-		return nil
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if instance.Name != "instance name update" {
+			t.Error(instance.Name)
+			return
+		}
+		if instance.Description != "instance description update" {
+			t.Error(instance.Description)
+			return
+		}
+		if instance.UserId != userId {
+			t.Error(instance.UserId, userId)
+			return
+		}
+		if instance.DesignId != design2.Id {
+			t.Error(instance.DesignId)
+			return
+		}
+		if instance.ReleaseId != release2.Id {
+			t.Error(instance.ReleaseId)
+			return
+		}
+		if instance.Ready != false {
+			t.Error(instance.Ready)
+			return
+		}
+		if instance.Error != "" {
+			t.Error(instance.Error)
+			return
+		}
+	})
+
+	t.Run("read instance after re design", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if instance.Name != "instance name update" {
+			t.Error(instance.Name)
+			return
+		}
+		if instance.Description != "instance description update" {
+			t.Error(instance.Description)
+			return
+		}
+		if instance.UserId != userId {
+			t.Error(instance.UserId)
+			return
+		}
+		if instance.DesignId != design2.Id {
+			t.Error(instance.DesignId)
+			return
+		}
+		if instance.ReleaseId != release2.Id {
+			t.Error(instance.ReleaseId)
+			return
+		}
+		if instance.Ready != false {
+			t.Error(instance.Ready)
+			return
+		}
 	})
 
 	time.Sleep(2 * time.Second)
 
 	t.Run("check updated params", func(t *testing.T) {
 		//real check of new parameter is in worker
-		if !called {
-			t.Error("missing worker call")
+		if callCount != 3 {
+			t.Error("call count:", callCount)
 		}
 	})
 }

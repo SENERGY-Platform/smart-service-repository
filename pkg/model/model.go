@@ -42,6 +42,7 @@ type SmartServiceReleaseExtended struct {
 	SvgXml              string                  `json:"svg_xml" bson:"svg_xml"`
 	ParsedInfo          SmartServiceReleaseInfo `json:"parsed_info" bson:"parsed_info"`
 	PermissionsInfo     PermissionsInfo         `json:"permissions_info,omitempty"` //optional, set if query parameter permissions_info=true
+	NewReleaseId        string                  `json:"new_release_id,omitempty"`
 }
 
 type PermissionsInfo struct {
@@ -59,6 +60,7 @@ type SmartServiceInstance struct {
 	UserId                   string `json:"user_id" bson:"user_id"`
 	DesignId                 string `json:"design_id" bson:"design_id"`
 	ReleaseId                string `json:"release_id" bson:"release_id"`
+	NewReleaseId             string `json:"new_release_id,omitempty"`
 	Ready                    bool   `json:"ready" bson:"ready"`
 	Deleting                 bool   `json:"deleting,omitempty" bson:"deleting"`
 	Error                    string `json:"error,omitempty" bson:"error"` //is set if module-worker notifies the repository about a error
