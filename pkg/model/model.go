@@ -28,12 +28,13 @@ type SmartServiceDesign struct {
 
 //cqrs
 type SmartServiceRelease struct {
-	Id          string `json:"id" bson:"id"`
-	DesignId    string `json:"design_id" bson:"design_id"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
-	CreatedAt   int64  `json:"created_at" bson:"created_at"` //unix timestamp, set by service on creation
-	Error       string `json:"error,omitempty" bson:"error"` //is set if errors occurred while releasing
+	Id           string `json:"id" bson:"id"`
+	DesignId     string `json:"design_id" bson:"design_id"`
+	Name         string `json:"name" bson:"name"`
+	Description  string `json:"description" bson:"description"`
+	CreatedAt    int64  `json:"created_at" bson:"created_at"` //unix timestamp, set by service on creation
+	Error        string `json:"error,omitempty" bson:"error"` //is set if errors occurred while releasing
+	NewReleaseId string `json:"new_release_id,omitempty"`
 }
 
 type SmartServiceReleaseExtended struct {
@@ -42,7 +43,6 @@ type SmartServiceReleaseExtended struct {
 	SvgXml              string                  `json:"svg_xml" bson:"svg_xml"`
 	ParsedInfo          SmartServiceReleaseInfo `json:"parsed_info" bson:"parsed_info"`
 	PermissionsInfo     PermissionsInfo         `json:"permissions_info,omitempty"` //optional, set if query parameter permissions_info=true
-	NewReleaseId        string                  `json:"new_release_id,omitempty"`
 }
 
 type PermissionsInfo struct {

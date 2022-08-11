@@ -596,7 +596,7 @@ func TestReleaseApi(t *testing.T) {
 		}
 	})
 
-	time.Sleep(5 * time.Second) //allow async cqrs
+	time.Sleep(10 * time.Second) //allow async cqrs
 
 	t.Run("read release", func(t *testing.T) {
 		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id))
@@ -656,25 +656,25 @@ func TestReleaseApi(t *testing.T) {
 		}
 	})
 
-	time.Sleep(2 * time.Second) //allow async cqrs delete to play out
+	time.Sleep(30 * time.Second) //allow async cqrs delete to play out
 
 	t.Run("list", func(t *testing.T) {
 		t.Run("default", func(t *testing.T) {
-			testReleaseList(t, apiUrl, "", names)
+			testReleaseList(t, apiUrl, "", names, names[len(names)-1])
 		})
 		t.Run("sort=name.asc", func(t *testing.T) {
-			testReleaseList(t, apiUrl, "?sort=name.asc", names)
+			testReleaseList(t, apiUrl, "?sort=name.asc", names, names[len(names)-1])
 		})
 		t.Run("sort=name.desc", func(t *testing.T) {
-			testReleaseList(t, apiUrl, "?sort=name.desc", reverse(names))
+			testReleaseList(t, apiUrl, "?sort=name.desc", reverse(names), names[len(names)-1])
 		})
 		t.Run("limit and offset", func(t *testing.T) {
-			testReleaseList(t, apiUrl, "?limit=2&offset=1", names[1:3])
+			testReleaseList(t, apiUrl, "?limit=2&offset=1", names[1:3], "")
 		})
 	})
 }
 
-func testReleaseList(t *testing.T, apiUrl string, query string, expectedNamesOrder []string) {
+func testReleaseList(t *testing.T, apiUrl string, query string, expectedNamesOrder []string, newestName string) {
 	resp, err := get(userToken, apiUrl+"/releases"+query)
 	if err != nil {
 		t.Error(err)
@@ -696,10 +696,30 @@ func testReleaseList(t *testing.T, apiUrl string, query string, expectedNamesOrd
 		t.Error(len(result), len(expectedNamesOrder), result)
 		return
 	}
+	newest := model.SmartServiceRelease{}
 	for i, element := range result {
+		if element.Name == newestName {
+			newest = element
+		}
 		if element.Name != expectedNamesOrder[i] {
 			t.Error(element.Name, expectedNamesOrder[i])
 			return
 		}
 	}
+	if newestName != "" {
+		for _, element := range result {
+			if element.Id == newest.Id && element.NewReleaseId != "" {
+				t.Error(element)
+				return
+			}
+			if element.Id != newest.Id && element.NewReleaseId != newest.Id {
+				t.Error("old:", element.NewReleaseId, "newest:", newest.Id, element)
+				elementJson, _ := json.Marshal(element)
+				newestJson, _ := json.Marshal(newest)
+				t.Error(string(elementJson), "\n", string(newestJson))
+				return
+			}
+		}
+	}
+
 }

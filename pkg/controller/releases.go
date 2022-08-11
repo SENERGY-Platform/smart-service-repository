@@ -70,27 +70,31 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 		return result, err, http.StatusBadRequest
 	}
 
-	msg, err := json.Marshal(ReleaseCommand{
-		Command: "PUT",
-		Id:      element.Id,
-		Owner:   token.GetUserId(),
-		Release: &model.SmartServiceReleaseExtended{
-			SmartServiceRelease: element,
-			BpmnXml:             design.BpmnXml,
-			SvgXml:              design.SvgXml,
-			ParsedInfo:          parsedInfo,
-		},
+	err = this.publishReleaseUpdate(token.GetUserId(), model.SmartServiceReleaseExtended{
+		SmartServiceRelease: element,
+		BpmnXml:             design.BpmnXml,
+		SvgXml:              design.SvgXml,
+		ParsedInfo:          parsedInfo,
 	})
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
 
-	err = this.releasesProducer.Produce(element.Id, msg)
+	return element, nil, http.StatusOK
+}
+
+func (this *Controller) publishReleaseUpdate(owner string, release model.SmartServiceReleaseExtended) (err error) {
+	msg, err := json.Marshal(ReleaseCommand{
+		Command: "PUT",
+		Id:      release.Id,
+		Owner:   owner,
+		Release: &release,
+	})
 	if err != nil {
-		return result, err, http.StatusInternalServerError
+		return err
 	}
 
-	return element, nil, http.StatusOK
+	return this.releasesProducer.Produce(release.Id, msg)
 }
 
 func (this *Controller) GetRelease(token auth.Token, id string) (result model.SmartServiceRelease, err error, code int) {
@@ -275,7 +279,7 @@ func (this *Controller) HandleRelease(cmd ReleaseCommand) (err error) {
 		}
 		return nil
 	case "DELETE":
-		err = this.HandleReleaseDelete(cmd.Id)
+		err = this.HandleReleaseDelete(cmd.Owner, cmd.Id)
 		if err != nil {
 			return err
 		}
@@ -285,8 +289,15 @@ func (this *Controller) HandleRelease(cmd ReleaseCommand) (err error) {
 	}
 }
 
-func (this *Controller) HandleReleaseSave(owner string, release model.SmartServiceReleaseExtended) error {
-	err, _ := this.db.SetRelease(release)
+func (this *Controller) HandleReleaseSave(owner string, release model.SmartServiceReleaseExtended) (err error) {
+	oldReleases := []model.SmartServiceReleaseExtended{}
+	if release.NewReleaseId == "" {
+		oldReleases, err = this.db.GetReleasesByDesignId(release.DesignId)
+		if err != nil {
+			return err
+		}
+	}
+	err, _ = this.db.SetRelease(release)
 	if err != nil {
 		return err
 	}
@@ -299,14 +310,65 @@ func (this *Controller) HandleReleaseSave(owner string, release model.SmartServi
 			return err
 		}
 	}
-	return this.db.SetReleaseError(release.Id, "")
+	err = this.db.SetReleaseError(release.Id, "")
+	if err != nil {
+		return err
+	}
+	for _, old := range oldReleases {
+		if old.CreatedAt < release.CreatedAt { //"if" to prevent race from  HandleReleaseDelete() to recreate deleted release
+			old.NewReleaseId = release.Id
+			err = this.publishReleaseUpdate(owner, old)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
-func (this *Controller) HandleReleaseDelete(id string) error {
+func (this *Controller) HandleReleaseDelete(userId string, id string) error {
+	//remove release from camunda
 	err := this.camunda.RemoveRelease(id)
 	if err != nil {
 		return err
 	}
+
+	//update NewReleaseId on other releases if this release is the newest one
+	currentRelease, err, code := this.db.GetRelease(id)
+	if err != nil && code != http.StatusNotFound {
+		return err
+	}
+	if err == nil && currentRelease.NewReleaseId == "" {
+		oldReleases, err := this.db.GetReleasesByDesignId(currentRelease.DesignId)
+		if err != nil {
+			return err
+		}
+		sort.Slice(oldReleases, func(i, j int) bool {
+			return oldReleases[i].CreatedAt > oldReleases[i].CreatedAt
+		})
+		youngestRelease := model.SmartServiceReleaseExtended{}
+		for _, value := range oldReleases {
+			if value.Id == currentRelease.Id {
+				continue
+			}
+			if youngestRelease.Id == "" {
+				youngestRelease = value
+				break
+			}
+		}
+		if youngestRelease.Id != "" {
+			youngestRelease.NewReleaseId = ""
+			err = this.publishReleaseUpdate(userId, youngestRelease)
+			if err != nil {
+				return err
+			}
+		}
+		//other releases will be updated on update handling of youngestRelease because NewReleaseId == ""
+		//there is a race between the deletion of this release from the database and the update of releases that are not youngestRelease in HandleReleaseSave()
+		//but the retroactive create/uptdate of the releaste that is meant to be deleted is prevented by "if old.CreatedAt < release.CreatedAt {" in HandleReleaseSave()
+	}
+
+	//delete release from db
 	err, _ = this.db.DeleteRelease(id)
 	return err
 }

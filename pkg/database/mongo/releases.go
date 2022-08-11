@@ -129,3 +129,13 @@ func (this *Mongo) GetReleaseListByIds(ids []string, sort string) (result []mode
 	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
 	return result, err
 }
+
+func (this *Mongo) GetReleasesByDesignId(designId string) (result []model.SmartServiceReleaseExtended, err error) {
+	ctx, _ := getTimeoutContext()
+	cursor, err := this.releaseCollection().Find(ctx, bson.M{ReleaseBson.DesignId: designId})
+	if err != nil {
+		return result, err
+	}
+	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
+	return result, err
+}

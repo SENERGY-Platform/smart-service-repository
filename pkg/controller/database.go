@@ -55,4 +55,5 @@ type ReleaseInterface interface {
 	GetRelease(id string) (model.SmartServiceReleaseExtended, error, int)
 	GetReleaseListByIds(ids []string, sort string) ([]model.SmartServiceReleaseExtended, error)
 	DeleteRelease(id string) (error, int)
+	GetReleasesByDesignId(designId string) ([]model.SmartServiceReleaseExtended, error)
 }
