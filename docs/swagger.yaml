@@ -493,6 +493,29 @@ paths:
       summary: returns a list of smart-service releases
       tags:
       - releases
+  /extended-releases/{id}:
+    get:
+      description: returns a smart-service release
+      parameters:
+      - description: Release ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceReleaseExtended'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a smart-service release
+      tags:
+      - releases
   /health:
     get:
       description: checks health and reachability of the service

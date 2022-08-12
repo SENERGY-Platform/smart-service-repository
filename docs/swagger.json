@@ -290,6 +290,41 @@
                 }
             }
         },
+        "/extended-releases/{id}": {
+            "get": {
+                "description": "returns a smart-service release",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases"
+                ],
+                "summary": "returns a smart-service release",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Release ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceReleaseExtended"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "checks health and reachability of the service",

@@ -208,6 +208,38 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 	})
 }
 
+// GetExtended godoc
+// @Summary      returns a smart-service release
+// @Description  returns a smart-service release
+// @Tags         releases
+// @Produce      json
+// @Param        id path string true "Release ID"
+// @Success      200 {object} model.SmartServiceReleaseExtended
+// @Failure      500
+// @Failure      401
+// @Router       /extended-releases/{id} [get]
+func (this *Releases) GetExtended(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/extended-releases/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+		result, err, code := ctrl.GetExtendedRelease(token, id)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(result)
+	})
+}
+
 // ListExtended godoc
 // @Summary      returns a list of smart-service releases
 // @Description  returns a list of smart-service releases

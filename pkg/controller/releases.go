@@ -127,6 +127,17 @@ func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryO
 	return result, nil, http.StatusOK
 }
 
+func (this *Controller) GetExtendedRelease(token auth.Token, id string) (result model.SmartServiceReleaseExtended, err error, code int) {
+	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, id, "r")
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	if !access {
+		return result, errors.New("access denied"), http.StatusForbidden
+	}
+	return this.db.GetRelease(id)
+}
+
 func (this *Controller) ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, err error, code int) {
 	permWrapper := []PermissionsWrapper{}
 	var filter *permissions.Selection
