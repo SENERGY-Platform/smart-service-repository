@@ -72,7 +72,7 @@ func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended) (error,
 	_, err = this.instanceCollection().UpdateMany(ctx, bson.M{
 		InstanceBson.ReleaseId: element.Id,
 	}, bson.M{
-		"$set": bson.M{InstanceBson.NewReleaseId: element.Id},
+		"$set": bson.M{InstanceBson.NewReleaseId: element.NewReleaseId},
 	})
 	if err != nil {
 		return err, http.StatusInternalServerError
