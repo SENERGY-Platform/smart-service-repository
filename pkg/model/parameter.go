@@ -32,6 +32,7 @@ type ParameterDescription struct {
 	Order            int                    `json:"order" bson:"order"`
 	CharacteristicId *string                `json:"characteristic_id,omitempty"`
 	Characteristic   *Characteristic        `json:"characteristic,omitempty"`
+	Optional         bool                   `json:"optional"`
 }
 
 type IotDescription struct {
@@ -79,6 +80,8 @@ type SmartServiceExtendedParameter struct {
 	Order            int             `json:"order"`
 	CharacteristicId *string         `json:"characteristic_id,omitempty"`
 	Characteristic   *Characteristic `json:"characteristic,omitempty"`
+	Optional         bool            `json:"optional"`
+	HasNoValidOption bool            `json:"has_no_valid_option"`
 }
 
 type Option struct {

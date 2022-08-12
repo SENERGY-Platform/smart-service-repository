@@ -222,6 +222,10 @@ func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result
 	if !access {
 		return result, errors.New("access denied"), http.StatusForbidden
 	}
+	return this.GetReleaseParameterWithoutAuthCheck(token, id)
+}
+
+func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int) {
 	release, err, code := this.db.GetRelease(id)
 	if err != nil {
 		return result, err, code
@@ -240,11 +244,13 @@ func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result
 			Order:            paramDesc.Order,
 			CharacteristicId: paramDesc.CharacteristicId,
 			Characteristic:   paramDesc.Characteristic,
+			Optional:         paramDesc.Optional,
 		}
 		param.Options, err, code = this.getParamOptions(token, paramDesc)
 		if err != nil {
 			return result, err, code
 		}
+		param.HasNoValidOption = !(param.Optional || paramDesc.IotDescription == nil || len(param.Options) > 0)
 		result = append(result, param)
 	}
 	sort.Slice(result, func(i, j int) bool {
@@ -457,6 +463,7 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 			Description:  properties["description"],
 			Type:         fieldType,
 			DefaultValue: defaultValue,
+			Optional:     strings.ToLower(strings.TrimSpace(properties["optional"])) == "true",
 		}
 		if order, ok := properties["order"]; ok {
 			param.Order, err = strconv.Atoi(order)

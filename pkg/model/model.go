@@ -37,12 +37,22 @@ type SmartServiceRelease struct {
 	NewReleaseId string `json:"new_release_id,omitempty"`
 }
 
+type SmartServiceReleaseWithUsableFlag struct {
+	SmartServiceRelease
+	Usable bool `json:"usable"`
+}
+
 type SmartServiceReleaseExtended struct {
 	SmartServiceRelease `bson:",inline"`
 	BpmnXml             string                  `json:"bpmn_xml" bson:"bpmn_xml"`
 	SvgXml              string                  `json:"svg_xml" bson:"svg_xml"`
 	ParsedInfo          SmartServiceReleaseInfo `json:"parsed_info" bson:"parsed_info"`
 	PermissionsInfo     PermissionsInfo         `json:"permissions_info,omitempty"` //optional, set if query parameter permissions_info=true
+}
+
+type SmartServiceReleaseExtendedWithUsableFlag struct {
+	SmartServiceReleaseExtended
+	Usable bool `json:"usable"`
 }
 
 type PermissionsInfo struct {

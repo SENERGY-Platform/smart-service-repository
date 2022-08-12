@@ -145,11 +145,12 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 // @Summary      returns a list of smart-service releases
 // @Description  returns a list of smart-service releases
 // @Tags         releases
-// @Param        latest query bool false "returns only newest release of the same design"
 // @Param        limit query integer false "limits size of result"
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
+// @Param        latest query bool false "returns only newest release of the same design"
+// @Param        add-usable-flag query bool false "add 'usable' flag to result, describing if the user hase options for all iot parameters"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceRelease
 // @Failure      500
@@ -197,14 +198,34 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 			}
 		}
 
+		addUsableFlagStr := request.URL.Query().Get("add-usable-flag")
+		addUsableFlag := false
+		if addUsableFlagStr != "" {
+			addUsableFlag, err = strconv.ParseBool(addUsableFlagStr)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+
 		result, err, code := ctrl.ListReleases(token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
 		}
 
-		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(result)
+		if addUsableFlag {
+			withUsableFlat, err := addUsableFlagToReleases(ctrl, token, result)
+			if err != nil {
+				http.Error(writer, err.Error(), code)
+				return
+			}
+			writer.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(writer).Encode(withUsableFlat)
+		} else {
+			writer.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(writer).Encode(result)
+		}
 	})
 }
 
@@ -244,11 +265,12 @@ func (this *Releases) GetExtended(config configuration.Config, router *httproute
 // @Summary      returns a list of smart-service releases
 // @Description  returns a list of smart-service releases
 // @Tags         releases
-// @Param        latest query bool false "returns only newest release of the same design"
 // @Param        limit query integer false "limits size of result"
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
+// @Param        latest query bool false "returns only newest release of the same design"
+// @Param        add-usable-flag query bool false "add 'usable' flag to result, describing if the user hase options for all iot parameters"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceReleaseExtended
 // @Failure      500
@@ -296,15 +318,75 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 			}
 		}
 
+		addUsableFlagStr := request.URL.Query().Get("add-usable-flag")
+		addUsableFlag := false
+		if addUsableFlagStr != "" {
+			addUsableFlag, err = strconv.ParseBool(addUsableFlagStr)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+
 		result, err, code := ctrl.ListExtendedReleases(token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
 		}
 
-		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(result)
+		if addUsableFlag {
+			withUsableFlat, err := addUsableFlagToExtendedReleases(ctrl, token, result)
+			if err != nil {
+				http.Error(writer, err.Error(), code)
+				return
+			}
+			writer.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(writer).Encode(withUsableFlat)
+		} else {
+			writer.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(writer).Encode(result)
+		}
 	})
+}
+
+func addUsableFlagToExtendedReleases(ctrl Controller, token auth.Token, releases []model.SmartServiceReleaseExtended) (result []model.SmartServiceReleaseExtendedWithUsableFlag, err error) {
+	for _, release := range releases {
+		parameter, err, _ := ctrl.GetReleaseParameterWithoutAuthCheck(token, release.Id)
+		if err != nil {
+			return result, err
+		}
+		element := model.SmartServiceReleaseExtendedWithUsableFlag{
+			SmartServiceReleaseExtended: release,
+			Usable:                      true,
+		}
+		for _, param := range parameter {
+			if param.HasNoValidOption {
+				element.Usable = false
+			}
+		}
+		result = append(result, element)
+	}
+	return result, nil
+}
+
+func addUsableFlagToReleases(ctrl Controller, token auth.Token, releases []model.SmartServiceRelease) (result []model.SmartServiceReleaseWithUsableFlag, err error) {
+	for _, release := range releases {
+		parameter, err, _ := ctrl.GetReleaseParameterWithoutAuthCheck(token, release.Id)
+		if err != nil {
+			return result, err
+		}
+		element := model.SmartServiceReleaseWithUsableFlag{
+			SmartServiceRelease: release,
+			Usable:              true,
+		}
+		for _, param := range parameter {
+			if param.HasNoValidOption {
+				element.Usable = false
+			}
+		}
+		result = append(result, element)
+	}
+	return result, nil
 }
 
 // Parameters godoc
