@@ -53,6 +53,8 @@ func NewProducer(ctx context.Context, config configuration.Config, topic string)
 		Async:       false,
 		Logger:      logger,
 		ErrorLogger: log.New(os.Stderr, "KAFKA", 0),
+		MaxAttempts: 10,
+		BatchSize:   1,
 	}
 
 	go func() {

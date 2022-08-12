@@ -653,10 +653,11 @@ func TestReleaseApi(t *testing.T) {
 				return
 			}
 			checkContentType(t, resp)
+			time.Sleep(2 * time.Second)
 		}
 	})
 
-	time.Sleep(30 * time.Second) //allow async cqrs delete to play out
+	time.Sleep(10 * time.Second) //allow async cqrs delete to play out
 
 	t.Run("list", func(t *testing.T) {
 		t.Run("default", func(t *testing.T) {
