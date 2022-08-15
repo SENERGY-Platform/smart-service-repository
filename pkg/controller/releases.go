@@ -94,7 +94,7 @@ func (this *Controller) publishReleaseUpdate(owner string, release model.SmartSe
 		return err
 	}
 
-	return this.releasesProducer.Produce(release.Id, msg)
+	return this.releasesProducer.Produce(release.DesignId+"/"+release.Id, msg)
 }
 
 func (this *Controller) GetRelease(token auth.Token, id string) (result model.SmartServiceRelease, err error, code int) {
@@ -110,10 +110,11 @@ func (this *Controller) GetRelease(token auth.Token, id string) (result model.Sm
 	return extended.SmartServiceRelease, err, code
 }
 
-type PermissionsWrapper struct {
+type ReleasePermissionsWrapper struct {
 	Id          string          `json:"id"`
 	Shared      bool            `json:"shared"`
 	Permissions map[string]bool `json:"permissions"`
+	DesignId    string          `json:"design_id"`
 }
 
 func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceRelease, err error, code int) {
@@ -139,7 +140,7 @@ func (this *Controller) GetExtendedRelease(token auth.Token, id string) (result 
 }
 
 func (this *Controller) ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, err error, code int) {
-	permWrapper := []PermissionsWrapper{}
+	permWrapper := []ReleasePermissionsWrapper{}
 	var filter *permissions.Selection
 	if query.Latest {
 		filter = &permissions.Selection{
@@ -189,25 +190,52 @@ func (this *Controller) ListExtendedReleases(token auth.Token, query model.Relea
 	return result, nil, http.StatusOK
 }
 
-func (this *Controller) DeleteRelease(token auth.Token, id string) (error, int) {
+func (this *Controller) DeleteRelease(token auth.Token, releaseId string) (error, int) {
 	if this.releasesProducer == nil {
 		return errors.New("edit is disabled"), http.StatusInternalServerError
 	}
-	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, id, "a")
+	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, releaseId, "a")
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
 	if !access {
 		return errors.New("access denied"), http.StatusForbidden
 	}
+
+	//find design-id to create correct kafka-key
+	wrapper := []ReleasePermissionsWrapper{}
+	oldReleas, err, code := this.db.GetRelease(releaseId) //try database
+	if err != nil && code == http.StatusNotFound {
+		//if not found in the database: try permissions-search
+		err, code = this.permissions.Query(token.Jwt(), permissions.QueryMessage{
+			Resource: this.config.KafkaSmartServiceReleaseTopic,
+			ListIds: &permissions.QueryListIds{
+				QueryListCommons: permissions.QueryListCommons{
+					Limit:  1,
+					Rights: "a",
+				},
+				Ids: []string{releaseId},
+			},
+		}, &wrapper)
+		if err != nil {
+			return err, code
+		}
+		if len(wrapper) == 0 {
+			return fmt.Errorf("unknown release id: %v", releaseId), http.StatusNotFound
+		}
+		oldReleas.DesignId = wrapper[0].DesignId
+		err = nil
+	}
+	key := oldReleas.DesignId + "/" + releaseId
+
 	msg, err := json.Marshal(ReleaseCommand{
 		Command: "DELETE",
-		Id:      id,
+		Id:      releaseId,
 	})
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	err = this.releasesProducer.Produce(id, msg)
+	err = this.releasesProducer.Produce(key, msg)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

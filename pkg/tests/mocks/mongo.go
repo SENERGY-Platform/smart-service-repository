@@ -18,12 +18,12 @@ package mocks
 
 import (
 	"context"
-	"github.com/strikesecurity/strikememongo"
+	"github.com/tryvium-travels/memongo"
 	"sync"
 )
 
 func Mongo(ctx context.Context, wg *sync.WaitGroup) (mongoUrl string, err error) {
-	mongoServer, err := strikememongo.StartWithOptions(&strikememongo.Options{MongoVersion: "4.2.1", ShouldUseReplica: true})
+	mongoServer, err := memongo.StartWithOptions(&memongo.Options{MongoVersion: "4.2.1", ShouldUseReplica: true})
 	if err != nil {
 		return "", err
 	}

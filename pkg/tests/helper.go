@@ -117,7 +117,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 		config.PermissionsUrl = "http://" + permIp + ":8080"
 		perm = permissions.New(config)
 		consumer = kafka.NewConsumer
-		producer = controller.NewProducerFactory(kafka.NewProducer)
+		producer = controller.NewProducerFactory(kafka.NewProducerWithKeySeparationBalancer)
 	} else {
 		var sender func(topic string, message []byte)
 		sender, consumer = mocks.NewConsumer(errHandler)

@@ -22,6 +22,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"log"
 	"os"
+	"strings"
 )
 
 type Producer struct {
@@ -30,6 +31,14 @@ type Producer struct {
 }
 
 func NewProducer(ctx context.Context, config configuration.Config, topic string) (*Producer, error) {
+	return NewProducerWithBalancer(ctx, config, topic, &kafka.Hash{})
+}
+
+func NewProducerWithKeySeparationBalancer(ctx context.Context, config configuration.Config, topic string) (*Producer, error) {
+	return NewProducerWithBalancer(ctx, config, topic, &KeySeparationBalancer{SubBalancer: &kafka.Hash{}, Seperator: "/"})
+}
+
+func NewProducerWithBalancer(ctx context.Context, config configuration.Config, topic string, balancer kafka.Balancer) (*Producer, error) {
 	result := &Producer{ctx: ctx}
 	broker, err := GetBroker(config.KafkaUrl)
 	if err != nil {
@@ -55,6 +64,7 @@ func NewProducer(ctx context.Context, config configuration.Config, topic string)
 		ErrorLogger: log.New(os.Stderr, "KAFKA", 0),
 		MaxAttempts: 10,
 		BatchSize:   1,
+		Balancer:    balancer,
 	}
 
 	go func() {
@@ -70,4 +80,19 @@ func (this *Producer) Produce(key string, message []byte) error {
 		Value: message,
 		Time:  configuration.TimeNow(),
 	})
+}
+
+type KeySeparationBalancer struct {
+	SubBalancer kafka.Balancer
+	Seperator   string
+}
+
+func (this *KeySeparationBalancer) Balance(msg kafka.Message, partitions ...int) (partition int) {
+	key := string(msg.Key)
+	if this.Seperator != "" {
+		keyParts := strings.Split(key, this.Seperator)
+		key = keyParts[0]
+	}
+	msg.Key = []byte(key)
+	return this.SubBalancer.Balance(msg, partitions...)
 }

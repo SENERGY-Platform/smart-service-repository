@@ -28,6 +28,12 @@ import (
 )
 
 func NewConsumer(ctx context.Context, config configuration.Config, topic string, listener func(delivery []byte) error) error {
+	return NewConsumerWithFullMessage(ctx, config, topic, func(delivery kafka.Message) error {
+		return listener(delivery.Value)
+	})
+}
+
+func NewConsumerWithFullMessage(ctx context.Context, config configuration.Config, topic string, listener func(delivery kafka.Message) error) error {
 	broker, err := GetBroker(config.KafkaUrl)
 	if err != nil {
 		log.Println("ERROR: unable to get broker list", err)
@@ -66,7 +72,7 @@ func NewConsumer(ctx context.Context, config configuration.Config, topic string,
 				}
 
 				err = retry(func() error {
-					return listener(m.Value)
+					return listener(m)
 				}, func(n int64) time.Duration {
 					return time.Duration(n) * time.Second
 				}, 10*time.Minute)

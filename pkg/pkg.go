@@ -44,7 +44,7 @@ func Start(ctx context.Context, config configuration.Config) error {
 		camunda.New(config),
 		selectables.New(config),
 		kafka.NewConsumer,
-		controller.NewProducerFactory(kafka.NewProducer),
+		controller.NewProducerFactory(kafka.NewProducerWithKeySeparationBalancer),
 		auth.GetCachedTokenProvider(config),
 	)
 	if err != nil {

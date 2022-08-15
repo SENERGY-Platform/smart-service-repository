@@ -23,6 +23,10 @@ import (
 )
 
 func InitTopic(bootstrapUrl string, topics ...string) (err error) {
+	return InitTopicWithPartitionNumber(bootstrapUrl, 1, topics...)
+}
+
+func InitTopicWithPartitionNumber(bootstrapUrl string, partitionNumber int, topics ...string) (err error) {
 	conn, err := kafka.Dial("tcp", bootstrapUrl)
 	if err != nil {
 		return err
@@ -45,7 +49,7 @@ func InitTopic(bootstrapUrl string, topics ...string) (err error) {
 	for _, topic := range topics {
 		topicConfigs = append(topicConfigs, kafka.TopicConfig{
 			Topic:             topic,
-			NumPartitions:     1,
+			NumPartitions:     partitionNumber,
 			ReplicationFactor: 1,
 			ConfigEntries: []kafka.ConfigEntry{
 				{
