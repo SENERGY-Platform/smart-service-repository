@@ -922,6 +922,7 @@ func TestInstanceApi(t *testing.T) {
 
 func fillTestParameter(parameters []model.SmartServiceExtendedParameter) (result []model.SmartServiceParameter) {
 	for _, p := range parameters {
+		p.Value = p.DefaultValue
 		if p.Value == nil {
 			if len(p.Options) > 0 {
 				if p.Multiple {

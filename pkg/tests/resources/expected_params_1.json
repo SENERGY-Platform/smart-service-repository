@@ -342,7 +342,7 @@
         "options": null,
         "order": 0,
         "type": "https://schema.org/Text",
-        "value": "default string"
+        "value": null
     },
     {
         "default_value": 42,
@@ -353,7 +353,7 @@
         "options": null,
         "order": 0,
         "type": "https://schema.org/Integer",
-        "value": 42
+        "value": null
     },
     {
         "default_value": null,

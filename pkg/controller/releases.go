@@ -262,7 +262,7 @@ func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id
 		param := model.SmartServiceExtendedParameter{
 			SmartServiceParameter: model.SmartServiceParameter{
 				Id:    paramDesc.Id,
-				Value: paramDesc.DefaultValue,
+				Value: nil,
 				Label: paramDesc.Label,
 			},
 			Description:      paramDesc.Description,
@@ -279,6 +279,21 @@ func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id
 			return result, err, code
 		}
 		param.HasNoValidOption = !(param.Optional || paramDesc.IotDescription == nil || len(param.Options) > 0)
+
+		//set default value to nil if it cont be found in options
+		if len(param.Options) > 0 && param.DefaultValue != nil {
+			found := false
+			for _, option := range param.Options {
+				if option.Value == param.DefaultValue {
+					found = true
+					break
+				}
+			}
+			if found {
+				param.DefaultValue = nil
+			}
+		}
+
 		result = append(result, param)
 	}
 	sort.Slice(result, func(i, j int) bool {
