@@ -289,7 +289,7 @@ func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id
 					break
 				}
 			}
-			if found {
+			if !found {
 				param.DefaultValue = nil
 			}
 		}
