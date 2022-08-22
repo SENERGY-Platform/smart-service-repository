@@ -147,6 +147,7 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 // @Tags         releases
 // @Param        limit query integer false "limits size of result"
 // @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        rights query string false "rights needed to see a release; bay be a combination of the following letters: 'rwxa'; default = r; release rights are set with https://github.com/SENERGY-Platform/permission-command"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
 // @Param        latest query bool false "returns only newest release of the same design"
@@ -182,6 +183,10 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 				http.Error(writer, err.Error(), http.StatusBadRequest)
 				return
 			}
+		}
+		query.Rights = request.URL.Query().Get("rights")
+		if query.Rights == "" {
+			query.Rights = "r"
 		}
 		query.Sort = request.URL.Query().Get("sort")
 		if query.Sort == "" {
@@ -267,6 +272,7 @@ func (this *Releases) GetExtended(config configuration.Config, router *httproute
 // @Tags         releases
 // @Param        limit query integer false "limits size of result"
 // @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        rights query string false "rights needed to see a release; bay be a combination of the following letters: 'rwxa'; default = r; release rights are set with https://github.com/SENERGY-Platform/permission-command"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
 // @Param        latest query bool false "returns only newest release of the same design"
@@ -302,6 +308,10 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 				http.Error(writer, err.Error(), http.StatusBadRequest)
 				return
 			}
+		}
+		query.Rights = request.URL.Query().Get("rights")
+		if query.Rights == "" {
+			query.Rights = "r"
 		}
 		query.Sort = request.URL.Query().Get("sort")
 		if query.Sort == "" {

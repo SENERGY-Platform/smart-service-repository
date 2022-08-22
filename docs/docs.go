@@ -249,12 +249,6 @@ const docTemplate = `{
                 "summary": "returns a list of smart-service releases",
                 "parameters": [
                     {
-                        "type": "boolean",
-                        "description": "returns only newest release of the same design",
-                        "name": "latest",
-                        "in": "query"
-                    },
-                    {
                         "type": "integer",
                         "description": "limits size of result",
                         "name": "limit",
@@ -268,6 +262,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "rights needed to see a release; bay be a combination of the following letters: 'rwxa'; default = r; release rights are set with https://github.com/SENERGY-Platform/permission-command",
+                        "name": "rights",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "describes the sorting in the form of name.asc",
                         "name": "sort",
                         "in": "query"
@@ -276,6 +276,18 @@ const docTemplate = `{
                         "type": "string",
                         "description": "optional text search (permission-search/elastic-search behavior)",
                         "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "returns only newest release of the same design",
+                        "name": "latest",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "add 'usable' flag to result, describing if the user hase options for all iot parameters",
+                        "name": "add-usable-flag",
                         "in": "query"
                     }
                 ],
@@ -1006,12 +1018,6 @@ const docTemplate = `{
                 "summary": "returns a list of smart-service releases",
                 "parameters": [
                     {
-                        "type": "boolean",
-                        "description": "returns only newest release of the same design",
-                        "name": "latest",
-                        "in": "query"
-                    },
-                    {
                         "type": "integer",
                         "description": "limits size of result",
                         "name": "limit",
@@ -1025,6 +1031,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "rights needed to see a release; bay be a combination of the following letters: 'rwxa'; default = r; release rights are set with https://github.com/SENERGY-Platform/permission-command",
+                        "name": "rights",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "describes the sorting in the form of name.asc",
                         "name": "sort",
                         "in": "query"
@@ -1033,6 +1045,18 @@ const docTemplate = `{
                         "type": "string",
                         "description": "optional text search (permission-search/elastic-search behavior)",
                         "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "returns only newest release of the same design",
+                        "name": "latest",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "add 'usable' flag to result, describing if the user hase options for all iot parameters",
+                        "name": "add-usable-flag",
                         "in": "query"
                     }
                 ],
@@ -1391,6 +1415,9 @@ const docTemplate = `{
                 "multiple": {
                     "type": "boolean"
                 },
+                "optional": {
+                    "type": "boolean"
+                },
                 "options": {
                     "type": "object",
                     "additionalProperties": true
@@ -1457,6 +1484,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "has_no_valid_option": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -1465,6 +1495,9 @@ const docTemplate = `{
                 },
                 "multiple": {
                     "description": "if true: Value = new([]Type); if false: Value = new(Type);",
+                    "type": "boolean"
+                },
+                "optional": {
                     "type": "boolean"
                 },
                 "options": {

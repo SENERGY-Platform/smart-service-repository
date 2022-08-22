@@ -89,6 +89,8 @@ definitions:
         type: string
       multiple:
         type: boolean
+      optional:
+        type: boolean
       options:
         additionalProperties: true
         type: object
@@ -133,12 +135,16 @@ definitions:
       default_value: {}
       description:
         type: string
+      has_no_valid_option:
+        type: boolean
       id:
         type: string
       label:
         type: string
       multiple:
         description: 'if true: Value = new([]Type); if false: Value = new(Type);'
+        type: boolean
+      optional:
         type: boolean
       options:
         description: if null -> "free text/number/etc"
@@ -457,10 +463,6 @@ paths:
     get:
       description: returns a list of smart-service releases
       parameters:
-      - description: returns only newest release of the same design
-        in: query
-        name: latest
-        type: boolean
       - description: limits size of result
         in: query
         name: limit
@@ -469,6 +471,11 @@ paths:
         in: query
         name: offset
         type: integer
+      - description: 'rights needed to see a release; bay be a combination of the
+          following letters: ''rwxa''; default = r; release rights are set with https://github.com/SENERGY-Platform/permission-command'
+        in: query
+        name: rights
+        type: string
       - description: describes the sorting in the form of name.asc
         in: query
         name: sort
@@ -477,6 +484,15 @@ paths:
         in: query
         name: search
         type: string
+      - description: returns only newest release of the same design
+        in: query
+        name: latest
+        type: boolean
+      - description: add 'usable' flag to result, describing if the user hase options
+          for all iot parameters
+        in: query
+        name: add-usable-flag
+        type: boolean
       produces:
       - application/json
       responses:
@@ -960,10 +976,6 @@ paths:
     get:
       description: returns a list of smart-service releases
       parameters:
-      - description: returns only newest release of the same design
-        in: query
-        name: latest
-        type: boolean
       - description: limits size of result
         in: query
         name: limit
@@ -972,6 +984,11 @@ paths:
         in: query
         name: offset
         type: integer
+      - description: 'rights needed to see a release; bay be a combination of the
+          following letters: ''rwxa''; default = r; release rights are set with https://github.com/SENERGY-Platform/permission-command'
+        in: query
+        name: rights
+        type: string
       - description: describes the sorting in the form of name.asc
         in: query
         name: sort
@@ -980,6 +997,15 @@ paths:
         in: query
         name: search
         type: string
+      - description: returns only newest release of the same design
+        in: query
+        name: latest
+        type: boolean
+      - description: add 'usable' flag to result, describing if the user hase options
+          for all iot parameters
+        in: query
+        name: add-usable-flag
+        type: boolean
       produces:
       - application/json
       responses:

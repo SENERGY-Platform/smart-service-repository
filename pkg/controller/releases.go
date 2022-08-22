@@ -157,7 +157,7 @@ func (this *Controller) ListExtendedReleases(token auth.Token, query model.Relea
 			QueryListCommons: permissions.QueryListCommons{
 				Limit:    query.Limit,
 				Offset:   query.Offset,
-				Rights:   "r",
+				Rights:   query.Rights,
 				SortBy:   query.GetSortField(),
 				SortDesc: !query.GetSortAsc(),
 			},
