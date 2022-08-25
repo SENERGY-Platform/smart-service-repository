@@ -373,6 +373,16 @@ func (this *Controller) HandleReleaseSave(owner string, release model.SmartServi
 			return err
 		}
 	}
+	sort.Slice(oldReleases, func(i, j int) bool {
+		return oldReleases[i].CreatedAt > oldReleases[i].CreatedAt
+	})
+	if len(oldReleases) > 0 {
+		err = this.copyRightsOfRelease(owner, oldReleases[len(oldReleases)-1], release)
+		if err != nil {
+			return err
+		}
+	}
+
 	err, _ = this.db.SetRelease(release)
 	if err != nil {
 		return err
@@ -447,6 +457,31 @@ func (this *Controller) HandleReleaseDelete(userId string, id string) error {
 	//delete release from db
 	err, _ = this.db.DeleteRelease(id)
 	return err
+}
+
+func (this *Controller) copyRightsOfRelease(owner string, oldRelease model.SmartServiceReleaseExtended, newRelease model.SmartServiceReleaseExtended) error {
+	token, err := this.adminAccess.EnsureAccess(this.config)
+	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
+		return err
+	}
+	rights, err, code := this.permissions.GetResourceRights(token, this.config.KafkaSmartServiceReleaseTopic, oldRelease.Id)
+	if err != nil {
+		log.Println("ERROR:", code, err)
+		debug.PrintStack()
+		return err
+	}
+	rights.UserRights[owner] = permissions.Right{
+		Read:         true,
+		Write:        true,
+		Execute:      true,
+		Administrate: true,
+	}
+	//same prefix as release PUT/DELETE to ensure same partition (preserved order when consuming)
+	//butt different suffix to ensure separate compaction
+	kafkaKey := newRelease.DesignId + "/" + newRelease.Id + "_" + "rights"
+	return this.permissions.SetResourceRights(token, this.config.KafkaSmartServiceReleaseTopic, newRelease.Id, rights, kafkaKey)
 }
 
 //------------ Parsing ----------------

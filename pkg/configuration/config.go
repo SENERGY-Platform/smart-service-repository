@@ -33,6 +33,7 @@ type Config struct {
 	CamundaUrl                           string   `json:"camunda_url" config:"secret"`
 	DeviceSelectionApi                   string   `json:"device_selection_api"`
 	PermissionsUrl                       string   `json:"permissions_url"`
+	PermissionsCmdUrl                    string   `json:"permissions_cmd_url"`
 	NotificationUrl                      string   `json:"notification_url"`
 	KafkaUrl                             string   `json:"kafka_url"`
 	ConsumerGroup                        string   `json:"consumer_group"`
@@ -49,6 +50,7 @@ type Config struct {
 	AuthEndpoint                         string   `json:"auth_endpoint"`
 	AuthClientId                         string   `json:"auth_client_id" config:"secret"`
 	AuthClientSecret                     string   `json:"auth_client_secret" config:"secret"`
+	AuthExpirationTimeBuffer             float64  `json:"auth_expiration_time_buffer"`
 	TokenCacheDefaultExpirationInSeconds int      `json:"token_cache_default_expiration_in_seconds"`
 	TokenCacheSizeInMb                   int      `json:"token_cache_size_in_mb"`
 	CleanupCycle                         string   `json:"cleanup_cycle"`

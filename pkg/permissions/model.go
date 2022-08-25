@@ -76,3 +76,18 @@ type Selection struct {
 	Not       *Selection      `json:"not"`
 	Condition ConditionConfig `json:"condition"`
 }
+
+type ResourceRights struct {
+	ResourceId  string                 `json:"resource_id"`
+	Features    map[string]interface{} `json:"features"`
+	UserRights  map[string]Right       `json:"user_rights"`
+	GroupRights map[string]Right       `json:"group_rights"`
+	Creator     string                 `json:"creator"`
+}
+
+type Right struct {
+	Read         bool `json:"read"`
+	Write        bool `json:"write"`
+	Execute      bool `json:"execute"`
+	Administrate bool `json:"administrate"`
+}

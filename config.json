@@ -4,6 +4,7 @@
     "enable_swagger_ui": false,
 
     "permissions_url": "",
+    "permissions_cmd_url": "",
     "device_selection_api": "",
     "camunda_url": "",
     "notification_url": "",
@@ -26,6 +27,7 @@
     "auth_endpoint": "",
     "auth_client_id": "",
     "auth_client_secret": "",
+    "auth_expiration_time_buffer": 2,
     "token_cache_default_expiration_in_seconds": 60,
     "token_cache_size_in_mb": 20,
 

@@ -51,3 +51,11 @@ func (this *Permissions) Query(token string, query permissions.QueryMessage, res
 func (this *Permissions) SetQueryFindResponses(queryFindResponses map[string]map[string]interface{}) {
 	this.queryFindResponses = queryFindResponses
 }
+
+func (this *Permissions) GetResourceRights(token string, topic string, id string) (rights permissions.ResourceRights, err error, code int) {
+	return rights, nil, 200
+}
+
+func (this *Permissions) SetResourceRights(token string, topic string, id string, rights permissions.ResourceRights, kafkaKey string) error {
+	return nil
+}

@@ -34,6 +34,7 @@ type Controller struct {
 	permissions       Permissions
 	selectables       Selectables
 	userTokenProvider UserTokenProvider
+	adminAccess       *auth.OpenidToken
 }
 
 type Producer interface {
@@ -43,6 +44,8 @@ type Producer interface {
 type Permissions interface {
 	CheckAccess(token auth.Token, topic string, id string, right string) (bool, error)
 	Query(token string, query permissions.QueryMessage, result interface{}) (err error, code int)
+	GetResourceRights(token string, topic string, id string) (rights permissions.ResourceRights, err error, code int)
+	SetResourceRights(token string, topic string, id string, rights permissions.ResourceRights, kafkaKey string) error
 }
 
 type Camunda interface {
@@ -74,6 +77,7 @@ func New(ctx context.Context, config configuration.Config, db *mongo.Mongo, perm
 		camunda:           camunda,
 		selectables:       selectables,
 		userTokenProvider: userTokenProvider,
+		adminAccess:       &auth.OpenidToken{},
 	}
 	if config.EditForward == "" || config.EditForward == "-" {
 		ctrl.releasesProducer, err = producer(ctx, config, config.KafkaSmartServiceReleaseTopic)

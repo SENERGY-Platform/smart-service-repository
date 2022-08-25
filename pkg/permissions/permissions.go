@@ -22,6 +22,7 @@ import (
 	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -96,4 +97,68 @@ func (this *Permissions) Query(token string, query QueryMessage, result interfac
 	}
 
 	return nil, http.StatusOK
+}
+
+func (this *Permissions) GetResourceRights(token string, topic string, id string) (rights ResourceRights, err error, code int) {
+	req, err := http.NewRequest("GET", this.config.PermissionsUrl+"/v3/administrate/rights/"+url.PathEscape(topic)+"/"+url.PathEscape(id), nil)
+	if err != nil {
+		debug.PrintStack()
+		return rights, err, http.StatusInternalServerError
+	}
+	req.Header.Set("Authorization", token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		debug.PrintStack()
+		return rights, err, http.StatusInternalServerError
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		err = errors.New(buf.String())
+		log.Println("ERROR: ", resp.StatusCode, err)
+		debug.PrintStack()
+		return rights, err, resp.StatusCode
+	}
+	err = json.NewDecoder(resp.Body).Decode(&rights)
+	if err != nil {
+		debug.PrintStack()
+		return rights, err, http.StatusInternalServerError
+	}
+
+	return rights, nil, http.StatusOK
+}
+
+func (this *Permissions) SetResourceRights(token string, topic string, id string, rights ResourceRights, kafkaKey string) error {
+	requestBody := new(bytes.Buffer)
+	err := json.NewEncoder(requestBody).Encode(rights)
+	if err != nil {
+		return err
+	}
+	queryParameter := ""
+	if kafkaKey != "" {
+		queryParameter = "?key=" + url.QueryEscape(kafkaKey)
+	}
+	req, err := http.NewRequest("PUT", this.config.PermissionsCmdUrl+"/v3/administrate/rights/"+url.PathEscape(topic)+"/"+url.PathEscape(id)+queryParameter, requestBody)
+	if err != nil {
+		debug.PrintStack()
+		return err
+	}
+	req.Header.Set("Authorization", token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		debug.PrintStack()
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		err = errors.New(buf.String())
+		log.Println("ERROR: ", resp.StatusCode, err)
+		debug.PrintStack()
+		return err
+	}
+	io.ReadAll(resp.Body) //empty body to ensure reuse of connection
+	return nil
 }
