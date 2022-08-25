@@ -354,6 +354,8 @@ func (this *Controller) HandleRelease(cmd ReleaseCommand) (err error) {
 			return err
 		}
 		return nil
+	case "RIGHTS":
+		return nil
 	case "DELETE":
 		err = this.HandleReleaseDelete(cmd.Owner, cmd.Id)
 		if err != nil {

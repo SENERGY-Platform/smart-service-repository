@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -28,8 +29,16 @@ import (
 
 func Keycloak(ctx context.Context, wg *sync.WaitGroup) (url string) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		token := userToken
+		if grandType := request.FormValue("grant_type"); grandType == "client_credentials" {
+			log.Println("TEST: supply admin token", grandType)
+			token = adminToken
+		} else {
+			log.Println("TEST: supply user token", grandType)
+			token = userToken
+		}
 		json.NewEncoder(writer).Encode(auth.OpenidToken{
-			AccessToken: strings.TrimPrefix(userToken, "Bearer "),
+			AccessToken: strings.TrimPrefix(token, "Bearer "),
 			ExpiresIn:   60,
 		})
 	}))

@@ -107,6 +107,7 @@ func TestReleaseSearch(t *testing.T) {
 				t.Error(resp.StatusCode, string(temp))
 				return
 			}
+			time.Sleep(1 * time.Second)
 		}
 	})
 

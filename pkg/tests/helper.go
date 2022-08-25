@@ -115,6 +115,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 		}
 		time.Sleep(5 * time.Second)
 		config.PermissionsUrl = "http://" + permIp + ":8080"
+		config.PermissionsCmdUrl = "http://" + permIp + ":8080"
 		perm = permissions.New(config)
 		consumer = kafka.NewConsumer
 		producer = controller.NewProducerFactory(kafka.NewProducerWithKeySeparationBalancer)
