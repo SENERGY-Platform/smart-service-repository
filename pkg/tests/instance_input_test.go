@@ -72,7 +72,7 @@ func TestInstanceJsonInput(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	time.Sleep(2 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	topicBackup := mocks.CAMUNDA_MODULE_WORKER_TOPIC
 	defer func() {

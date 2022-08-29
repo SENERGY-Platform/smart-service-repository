@@ -31,7 +31,7 @@ func PermSearch(ctx context.Context, wg *sync.WaitGroup, zk string, elasticIp st
 		return "", "", err
 	}
 	log.Println("start permsearch")
-	container, err := pool.Run("ghcr.io/senergy-platform/permission-search", "dev", []string{
+	container, err := pool.Run("ghcr.io/senergy-platform/permission-search", "prod", []string{
 		"KAFKA_URL=" + zk,
 		"ELASTIC_URL=" + "http://" + elasticIp + ":9200",
 		"DEBUG=true",
