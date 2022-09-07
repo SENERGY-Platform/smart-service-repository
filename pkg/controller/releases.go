@@ -482,7 +482,7 @@ func (this *Controller) copyRightsOfRelease(owner string, oldRelease model.Smart
 	}
 	//same prefix as release PUT/DELETE to ensure same partition (preserved order when consuming)
 	//butt different suffix to ensure separate compaction
-	kafkaKey := newRelease.DesignId + "/" + newRelease.Id + "_" + "rights"
+	kafkaKey := newRelease.DesignId + "/" + newRelease.Id + "_rights"
 	return this.permissions.SetResourceRights(token, this.config.KafkaSmartServiceReleaseTopic, newRelease.Id, rights, kafkaKey)
 }
 

@@ -166,7 +166,7 @@ func optionFromImport(importOption model.Import, path string, characteristicId s
 		}
 	}
 
-	temp, err := json.Marshal(model.IotOption{ImportSelection: &importSelection})
+	temp, err := json.Marshal(model.IotOption{ImportSelection: &importSelection, Label: option.Label})
 	if err != nil {
 		return option, err
 	}
@@ -204,7 +204,7 @@ func optionFromDeviceServiceAndPath(device model.Device, service model.Service, 
 		}
 	}
 
-	temp, err := json.Marshal(model.IotOption{DeviceSelection: &deviceSelection})
+	temp, err := json.Marshal(model.IotOption{DeviceSelection: &deviceSelection, Label: option.Label})
 	if err != nil {
 		return option, err
 	}
@@ -214,7 +214,7 @@ func optionFromDeviceServiceAndPath(device model.Device, service model.Service, 
 
 func (this *Controller) deviceGroupToOptionInfo(group model.DeviceGroup) (label string, encodedValue string, err error, code int) {
 	label = group.Name
-	temp, err := json.Marshal(model.IotOption{DeviceGroupSelection: &model.DeviceGroupSelection{Id: group.Id}})
+	temp, err := json.Marshal(model.IotOption{DeviceGroupSelection: &model.DeviceGroupSelection{Id: group.Id}, Label: label})
 	if err != nil {
 		return label, encodedValue, err, http.StatusInternalServerError
 	}

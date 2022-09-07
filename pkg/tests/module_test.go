@@ -193,7 +193,7 @@ func TestModuleApi(t *testing.T) {
 			},
 			"Task_foo.selection": {
 				Type:  "String",
-				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null},\"label\":\"Device 1: one service, no paths\"}",
 			},
 			"color_hex": {
 				Type:  "String",
@@ -201,7 +201,7 @@ func TestModuleApi(t *testing.T) {
 			},
 			"device_selection": {
 				Type:  "String",
-				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null},\"label\":\"Device 1: one service, no paths\"}",
 			},
 			"process_model_id": {
 				Type:  "String",
@@ -442,7 +442,7 @@ func TestModulePutApi(t *testing.T) {
 			},
 			"Task_foo.selection": {
 				Type:  "String",
-				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null},\"label\":\"Device 1: one service, no paths\"}",
 			},
 			"color_hex": {
 				Type:  "String",
@@ -450,7 +450,7 @@ func TestModulePutApi(t *testing.T) {
 			},
 			"device_selection": {
 				Type:  "String",
-				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null}}",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null},\"label\":\"Device 1: one service, no paths\"}",
 			},
 			"process_model_id": {
 				Type:  "String",
@@ -583,7 +583,6 @@ func TestModulePutApi(t *testing.T) {
 }
 
 func testModuleList(t *testing.T, apiUrl string, query string, expectedCount int, allowedInstanceIds []string, allowedModuleTypes []string) {
-	t.Helper()
 	resp, err := get(userToken, apiUrl+"/modules"+query)
 	if err != nil {
 		t.Error(err)
@@ -614,7 +613,6 @@ func testModuleList(t *testing.T, apiUrl string, query string, expectedCount int
 			t.Error(element.InstanceId, allowedInstanceIds)
 			return
 		}
-		t.Log(element.ModuleData)
 	}
 }
 
