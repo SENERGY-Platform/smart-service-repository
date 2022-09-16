@@ -299,6 +299,11 @@ func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id
 			}
 		}
 
+		//sort options
+		sort.Slice(param.Options, func(i, j int) bool {
+			return param.Options[i].Label < param.Options[j].Label
+		})
+
 		result = append(result, param)
 	}
 	sort.Slice(result, func(i, j int) bool {
