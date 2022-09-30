@@ -59,6 +59,10 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 			if searched == model.ImportFilter {
 				query.Set("include_imports", "true")
 			}
+			if searched == model.DeviceServiceGroupFilter {
+				query.Set("include_devices", "true")
+				query.Set("include_id_modified", "true")
+			}
 		}
 	}
 

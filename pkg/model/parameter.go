@@ -52,9 +52,10 @@ type Criteria struct {
 type FilterPossibility = string
 
 const (
-	DeviceFilter FilterPossibility = "device"
-	GroupFilter  FilterPossibility = "group"
-	ImportFilter FilterPossibility = "import"
+	DeviceFilter             FilterPossibility = "device"
+	DeviceServiceGroupFilter FilterPossibility = "device_service_group"
+	GroupFilter              FilterPossibility = "group"
+	ImportFilter             FilterPossibility = "import"
 )
 
 //---------------------------------
