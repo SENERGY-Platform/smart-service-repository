@@ -17,6 +17,7 @@
 package mongo
 
 import (
+	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -26,6 +27,8 @@ import (
 )
 
 var InstanceBson = getBsonFieldObject[model.SmartServiceInstance]()
+
+var ErrInstanceNotFound = errors.New("instance not found")
 
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
@@ -63,14 +66,14 @@ func (this *Mongo) GetInstance(id string, userId string) (result model.SmartServ
 	temp := this.instanceCollection().FindOne(ctx, filter)
 	err = temp.Err()
 	if err == mongo.ErrNoDocuments {
-		return result, err, http.StatusNotFound
+		return result, ErrInstanceNotFound, http.StatusNotFound
 	}
 	if err != nil {
 		return
 	}
 	err = temp.Decode(&result)
 	if err == mongo.ErrNoDocuments {
-		return result, err, http.StatusNotFound
+		return result, ErrInstanceNotFound, http.StatusNotFound
 	}
 	return result, nil, http.StatusOK
 }

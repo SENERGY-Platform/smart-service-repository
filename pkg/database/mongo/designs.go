@@ -17,6 +17,7 @@
 package mongo
 
 import (
+	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -27,6 +28,8 @@ import (
 )
 
 var DesignBson = getBsonFieldObject[model.SmartServiceDesign]()
+
+var ErrDesignNotFound = errors.New("design not found")
 
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
@@ -60,14 +63,14 @@ func (this *Mongo) GetDesign(id string, userId string) (result model.SmartServic
 	temp := this.designCollection().FindOne(ctx, bson.M{DesignBson.Id: id, DesignBson.UserId: userId})
 	err = temp.Err()
 	if err == mongo.ErrNoDocuments {
-		return result, err, http.StatusNotFound
+		return result, ErrDesignNotFound, http.StatusNotFound
 	}
 	if err != nil {
 		return
 	}
 	err = temp.Decode(&result)
 	if err == mongo.ErrNoDocuments {
-		return result, err, http.StatusNotFound
+		return result, ErrDesignNotFound, http.StatusNotFound
 	}
 	return result, nil, http.StatusOK
 }

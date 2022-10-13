@@ -17,6 +17,7 @@
 package mongo
 
 import (
+	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -26,6 +27,8 @@ import (
 )
 
 var ReleaseBson = getBsonFieldObject[model.SmartServiceReleaseExtended]()
+
+var ErrReleaseNotFound = errors.New("release not found")
 
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
@@ -96,14 +99,14 @@ func (this *Mongo) GetRelease(id string) (result model.SmartServiceReleaseExtend
 	temp := this.releaseCollection().FindOne(ctx, bson.M{ReleaseBson.Id: id})
 	err = temp.Err()
 	if err == mongo.ErrNoDocuments {
-		return result, err, http.StatusNotFound
+		return result, ErrReleaseNotFound, http.StatusNotFound
 	}
 	if err != nil {
 		return
 	}
 	err = temp.Decode(&result)
 	if err == mongo.ErrNoDocuments {
-		return result, err, http.StatusNotFound
+		return result, ErrReleaseNotFound, http.StatusNotFound
 	}
 	return result, nil, http.StatusOK
 }

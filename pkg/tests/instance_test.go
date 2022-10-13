@@ -28,6 +28,7 @@ import (
 	"net/url"
 	"reflect"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -916,6 +917,28 @@ func TestInstanceApi(t *testing.T) {
 		t.Run("limit and offset", func(t *testing.T) {
 			testInstanceList(t, apiUrl, "?limit=2&offset=1", names[1:3])
 		})
+	})
+
+	t.Run("read instance 404", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/instances/foo")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		msg, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if strings.Contains(string(msg), "mongo") {
+			t.Error(string(msg))
+			return
+		}
 	})
 
 }
