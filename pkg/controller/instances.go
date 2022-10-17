@@ -47,6 +47,33 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 	if err != nil {
 		return result, err, code
 	}
+
+	paramListWithoutAutoSelect := instanceInfo.Parameters
+
+	paramListWithAutoSelect := []model.SmartServiceParameter{}
+	paramListWithAutoSelect = append(paramListWithAutoSelect, instanceInfo.Parameters...)
+	for _, param := range release.ParsedInfo.ParameterDescriptions {
+		if param.AutoSelectAll {
+			options, err, code := this.getParamOptions(token, param)
+			if err != nil {
+				return result, err, code
+			}
+
+			value := []interface{}{}
+			for _, option := range options {
+				value = append(value, option.Value)
+			}
+
+			paramListWithAutoSelect = append(paramListWithAutoSelect, model.SmartServiceParameter{
+				Id:         param.Id,
+				Value:      value,
+				Label:      param.Label,
+				ValueLabel: param.Label,
+			})
+		}
+	}
+
+	//store without auto_select_all parameter
 	result = model.SmartServiceInstance{
 		SmartServiceInstanceInit: instanceInfo,
 		Id:                       uuid.NewString(),
@@ -64,6 +91,9 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 	if err != nil {
 		return result, err, code
 	}
+
+	//start with auto_select_all parameter
+	result.SmartServiceInstanceInit.Parameters = paramListWithAutoSelect
 	err = this.camunda.Start(result)
 	if err != nil {
 		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
@@ -74,6 +104,8 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 		return result, err, http.StatusInternalServerError
 	}
 
+	//return result without auto_select_all parameters
+	result.SmartServiceInstanceInit.Parameters = paramListWithoutAutoSelect
 	return result, nil, http.StatusOK
 }
 

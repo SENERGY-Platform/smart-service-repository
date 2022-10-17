@@ -27,6 +27,7 @@ type ParameterDescription struct {
 	Type             string                 `json:"type" bson:"type"`
 	DefaultValue     interface{}            `json:"default_value" bson:"default_value"`
 	Multiple         bool                   `json:"multiple" bson:"multiple"`
+	AutoSelectAll    bool                   `json:"auto_select_all" bson:"auto_select_all"`
 	Options          map[string]interface{} `json:"options,omitempty" bson:"options,omitempty"`
 	IotDescription   *IotDescription        `json:"iot_description" bson:"iot_description"`
 	Order            int                    `json:"order" bson:"order"`

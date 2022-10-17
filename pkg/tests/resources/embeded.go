@@ -68,12 +68,19 @@ var ExpectedParams2Obj []model.SmartServiceExtendedParameter
 var SelectionsResponse3 []byte
 var SelectionsResponse3Obj []model.Selectable
 
+//go:embed selections_response_4.json
+var SelectionsResponse4 []byte
+var SelectionsResponse4Obj []model.Selectable
+
 //go:embed expected_params_3.json
 var ExpectedParams3 []byte
 var ExpectedParams3Obj []model.SmartServiceExtendedParameter
 
 //go:embed json_location_input.bpmn
 var JsonLocationInputBpmn string
+
+//go:embed auto_select_all_input.bpmn
+var AutoSelectAllInputBpmn string
 
 //go:embed empty-analytics-test.bpmn
 var EmptyAnalyticsTestBpmn string
@@ -112,6 +119,13 @@ func init() {
 		panic(err)
 	}
 	err = json.Unmarshal(ExpectedParams3, &ExpectedParams3Obj)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", err)
+		panic(err)
+	}
+
+	err = json.Unmarshal(SelectionsResponse4, &SelectionsResponse4Obj)
 	if err != nil {
 		debug.PrintStack()
 		log.Println("ERROR:", err)

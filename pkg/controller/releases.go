@@ -259,6 +259,9 @@ func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id
 		return result, err, code
 	}
 	for _, paramDesc := range release.ParsedInfo.ParameterDescriptions {
+		if paramDesc.AutoSelectAll {
+			continue //will be filled on instantiation of the release
+		}
 		param := model.SmartServiceExtendedParameter{
 			SmartServiceParameter: model.SmartServiceParameter{
 				Id:    paramDesc.Id,
@@ -583,6 +586,15 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 				return result, fmt.Errorf("invalid multiple property for formField %v: %w", id, err)
 			}
 		}
+		if autoSelectAll, ok := properties["auto_select_all"]; ok {
+			param.AutoSelectAll, err = strconv.ParseBool(autoSelectAll)
+			if err != nil {
+				return result, fmt.Errorf("invalid auto_select_all property for formField %v: %w", id, err)
+			}
+			if param.AutoSelectAll && !param.Multiple {
+				return result, fmt.Errorf("auto_select_all property may only be used in combination with multiple for formField %v: %w", id, err)
+			}
+		}
 		if iot, ok := properties["iot"]; ok {
 			if _, containsOptions := properties["options"]; containsOptions {
 				return result, fmt.Errorf("invalid options/iot property for formField %v: %v", id, "iot and options are mutual exclusive")
@@ -632,12 +644,15 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 
 func (this *Controller) validateParsedReleaseInfos(info model.SmartServiceReleaseInfo) error {
 	for _, param := range info.ParameterDescriptions {
+		if param.AutoSelectAll && !param.Multiple {
+			return fmt.Errorf("%v: parameter property \"auto_select_all\" may only be used in combination with  \"multiple\"", param.Id)
+		}
 		if param.IotDescription != nil {
 			if param.IotDescription.NeedsSameEntityIdInParameter != "" {
 				if !ListContains(info.ParameterDescriptions, func(p model.ParameterDescription) bool {
 					return p.Id == param.IotDescription.NeedsSameEntityIdInParameter
 				}) {
-					return fmt.Errorf("parameter property \"entity_only\" references unknown parameter \"%v\"", param.IotDescription.NeedsSameEntityIdInParameter)
+					return fmt.Errorf("%v: parameter property \"entity_only\" references unknown parameter \"%v\"", param.Id, param.IotDescription.NeedsSameEntityIdInParameter)
 				}
 			}
 		}
