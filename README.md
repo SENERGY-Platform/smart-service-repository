@@ -67,6 +67,13 @@ examples can be found in ./pkg/tests/resources
 - value: boolean
 - value example: `true`
 
+### auto_select_all
+
+- property name: `auto_select_all`
+- description: parameter will not be displayed to user. instead the parameter becomes a list of all parameter options. must be used in combination with `multiple`. can be used to select all devices of a user that matches the given criteria.
+- value: boolean
+- value example: `true`
+
 ### characteristic_id
 
 - property name: `characteristic_id`
