@@ -69,6 +69,45 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 	return nil
 }
 
+func (this *Camunda) StartMaintenance(procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error {
+	requestBody := new(bytes.Buffer)
+	key := idToCNName(id)
+	variables, err := this.GetProcessParameters(key)
+	if err != nil {
+		return err
+	}
+	query, err := createMaintenanceStartForm(procedure, id, parameter, variables)
+	if err != nil {
+		return err
+	}
+	err = json.NewEncoder(requestBody).Encode(query)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", this.config.CamundaUrl+"/engine-rest/message", requestBody)
+	if err != nil {
+		debug.PrintStack()
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		debug.PrintStack()
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		err = errors.New(buf.String())
+		log.Println("ERROR: ", resp.StatusCode, err)
+		debug.PrintStack()
+		return err
+	}
+	_, _ = io.ReadAll(resp.Body)
+	return nil
+}
+
 type Variable struct {
 	Value     interface{} `json:"value"`
 	Type      string      `json:"type"`
@@ -109,6 +148,20 @@ func createCamundaStartForm(instance model.SmartServiceInstance, variables map[s
 	return result, nil
 }
 
+func createMaintenanceStartForm(procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter, variables map[string]Variable) (result CamundaMaintenanceStartForm, err error) {
+	result.BusinessKey = id
+	result.MessageName = procedure.InternalEventId
+	result.ProcessVariables = map[string]CamundaStartVariable{}
+	for _, param := range parameter {
+		value, err := handleObjectsAsJson(param, variables)
+		if err != nil {
+			return result, err
+		}
+		result.ProcessVariables[param.Id] = CamundaStartVariable{Value: value}
+	}
+	return result, nil
+}
+
 func handleObjectsAsJson(param model.SmartServiceParameter, variables map[string]Variable) (result interface{}, err error) {
 	if variable, ok := variables[param.Id]; ok {
 		typeStr := strings.ToLower(variable.Type)
@@ -128,6 +181,12 @@ func handleObjectsAsJson(param model.SmartServiceParameter, variables map[string
 type CamundaStartForm struct {
 	BusinessKey string                          `json:"businessKey"`
 	Variables   map[string]CamundaStartVariable `json:"variables"`
+}
+
+type CamundaMaintenanceStartForm struct {
+	MessageName      string                          `json:"messageName"`
+	BusinessKey      string                          `json:"businessKey"`
+	ProcessVariables map[string]CamundaStartVariable `json:"processVariables"`
 }
 
 type CamundaStartVariable struct {

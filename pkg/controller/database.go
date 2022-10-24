@@ -23,6 +23,7 @@ type Database interface {
 	ModuleInterface
 	InstanceInterface
 	ReleaseInterface
+	MaintenanceInterface
 }
 
 type DesignsInterface interface {
@@ -56,4 +57,9 @@ type ReleaseInterface interface {
 	GetReleaseListByIds(ids []string, sort string) ([]model.SmartServiceReleaseExtended, error)
 	DeleteRelease(id string) (error, int)
 	GetReleasesByDesignId(designId string) ([]model.SmartServiceReleaseExtended, error)
+}
+
+type MaintenanceInterface interface {
+	RemoveFromRunningMaintenanceIds(instanceId string, removeMaintenanceIds []string) error
+	AddToRunningMaintenanceIds(instanceId string, maintenanceId string) error
 }

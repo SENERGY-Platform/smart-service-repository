@@ -27,6 +27,7 @@ type Controller interface {
 	BulkModulesInterface
 	ReleaseInterface
 	InstancesInterface
+	MaintenanceInterface
 	GetNewId() string
 }
 
@@ -70,4 +71,11 @@ type InstancesInterface interface {
 	UpdateInstanceInfo(token auth.Token, id string, element model.SmartServiceInstanceInfo) (model.SmartServiceInstance, error, int)
 	RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameter, releaseId string) (model.SmartServiceInstance, error, int)
 	GetInstanceUserIdByProcessInstanceId(processInstanceId string) (string, error, int)
+}
+
+type MaintenanceInterface interface {
+	GetMaintenanceProceduresOfInstance(token auth.Token, instanceId string) ([]model.MaintenanceProcedure, error, int)
+	GetMaintenanceProcedureOfInstance(token auth.Token, instanceId string, publicEventId string) (model.MaintenanceProcedure, error, int)
+	GetMaintenanceProcedureParametersOfInstance(token auth.Token, instanceId string, publicEventId string) ([]model.SmartServiceExtendedParameter, error, int)
+	StartMaintenanceProcedure(token auth.Token, instanceId string, publicEventId string, parameters model.SmartServiceParameters) (error, int)
 }

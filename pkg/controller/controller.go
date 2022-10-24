@@ -24,6 +24,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/google/uuid"
+	"sync"
 )
 
 type Controller struct {
@@ -35,6 +36,7 @@ type Controller struct {
 	selectables       Selectables
 	userTokenProvider UserTokenProvider
 	adminAccess       *auth.OpenidToken
+	cleanupMux        sync.Mutex
 }
 
 type Producer interface {
@@ -52,11 +54,12 @@ type Camunda interface {
 	DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool)
 	RemoveRelease(id string) error
 	Start(result model.SmartServiceInstance) error
-	CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool)
+	CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool, err error)
 	StopInstance(smartServiceInstanceId string) error
 	DeleteInstance(instance model.HistoricProcessInstance) (err error)
 	GetProcessInstanceBusinessKey(processInstanceId string) (string, error, int)
 	GetProcessInstanceList() (result []model.HistoricProcessInstance, err error)
+	StartMaintenance(procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error
 }
 
 type Selectables interface {

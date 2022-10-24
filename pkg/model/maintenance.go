@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-package camunda
+package model
 
-import (
-	"log"
-	"runtime/debug"
-)
-
-func (this *Camunda) CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool, err error) {
-	instances, err := this.getProcessInstanceListByKey(smartServiceInstanceId)
-	if err != nil {
-		log.Println("ERROR:", err)
-		debug.PrintStack()
-		return finished, missing, err
-	}
-	if len(instances) == 0 {
-		missing = true
-		return finished, missing, nil
-	}
-	finished = instances[0].EndTime != ""
-	return finished, missing, nil
+type MaintenanceProcedure struct {
+	BpmnId                string                 `json:"bpmn_id" bson:"bpmn_id"`
+	MessageRef            string                 `json:"message_ref" bson:"message_ref"`
+	PublicEventId         string                 `json:"public_event_id" bson:"public_event_id"`
+	InternalEventId       string                 `json:"internal_event_id" bson:"internal_event_id"`
+	ParameterDescriptions []ParameterDescription `json:"parameter_descriptions" bson:"parameter_descriptions"`
 }

@@ -44,6 +44,11 @@ func init() {
 			debug.PrintStack()
 			return err
 		}
+		err = db.ensureIndex(collection, "instance_maintenance_ids_index", "running_maintenance_ids", true, false)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
 		err = db.ensureIndex(collection, "instance_release_index", InstanceBson.ReleaseId, true, false)
 		if err != nil {
 			debug.PrintStack()
@@ -59,7 +64,10 @@ func (this *Mongo) instanceCollection() *mongo.Collection {
 
 func (this *Mongo) GetInstance(id string, userId string) (result model.SmartServiceInstance, err error, code int) {
 	ctx, _ := getTimeoutContext()
-	filter := bson.M{InstanceBson.Id: id}
+	filter := bson.M{"$or": []interface{}{
+		bson.M{InstanceBson.Id: id},
+		bson.M{"running_maintenance_ids": id},
+	}}
 	if userId != "" {
 		filter[InstanceBson.UserId] = userId
 	}

@@ -36,7 +36,7 @@ func (this *Camunda) DeployRelease(owner string, release model.SmartServiceRelea
 	if err != nil {
 		return err, false
 	}
-	releaseXml, err := setReleaseIdToBpmn(release.BpmnXml, id)
+	releaseXml, err := modifyBpmnWithReleaseIds(release.BpmnXml, id, release.ParsedInfo.MaintenanceProcedures)
 	if err != nil {
 		return err, true
 	}
@@ -80,7 +80,7 @@ func (this *Camunda) deployProcess(name string, xml string, svg string) (result 
 	return result, err, resp.StatusCode
 }
 
-func setReleaseIdToBpmn(xml string, id string) (resultXml string, err error) {
+func modifyBpmnWithReleaseIds(xml string, id string, maintenanceProcedures []model.MaintenanceProcedure) (resultXml string, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
 			log.Printf("%s: %s", r, debug.Stack())
@@ -97,6 +97,15 @@ func setReleaseIdToBpmn(xml string, id string) (resultXml string, err error) {
 	} else {
 		doc.FindElement("//bpmn:process").CreateAttr("id", id)
 	}
+
+	for _, maintenance := range maintenanceProcedures {
+		ref := doc.FindElement("//bpmn:message[@id='" + maintenance.MessageRef + "']")
+		if ref == nil {
+			return "", fmt.Errorf("unknown maintenance message ref %v", maintenance.MessageRef)
+		}
+		ref.CreateAttr("name", maintenance.InternalEventId)
+	}
+
 	return doc.WriteToString()
 }
 

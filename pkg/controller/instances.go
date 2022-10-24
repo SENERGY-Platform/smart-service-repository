@@ -50,27 +50,9 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 
 	paramListWithoutAutoSelect := instanceInfo.Parameters
 
-	paramListWithAutoSelect := []model.SmartServiceParameter{}
-	paramListWithAutoSelect = append(paramListWithAutoSelect, instanceInfo.Parameters...)
-	for _, param := range release.ParsedInfo.ParameterDescriptions {
-		if param.AutoSelectAll {
-			options, err, code := this.getParamOptions(token, param)
-			if err != nil {
-				return result, err, code
-			}
-
-			value := []interface{}{}
-			for _, option := range options {
-				value = append(value, option.Value)
-			}
-
-			paramListWithAutoSelect = append(paramListWithAutoSelect, model.SmartServiceParameter{
-				Id:         param.Id,
-				Value:      value,
-				Label:      param.Label,
-				ValueLabel: param.Label,
-			})
-		}
+	paramListWithAutoSelect, err, code := this.appendAutoSelectParams(token, instanceInfo.Parameters, release.ParsedInfo.ParameterDescriptions)
+	if err != nil {
+		return result, err, code
 	}
 
 	//store without auto_select_all parameter
@@ -87,6 +69,10 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 		CreatedAt:                time.Now().Unix(),
 	}
 	result.UpdatedAt = time.Now().Unix()
+
+	this.cleanupMux.Lock()
+	defer this.cleanupMux.Unlock()
+
 	err, code = this.db.SetInstance(result)
 	if err != nil {
 		return result, err, code
@@ -106,6 +92,32 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 
 	//return result without auto_select_all parameters
 	result.SmartServiceInstanceInit.Parameters = paramListWithoutAutoSelect
+	return result, nil, http.StatusOK
+}
+
+func (this *Controller) appendAutoSelectParams(token auth.Token, parameters []model.SmartServiceParameter, paramDescriptions []model.ParameterDescription) (result []model.SmartServiceParameter, err error, code int) {
+	result = []model.SmartServiceParameter{}
+	result = append(result, parameters...)
+	for _, param := range paramDescriptions {
+		if param.AutoSelectAll {
+			options, err, code := this.getParamOptions(token, param)
+			if err != nil {
+				return result, err, code
+			}
+
+			value := []interface{}{}
+			for _, option := range options {
+				value = append(value, option.Value)
+			}
+
+			result = append(result, model.SmartServiceParameter{
+				Id:         param.Id,
+				Value:      value,
+				Label:      param.Label,
+				ValueLabel: param.Label,
+			})
+		}
+	}
 	return result, nil, http.StatusOK
 }
 
@@ -184,6 +196,7 @@ func (this *Controller) GetInstance(token auth.Token, id string) (result model.S
 		return result, err, code
 	}
 	result = this.handleReadyAndErrorField(result)
+	result = this.removeFinishedMaintenanceIds(result)
 	return result, err, code
 }
 
@@ -238,10 +251,15 @@ func (this *Controller) handleReadyAndErrorField(instance model.SmartServiceInst
 	if instance.Ready {
 		return instance
 	}
-	finished, missing := this.camunda.CheckInstanceReady(instance.Id)
+	finished, missing, err := this.camunda.CheckInstanceReady(instance.Id)
+	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
+		return instance
+	}
 	if missing {
 		instance.Error = "missing camunda process instance"
-		err, _ := this.db.SetInstance(instance)
+		err, _ = this.db.SetInstance(instance)
 		if err != nil {
 			log.Println("ERROR:", err)
 			debug.PrintStack()
@@ -251,6 +269,44 @@ func (this *Controller) handleReadyAndErrorField(instance model.SmartServiceInst
 	if finished {
 		instance.Ready = true
 		err, _ := this.db.SetInstance(instance)
+		if err != nil {
+			log.Println("ERROR:", err)
+			debug.PrintStack()
+			return instance
+		}
+	}
+	return instance
+}
+
+func (this *Controller) removeFinishedMaintenanceIds(instance model.SmartServiceInstance) model.SmartServiceInstance {
+	if len(instance.RunningMaintenanceIds) == 0 {
+		return instance
+	}
+	removedMaintenanceIds := []string{}
+	newMaintenanceIds := []string{}
+	for _, id := range instance.RunningMaintenanceIds {
+		finished, missing, err := this.camunda.CheckInstanceReady(id)
+		if err != nil {
+			log.Println("ERROR:", err)
+			debug.PrintStack()
+			return instance
+		}
+		if finished && !missing {
+			err = this.camunda.StopInstance(id)
+			if err != nil {
+				log.Println("ERROR:", err)
+				debug.PrintStack()
+			}
+		}
+		if missing || finished {
+			removedMaintenanceIds = append(removedMaintenanceIds, id)
+		} else {
+			newMaintenanceIds = append(newMaintenanceIds, id)
+		}
+	}
+	instance.RunningMaintenanceIds = newMaintenanceIds
+	if len(removedMaintenanceIds) > 0 {
+		err := this.db.RemoveFromRunningMaintenanceIds(instance.Id, removedMaintenanceIds)
 		if err != nil {
 			log.Println("ERROR:", err)
 			debug.PrintStack()

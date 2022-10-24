@@ -61,7 +61,7 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 		element.Id = this.GetNewId()
 	}
 
-	parsedInfo, err := this.parseDesignXmlForReleaseInfo(token, design.BpmnXml)
+	parsedInfo, err := this.parseDesignXmlForReleaseInfo(token, design.BpmnXml, element)
 	if err != nil {
 		return result, fmt.Errorf("unable to parse design xml for release: %w", err), http.StatusBadRequest
 	}
@@ -253,12 +253,8 @@ func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result
 	return this.GetReleaseParameterWithoutAuthCheck(token, id)
 }
 
-func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int) {
-	release, err, code := this.db.GetRelease(id)
-	if err != nil {
-		return result, err, code
-	}
-	for _, paramDesc := range release.ParsedInfo.ParameterDescriptions {
+func (this *Controller) parameterDescriptionsToSmartServiceExtendedParameter(token auth.Token, paramList []model.ParameterDescription) (result []model.SmartServiceExtendedParameter, err error, code int) {
+	for _, paramDesc := range paramList {
 		if paramDesc.AutoSelectAll {
 			continue //will be filled on instantiation of the release
 		}
@@ -313,6 +309,14 @@ func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id
 		return result[i].Order < result[j].Order
 	})
 	return result, nil, http.StatusOK
+}
+
+func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int) {
+	release, err, code := this.db.GetRelease(id)
+	if err != nil {
+		return result, err, code
+	}
+	return this.parameterDescriptionsToSmartServiceExtendedParameter(token, release.ParsedInfo.ParameterDescriptions)
 }
 
 func getSchemaOrgType(t string) model.Type {
@@ -496,7 +500,7 @@ func (this *Controller) copyRightsOfRelease(owner string, oldRelease model.Smart
 
 //------------ Parsing ----------------
 
-func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml string) (result model.SmartServiceReleaseInfo, err error) {
+func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml string, element model.SmartServiceRelease) (result model.SmartServiceReleaseInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
 			log.Printf("%s: %s", r, debug.Stack())
@@ -508,138 +512,181 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 	if err != nil {
 		return result, err
 	}
-	for _, formField := range doc.FindElements("//camunda:formField") {
-		id := formField.SelectAttrValue("id", "")
-		if id == "" {
-			return result, errors.New("missing id in camunda:formField")
-		}
-		label := formField.SelectAttrValue("label", id)
-		if label == "" {
-			label = id
-		}
-		fieldType := formField.SelectAttrValue("type", "")
-		if id == "" {
-			return result, errors.New("missing type in camunda:formField")
-		}
-		var defaultValue interface{}
-		defaultValueField := formField.SelectAttr("defaultValue")
-		if defaultValueField != nil {
-			switch fieldType {
-			case "string":
-				defaultValue = defaultValueField.Value
-			case "long":
-				defaultValue, err = strconv.ParseFloat(defaultValueField.Value, 64)
-				if err != nil {
-					return result, fmt.Errorf("expect number in camunda:formField %v defaultValue: %w", id, err)
+	startEvents := doc.FindElements("//bpmn:startEvent")
+	for _, startEvent := range startEvents {
+		parameter := []model.ParameterDescription{}
+		for _, formField := range doc.FindElements("//camunda:formField") {
+			id := formField.SelectAttrValue("id", "")
+			if id == "" {
+				return result, errors.New("missing id in camunda:formField")
+			}
+			label := formField.SelectAttrValue("label", id)
+			if label == "" {
+				label = id
+			}
+			fieldType := formField.SelectAttrValue("type", "")
+			if id == "" {
+				return result, errors.New("missing type in camunda:formField")
+			}
+			var defaultValue interface{}
+			defaultValueField := formField.SelectAttr("defaultValue")
+			if defaultValueField != nil {
+				switch fieldType {
+				case "string":
+					defaultValue = defaultValueField.Value
+				case "long":
+					defaultValue, err = strconv.ParseFloat(defaultValueField.Value, 64)
+					if err != nil {
+						return result, fmt.Errorf("expect number in camunda:formField %v defaultValue: %w", id, err)
+					}
+				case "boolean":
+					defaultValue, err = strconv.ParseBool(defaultValueField.Value)
+					if err != nil {
+						return result, fmt.Errorf("expect boolean in camunda:formField %v defaultValue: %w", id, err)
+					}
 				}
-			case "boolean":
-				defaultValue, err = strconv.ParseBool(defaultValueField.Value)
-				if err != nil {
-					return result, fmt.Errorf("expect boolean in camunda:formField %v defaultValue: %w", id, err)
+
+			}
+			properties := map[string]string{}
+
+			for _, property := range formField.FindElements("./camunda:properties/camunda:property") {
+				propertyId := property.SelectAttrValue("id", "")
+				if propertyId == "" {
+					return result, fmt.Errorf("missing property id in formField %v", id)
 				}
+				properties[propertyId] = property.SelectAttrValue("value", "")
 			}
 
-		}
-		properties := map[string]string{}
-
-		for _, property := range formField.FindElements("./camunda:properties/camunda:property") {
-			propertyId := property.SelectAttrValue("id", "")
-			if propertyId == "" {
-				return result, fmt.Errorf("missing property id in formField %v", id)
+			param := model.ParameterDescription{
+				Id:           id,
+				Label:        label,
+				Description:  properties["description"],
+				Type:         fieldType,
+				DefaultValue: defaultValue,
+				Optional:     strings.ToLower(strings.TrimSpace(properties["optional"])) == "true",
 			}
-			properties[propertyId] = property.SelectAttrValue("value", "")
-		}
-
-		param := model.ParameterDescription{
-			Id:           id,
-			Label:        label,
-			Description:  properties["description"],
-			Type:         fieldType,
-			DefaultValue: defaultValue,
-			Optional:     strings.ToLower(strings.TrimSpace(properties["optional"])) == "true",
-		}
-		if order, ok := properties["order"]; ok {
-			param.Order, err = strconv.Atoi(order)
-			if err != nil {
-				return result, fmt.Errorf("invalid order property for formField %v: %w", id, err)
-			}
-		}
-		if chId, ok := properties["characteristic_id"]; ok {
-			param.CharacteristicId = &chId
-			param.Characteristic, err = this.GetCharacteristic(token.Jwt(), chId)
-			if err != nil {
-				return result, fmt.Errorf("unable to find characteristics_id for formField %v: %w", id, err)
-			}
-		}
-		if options, ok := properties["options"]; ok {
-			if _, containsCharacteristic := properties["characteristic_id"]; containsCharacteristic {
-				return result, fmt.Errorf("invalid characteristics_id/options property for formField %v: %v", id, "options and characteristics_id are mutual exclusive")
-			}
-			err = json.Unmarshal([]byte(options), &param.Options)
-			if err != nil {
-				return result, fmt.Errorf("invalid options property for formField %v: %w", id, err)
-			}
-		}
-		if multiple, ok := properties["multiple"]; ok {
-			param.Multiple, err = strconv.ParseBool(multiple)
-			if err != nil {
-				return result, fmt.Errorf("invalid multiple property for formField %v: %w", id, err)
-			}
-		}
-		if autoSelectAll, ok := properties["auto_select_all"]; ok {
-			param.AutoSelectAll, err = strconv.ParseBool(autoSelectAll)
-			if err != nil {
-				return result, fmt.Errorf("invalid auto_select_all property for formField %v: %w", id, err)
-			}
-			if param.AutoSelectAll && !param.Multiple {
-				return result, fmt.Errorf("auto_select_all property may only be used in combination with multiple for formField %v: %w", id, err)
-			}
-		}
-		if iot, ok := properties["iot"]; ok {
-			if _, containsOptions := properties["options"]; containsOptions {
-				return result, fmt.Errorf("invalid options/iot property for formField %v: %v", id, "iot and options are mutual exclusive")
-			}
-			if _, containsCharacteristic := properties["characteristic_id"]; containsCharacteristic {
-				return result, fmt.Errorf("invalid characteristics_id/iot property for formField %v: %v", id, "iot and characteristics_id are mutual exclusive")
-			}
-			typeFilter := []string{}
-			iot = strings.ReplaceAll(iot, " ", "")
-			if iot != "" {
-				typeFilter = strings.Split(iot, ",")
-			}
-			criteria := []model.Criteria{}
-			if criteriaStr, hasCriteria := properties["criteria"]; hasCriteria {
-				temp := model.Criteria{}
-				err = json.Unmarshal([]byte(criteriaStr), &temp)
+			if order, ok := properties["order"]; ok {
+				param.Order, err = strconv.Atoi(order)
 				if err != nil {
-					return result, fmt.Errorf("invalid criteria property for formField %v: %w", id, err)
-				}
-				criteria = []model.Criteria{temp}
-			}
-			if criteriaStr, hasCriteria := properties["criteria_list"]; hasCriteria {
-				err = json.Unmarshal([]byte(criteriaStr), &criteria)
-				if err != nil {
-					return result, fmt.Errorf("invalid criteria property for formField %v: %w", id, err)
+					return result, fmt.Errorf("invalid order property for formField %v: %w", id, err)
 				}
 			}
-
-			entityOnly := false
-			if entityOnlyStr, hasEntityOnly := properties["entity_only"]; hasEntityOnly {
-				entityOnly, _ = strconv.ParseBool(entityOnlyStr)
+			if chId, ok := properties["characteristic_id"]; ok {
+				param.CharacteristicId = &chId
+				param.Characteristic, err = this.GetCharacteristic(token.Jwt(), chId)
+				if err != nil {
+					return result, fmt.Errorf("unable to find characteristics_id for formField %v: %w", id, err)
+				}
 			}
-
-			sameEntity := properties["same_entity"]
-
-			param.IotDescription = &model.IotDescription{
-				TypeFilter:                   typeFilter,
-				Criteria:                     criteria,
-				EntityOnly:                   entityOnly,
-				NeedsSameEntityIdInParameter: sameEntity,
+			if options, ok := properties["options"]; ok {
+				if _, containsCharacteristic := properties["characteristic_id"]; containsCharacteristic {
+					return result, fmt.Errorf("invalid characteristics_id/options property for formField %v: %v", id, "options and characteristics_id are mutual exclusive")
+				}
+				err = json.Unmarshal([]byte(options), &param.Options)
+				if err != nil {
+					return result, fmt.Errorf("invalid options property for formField %v: %w", id, err)
+				}
 			}
+			if multiple, ok := properties["multiple"]; ok {
+				param.Multiple, err = strconv.ParseBool(multiple)
+				if err != nil {
+					return result, fmt.Errorf("invalid multiple property for formField %v: %w", id, err)
+				}
+			}
+			if autoSelectAll, ok := properties["auto_select_all"]; ok {
+				param.AutoSelectAll, err = strconv.ParseBool(autoSelectAll)
+				if err != nil {
+					return result, fmt.Errorf("invalid auto_select_all property for formField %v: %w", id, err)
+				}
+				if param.AutoSelectAll && !param.Multiple {
+					return result, fmt.Errorf("auto_select_all property may only be used in combination with multiple for formField %v: %w", id, err)
+				}
+			}
+			if iot, ok := properties["iot"]; ok {
+				if _, containsOptions := properties["options"]; containsOptions {
+					return result, fmt.Errorf("invalid options/iot property for formField %v: %v", id, "iot and options are mutual exclusive")
+				}
+				if _, containsCharacteristic := properties["characteristic_id"]; containsCharacteristic {
+					return result, fmt.Errorf("invalid characteristics_id/iot property for formField %v: %v", id, "iot and characteristics_id are mutual exclusive")
+				}
+				typeFilter := []string{}
+				iot = strings.ReplaceAll(iot, " ", "")
+				if iot != "" {
+					typeFilter = strings.Split(iot, ",")
+				}
+				criteria := []model.Criteria{}
+				if criteriaStr, hasCriteria := properties["criteria"]; hasCriteria {
+					temp := model.Criteria{}
+					err = json.Unmarshal([]byte(criteriaStr), &temp)
+					if err != nil {
+						return result, fmt.Errorf("invalid criteria property for formField %v: %w", id, err)
+					}
+					criteria = []model.Criteria{temp}
+				}
+				if criteriaStr, hasCriteria := properties["criteria_list"]; hasCriteria {
+					err = json.Unmarshal([]byte(criteriaStr), &criteria)
+					if err != nil {
+						return result, fmt.Errorf("invalid criteria property for formField %v: %w", id, err)
+					}
+				}
+
+				entityOnly := false
+				if entityOnlyStr, hasEntityOnly := properties["entity_only"]; hasEntityOnly {
+					entityOnly, _ = strconv.ParseBool(entityOnlyStr)
+				}
+
+				sameEntity := properties["same_entity"]
+
+				param.IotDescription = &model.IotDescription{
+					TypeFilter:                   typeFilter,
+					Criteria:                     criteria,
+					EntityOnly:                   entityOnly,
+					NeedsSameEntityIdInParameter: sameEntity,
+				}
+			}
+			parameter = append(parameter, param)
 		}
-		result.ParameterDescriptions = append(result.ParameterDescriptions, param)
+		if isMaintenanceProcedure(startEvent) {
+			maintenanceProcedure, err := createMaintenanceProcedure(doc, startEvent, element, parameter)
+			if err != nil {
+				return result, err
+			}
+			result.MaintenanceProcedures = append(result.MaintenanceProcedures, maintenanceProcedure)
+		} else {
+			result.ParameterDescriptions = parameter
+		}
 	}
+
 	return result, nil
+}
+
+func createMaintenanceProcedure(doc *etree.Document, event *etree.Element, element model.SmartServiceRelease, parameter []model.ParameterDescription) (result model.MaintenanceProcedure, err error) {
+	result.ParameterDescriptions = parameter
+	result.BpmnId = event.SelectAttrValue("id", "")
+	msgEvent := event.FindElement(".//bpmn:messageEventDefinition")
+	if msgEvent == nil {
+		return result, fmt.Errorf("missing bpmn:messageEventDefinition for %v", result.BpmnId)
+	}
+	result.MessageRef = msgEvent.SelectAttrValue("messageRef", "")
+	if result.MessageRef == "" {
+		return result, fmt.Errorf("missing messageRef for %v", result.BpmnId)
+	}
+	msgRefElement := doc.FindElement("//bpmn:message[@id='" + result.MessageRef + "']")
+	if msgRefElement == nil {
+		return result, fmt.Errorf("unknown messageRef %v for %v", result.MessageRef, result.BpmnId)
+	}
+	result.PublicEventId = msgRefElement.SelectAttrValue("name", "")
+	result.InternalEventId = element.Id + "_" + result.PublicEventId
+
+	return result, nil
+}
+
+func isMaintenanceProcedure(element *etree.Element) bool {
+	msgEvent := element.FindElement(".//bpmn:messageEventDefinition")
+	if msgEvent == nil {
+		return false //is not msg event
+	}
+	return true
 }
 
 func (this *Controller) validateParsedReleaseInfos(info model.SmartServiceReleaseInfo) error {
@@ -656,6 +703,16 @@ func (this *Controller) validateParsedReleaseInfos(info model.SmartServiceReleas
 				}
 			}
 		}
+	}
+	knownEventIds := map[string]bool{}
+	for _, maintenanceProcedure := range info.MaintenanceProcedures {
+		if maintenanceProcedure.PublicEventId == "" {
+			return fmt.Errorf("empty msg-event-id for maintenance-procedure in %v", maintenanceProcedure.BpmnId)
+		}
+		if ok := knownEventIds[maintenanceProcedure.PublicEventId]; ok {
+			return fmt.Errorf("reuse of %v as msg-event-id for maintenance-procedure in %v", maintenanceProcedure.PublicEventId, maintenanceProcedure.BpmnId)
+		}
+		knownEventIds[maintenanceProcedure.PublicEventId] = true
 	}
 	return nil
 }
