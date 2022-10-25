@@ -242,6 +242,10 @@ definitions:
         type: string
       instance_id:
         type: string
+      keys:
+        items:
+          type: string
+        type: array
       module_data:
         additionalProperties: true
         type: object
@@ -257,6 +261,10 @@ definitions:
     properties:
       delete_info:
         $ref: '#/definitions/model.ModuleDeleteInfo'
+      keys:
+        items:
+          type: string
+        type: array
       module_data:
         additionalProperties: true
         type: object
@@ -1097,6 +1105,10 @@ paths:
       - description: filter by instance id
         in: query
         name: instance_id
+        type: string
+      - description: filter by key
+        in: query
+        name: key
         type: string
       - description: limits size of result; 0 means unlimited
         in: query

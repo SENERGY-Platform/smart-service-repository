@@ -19,6 +19,7 @@ package model
 import "strings"
 
 type ModuleQueryOptions struct {
+	KeyFilter        *string
 	TypeFilter       *string
 	InstanceIdFilter *string
 	Limit            int

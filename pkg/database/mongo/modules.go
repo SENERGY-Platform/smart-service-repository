@@ -54,6 +54,11 @@ func init() {
 			debug.PrintStack()
 			return err
 		}
+		err = db.ensureIndex(collection, "module_keys_index", "keys", true, false)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
 		return nil
 	})
 }
@@ -116,6 +121,9 @@ func (this *Mongo) ListModules(userId string, query model.ModuleQueryOptions) (r
 	}
 	if query.TypeFilter != nil {
 		filter[ModuleBson.ModuleType] = *query.TypeFilter
+	}
+	if query.KeyFilter != nil {
+		filter["keys"] = *query.KeyFilter
 	}
 	cursor, err := this.moduleCollection().Find(ctx, filter, opt)
 	if err != nil {

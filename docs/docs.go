@@ -1160,6 +1160,12 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "filter by key",
+                        "name": "key",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "description": "limits size of result; 0 means unlimited",
                         "name": "limit",
@@ -1864,6 +1870,12 @@ const docTemplate = `{
                 "instance_id": {
                     "type": "string"
                 },
+                "keys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "module_data": {
                     "type": "object",
                     "additionalProperties": true
@@ -1885,6 +1897,12 @@ const docTemplate = `{
             "properties": {
                 "delete_info": {
                     "$ref": "#/definitions/model.ModuleDeleteInfo"
+                },
+                "keys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "module_data": {
                     "type": "object",

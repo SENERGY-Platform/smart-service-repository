@@ -109,6 +109,7 @@ type SmartServiceModuleInit struct {
 	DeleteInfo *ModuleDeleteInfo      `json:"delete_info" bson:"delete_info"`
 	ModuleType string                 `json:"module_type" bson:"module_type"` //"process-deployment" | "analytics" ...
 	ModuleData map[string]interface{} `json:"module_data" bson:"module_data"`
+	Keys       []string               `json:"keys" bson:"keys"`
 }
 
 type ModuleDeleteInfo struct {

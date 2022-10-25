@@ -308,6 +308,278 @@ func TestModuleApi(t *testing.T) {
 	})
 }
 
+func TestModuleKeyApi(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	design := model.SmartServiceDesign{}
+	t.Run("create design", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml: resources.ProcessDeploymentBpmn,
+			SvgXml:  resources.ProcessDeploymentSvg,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if design.BpmnXml != resources.ProcessDeploymentBpmn {
+			t.Error(design.BpmnXml)
+			return
+		}
+		if design.SvgXml != resources.ProcessDeploymentSvg {
+			t.Error(design.SvgXml)
+			return
+		}
+		if design.Id == "" {
+			t.Error(design.Id)
+			return
+		}
+	})
+
+	release := model.SmartServiceRelease{}
+	t.Run("create release", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design.Id,
+			Name:        "release name",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	time.Sleep(5 * time.Second) //allow async cqrs
+
+	parameters := []model.SmartServiceExtendedParameter{}
+	t.Run("read params", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/parameters")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&parameters)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	instanceA := model.SmartServiceInstance{}
+	t.Run("create instance", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/instances", model.SmartServiceInstanceInit{
+			SmartServiceInstanceInfo: model.SmartServiceInstanceInfo{
+				Name:        "instance name",
+				Description: "instance description",
+			},
+			Parameters: fillTestParameter(parameters),
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instanceA)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	instanceB := model.SmartServiceInstance{}
+	t.Run("create instance", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/instances", model.SmartServiceInstanceInit{
+			SmartServiceInstanceInfo: model.SmartServiceInstanceInfo{
+				Name:        "instance name",
+				Description: "instance description",
+			},
+			Parameters: fillTestParameter(parameters),
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instanceB)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	//time.Sleep(2 * time.Second)
+
+	mocks.NewModuleWorker(ctx, wg, apiUrl, config, func(taskWorkerMsg mocks.ModuleWorkerMessage) (err error) {
+		expectedVariables := map[string]mocks.CamundaVariable{
+			"Task_foo.parameter": {
+				Type:  "String",
+				Value: "{\"inputs.on\": true, \"inputs.hex\": #ff00ff}",
+			},
+			"Task_foo.selection": {
+				Type:  "String",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null},\"label\":\"Device 1: one service, no paths\"}",
+			},
+			"color_hex": {
+				Type:  "String",
+				Value: "#ff00ff",
+			},
+			"device_selection": {
+				Type:  "String",
+				Value: "{\"device_selection\":{\"device_id\":\"device_1\",\"service_id\":\"s1\",\"path\":null},\"label\":\"Device 1: one service, no paths\"}",
+			},
+			"process_model_id": {
+				Type:  "String",
+				Value: "76e6f65c-c3c1-47c0-a999-4675baace425",
+			},
+		}
+		temp, _ := json.Marshal(taskWorkerMsg.Variables)
+		t.Log("worker call:", string(temp))
+		if !reflect.DeepEqual(taskWorkerMsg.Variables, expectedVariables) {
+			t.Error(string(temp))
+		}
+		return nil
+	})
+
+	time.Sleep(2 * time.Second)
+
+	receivedModuleDelete := false
+	mockDelete := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		receivedModuleDelete = true
+		writer.WriteHeader(200)
+	}))
+	wg.Add(1)
+	go func() {
+		<-ctx.Done()
+		mockDelete.Close()
+		wg.Done()
+	}()
+
+	t.Run("set instance module", func(t *testing.T) {
+		//other modules are set by the worker mock
+		module := model.SmartServiceModuleInit{
+			ModuleType: "test-module",
+			ModuleData: map[string]interface{}{
+				"foo": "bar",
+			},
+			DeleteInfo: &model.ModuleDeleteInfo{
+				Url:    mockDelete.URL,
+				UserId: userId,
+			},
+			Keys: []string{"modulekey", "foo=bar"},
+		}
+
+		body := new(bytes.Buffer)
+		err := json.NewEncoder(body).Encode(module)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		req, err := http.NewRequest("POST", apiUrl+"/instances/"+url.PathEscape(instanceA.Id)+"/modules", body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		req.Header.Set("Authorization", userToken)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode >= 300 {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+	})
+
+	t.Run("list by key="+url.QueryEscape("foo=bar"), func(t *testing.T) {
+		testModuleListExtended(t, apiUrl, "?key="+url.QueryEscape("foo=bar"), 1, []string{instanceA.Id}, []string{"test-module"}, func(modules []model.SmartServiceModule) {
+			if len(modules) != 1 || modules[0].InstanceId != instanceA.Id || len(modules[0].Keys) != 2 || modules[0].Keys[1] != "foo=bar" {
+				b, _ := json.Marshal(modules)
+				t.Error(instanceA.Id, string(b))
+			}
+		})
+	})
+
+	t.Run("list by key=modulekey", func(t *testing.T) {
+		testModuleListExtended(t, apiUrl, "?key=modulekey", 1, []string{instanceA.Id}, []string{"test-module"}, func(modules []model.SmartServiceModule) {
+			if len(modules) != 1 || modules[0].InstanceId != instanceA.Id || len(modules[0].Keys) != 2 || modules[0].Keys[0] != "modulekey" {
+				b, _ := json.Marshal(modules)
+				t.Error(instanceA.Id, string(b))
+			}
+		})
+	})
+
+	t.Run("delete instance", func(t *testing.T) {
+		resp, err := delete(userToken, apiUrl+"/instances/"+url.PathEscape(instanceA.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+	})
+
+	t.Run("check module delete on instance delete", func(t *testing.T) {
+		if !receivedModuleDelete {
+			t.Error(receivedModuleDelete)
+		}
+	})
+}
+
 func TestModulePutApi(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()

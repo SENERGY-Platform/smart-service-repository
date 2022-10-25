@@ -39,6 +39,7 @@ type Modules struct{}
 // @Tags         modules
 // @Param        module_type query string false "filter by module type"
 // @Param        instance_id query string false "filter by instance id"
+// @Param        key query string false "filter by key"
 // @Param        limit query integer false "limits size of result; 0 means unlimited"
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Success      200 {array} model.SmartServiceModule
@@ -54,6 +55,10 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 		}
 
 		query := model.ModuleQueryOptions{}
+		keyFilter := request.URL.Query().Get("key")
+		if keyFilter != "" {
+			query.KeyFilter = &keyFilter
+		}
 		moduleTypeFilter := request.URL.Query().Get("module_type")
 		if moduleTypeFilter != "" {
 			query.TypeFilter = &moduleTypeFilter
