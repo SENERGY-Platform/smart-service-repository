@@ -18,6 +18,7 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/google/uuid"
@@ -62,6 +63,14 @@ func (this *Controller) StartMaintenanceProcedure(token auth.Token, instanceId s
 	procedure, instance, release, err, code := this.GetMaintenanceProcedureOfInstance(token, instanceId, publicEventId)
 	if err != nil {
 		return err, code
+	}
+
+	if !instance.Ready {
+		return fmt.Errorf("instance init is not ready"), http.StatusBadRequest
+	}
+
+	if instance.Error != "" {
+		return fmt.Errorf("instance has error state: '%v'", instance.Error), http.StatusBadRequest
 	}
 
 	parameterWithInstanceInputs := instance.Parameters
