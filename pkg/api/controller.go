@@ -74,8 +74,8 @@ type InstancesInterface interface {
 }
 
 type MaintenanceInterface interface {
-	GetMaintenanceProceduresOfInstance(token auth.Token, instanceId string) ([]model.MaintenanceProcedure, error, int)
-	GetMaintenanceProcedureOfInstance(token auth.Token, instanceId string, publicEventId string) (model.MaintenanceProcedure, error, int)
+	GetMaintenanceProceduresOfInstance(token auth.Token, instanceId string) (maintenanceProcedure []model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int)
+	GetMaintenanceProcedureOfInstance(token auth.Token, instanceId string, publicEventId string) (maintenanceProcedure model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int)
 	GetMaintenanceProcedureParametersOfInstance(token auth.Token, instanceId string, publicEventId string) ([]model.SmartServiceExtendedParameter, error, int)
 	StartMaintenanceProcedure(token auth.Token, instanceId string, publicEventId string, parameters model.SmartServiceParameters) (error, int)
 }

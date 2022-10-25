@@ -59,7 +59,7 @@ type Camunda interface {
 	DeleteInstance(instance model.HistoricProcessInstance) (err error)
 	GetProcessInstanceBusinessKey(processInstanceId string) (string, error, int)
 	GetProcessInstanceList() (result []model.HistoricProcessInstance, err error)
-	StartMaintenance(procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error
+	StartMaintenance(releaseId string, procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error
 }
 
 type Selectables interface {

@@ -583,6 +583,10 @@ func TestModulePutApi(t *testing.T) {
 }
 
 func testModuleList(t *testing.T, apiUrl string, query string, expectedCount int, allowedInstanceIds []string, allowedModuleTypes []string) {
+	testModuleListExtended(t, apiUrl, query, expectedCount, allowedInstanceIds, allowedModuleTypes, func(modules []model.SmartServiceModule) {})
+}
+
+func testModuleListExtended(t *testing.T, apiUrl string, query string, expectedCount int, allowedInstanceIds []string, allowedModuleTypes []string, checkResult func([]model.SmartServiceModule)) {
 	resp, err := get(userToken, apiUrl+"/modules"+query)
 	if err != nil {
 		t.Error(err)
@@ -614,6 +618,7 @@ func testModuleList(t *testing.T, apiUrl string, query string, expectedCount int
 			return
 		}
 	}
+	checkResult(result)
 }
 
 func TestEmptyAnalyticsVariables(t *testing.T) {

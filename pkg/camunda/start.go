@@ -69,9 +69,9 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 	return nil
 }
 
-func (this *Camunda) StartMaintenance(procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error {
+func (this *Camunda) StartMaintenance(releaseId string, procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error {
 	requestBody := new(bytes.Buffer)
-	key := idToCNName(id)
+	key := idToCNName(releaseId)
 	variables, err := this.GetProcessParameters(key)
 	if err != nil {
 		return err

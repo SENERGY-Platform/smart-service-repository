@@ -85,6 +85,12 @@ var AutoSelectAllInputBpmn string
 //go:embed empty-analytics-test.bpmn
 var EmptyAnalyticsTestBpmn string
 
+//go:embed "maintenance test.bpmn"
+var MaintenanceTestBpmn string
+
+//go:embed "maintenance test.svg"
+var MaintenanceTestSvg string
+
 func init() {
 	err := json.Unmarshal(SelectionsResponse1, &SelectionsResponse1Obj)
 	if err != nil {

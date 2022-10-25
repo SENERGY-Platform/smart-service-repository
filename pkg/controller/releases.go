@@ -515,7 +515,7 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 	startEvents := doc.FindElements("//bpmn:startEvent")
 	for _, startEvent := range startEvents {
 		parameter := []model.ParameterDescription{}
-		for _, formField := range doc.FindElements("//camunda:formField") {
+		for _, formField := range startEvent.FindElements(".//camunda:formField") {
 			id := formField.SelectAttrValue("id", "")
 			if id == "" {
 				return result, errors.New("missing id in camunda:formField")
@@ -690,7 +690,12 @@ func isMaintenanceProcedure(element *etree.Element) bool {
 }
 
 func (this *Controller) validateParsedReleaseInfos(info model.SmartServiceReleaseInfo) error {
+	knownInitParams := map[string]bool{}
 	for _, param := range info.ParameterDescriptions {
+		if ok := knownInitParams[param.Id]; ok {
+			return fmt.Errorf("reuse of %v as param-id", param.Id)
+		}
+		knownInitParams[param.Id] = true
 		if param.AutoSelectAll && !param.Multiple {
 			return fmt.Errorf("%v: parameter property \"auto_select_all\" may only be used in combination with  \"multiple\"", param.Id)
 		}
@@ -713,6 +718,17 @@ func (this *Controller) validateParsedReleaseInfos(info model.SmartServiceReleas
 			return fmt.Errorf("reuse of %v as msg-event-id for maintenance-procedure in %v", maintenanceProcedure.PublicEventId, maintenanceProcedure.BpmnId)
 		}
 		knownEventIds[maintenanceProcedure.PublicEventId] = true
+
+		knownParams := map[string]bool{}
+		for _, param := range maintenanceProcedure.ParameterDescriptions {
+			if ok := knownInitParams[param.Id]; ok {
+				return fmt.Errorf("reuse of init-param %v as param-id in maintenance-procedure %v (%v)", param.Id, maintenanceProcedure.PublicEventId, maintenanceProcedure.BpmnId)
+			}
+			if ok := knownParams[param.Id]; ok {
+				return fmt.Errorf("reuse of %v as param-id in maintenance-procedure %v (%v)", param.Id, maintenanceProcedure.PublicEventId, maintenanceProcedure.BpmnId)
+			}
+			knownParams[param.Id] = true
+		}
 	}
 	return nil
 }

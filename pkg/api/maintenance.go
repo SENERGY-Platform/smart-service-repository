@@ -48,7 +48,7 @@ func (this *Maintenance) ListMaintenanceProcedures(config configuration.Config, 
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		result, err, code := ctrl.GetMaintenanceProceduresOfInstance(token, params.ByName("id"))
+		result, _, _, err, code := ctrl.GetMaintenanceProceduresOfInstance(token, params.ByName("id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -76,7 +76,7 @@ func (this *Maintenance) GetMaintenanceProcedure(config configuration.Config, ro
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		result, err, code := ctrl.GetMaintenanceProcedureOfInstance(token, params.ByName("id"), params.ByName("public_event_id"))
+		result, _, _, err, code := ctrl.GetMaintenanceProcedureOfInstance(token, params.ByName("id"), params.ByName("public_event_id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
