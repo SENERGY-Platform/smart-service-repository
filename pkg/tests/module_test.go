@@ -497,6 +497,40 @@ func TestModulePutApi(t *testing.T) {
 		}
 	})
 
+	t.Run("check instance by process id", func(t *testing.T) {
+		req, err := http.NewRequest("GET", apiUrl+"/instances-by-process-id/"+url.PathEscape(processInstanceId), nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		req.Header.Set("Authorization", adminToken)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode >= 300 {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		respInstance := model.SmartServiceInstance{}
+		err = json.NewDecoder(resp.Body).Decode(&respInstance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if respInstance.UserId != userId {
+			t.Error(respInstance.UserId, userId)
+			return
+		}
+		if respInstance.Id != instanceA.Id {
+			t.Error(respInstance.Id, instanceA.Id)
+			return
+		}
+	})
+
 	t.Run("create instance module", func(t *testing.T) {
 		//other modules are set by the worker mock
 		module := model.SmartServiceModuleInit{

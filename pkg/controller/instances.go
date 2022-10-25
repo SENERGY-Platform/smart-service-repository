@@ -351,6 +351,17 @@ func (this *Controller) SetInstanceErrorByProcessInstanceId(processInstanceId st
 	return this.setInstanceError(userId, businessKey, errMsg)
 }
 
+func (this *Controller) GetInstanceByProcessInstanceId(processInstanceId string) (result model.SmartServiceInstance, err error, code int) {
+	if processInstanceId == "" {
+		return result, errors.New("missing process instance id"), http.StatusBadRequest
+	}
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	if err != nil {
+		return result, err, code
+	}
+	return this.db.GetInstance(businessKey, "")
+}
+
 func (this *Controller) GetInstanceUserIdByProcessInstanceId(processInstanceId string) (string, error, int) {
 	if processInstanceId == "" {
 		return "", errors.New("missing process instance id"), http.StatusBadRequest

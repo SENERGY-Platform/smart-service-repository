@@ -181,6 +181,37 @@ func (this *Instances) SetError(config configuration.Config, router *httprouter.
 	})
 }
 
+// GetInstanceByProcessId godoc
+// @Summary      get smart-service instance by process-instance-id
+// @Description  get smart-service instance by process-instance-id
+// @Tags         instances, process-id
+// @Param        id path string true "Process-Instance ID"
+// @Produce      json
+// @Success      200 {object}  model.SmartServiceInstance
+// @Failure      500
+// @Failure      401
+// @Router       /instances-by-process-id/{id} [get]
+func (this *Instances) GetInstanceByProcessId(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/instances-by-process-id/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		if !token.IsAdmin() {
+			http.Error(writer, "only admins may ask for instances-by-process-id", http.StatusForbidden)
+			return
+		}
+		userId, err, code := ctrl.GetInstanceByProcessInstanceId(params.ByName("id"))
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(userId)
+	})
+}
+
 // GetInstanceUserId godoc
 // @Summary      get smart-service instance user-id
 // @Description  get smart-service instance user-id

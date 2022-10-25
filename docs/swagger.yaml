@@ -47,6 +47,21 @@ definitions:
           type: string
         type: array
     type: object
+  model.MaintenanceProcedure:
+    properties:
+      bpmn_id:
+        type: string
+      internal_event_id:
+        type: string
+      message_ref:
+        type: string
+      parameter_descriptions:
+        items:
+          $ref: '#/definitions/model.ParameterDescription'
+        type: array
+      public_event_id:
+        type: string
+    type: object
   model.ModuleDeleteInfo:
     properties:
       url:
@@ -74,6 +89,8 @@ definitions:
     type: object
   model.ParameterDescription:
     properties:
+      auto_select_all:
+        type: boolean
       characteristic:
         $ref: '#/definitions/model.Characteristic'
       characteristic_id:
@@ -187,6 +204,10 @@ definitions:
         type: boolean
       release_id:
         type: string
+      running_maintenance_ids:
+        items:
+          type: string
+        type: array
       updated_at:
         description: unix timestamp, set by service on creation
         type: integer
@@ -302,6 +323,10 @@ definitions:
     type: object
   model.SmartServiceReleaseInfo:
     properties:
+      maintenance_procedures:
+        items:
+          $ref: '#/definitions/model.MaintenanceProcedure'
+        type: array
       parameter_descriptions:
         items:
           $ref: '#/definitions/model.ParameterDescription'
@@ -573,6 +598,30 @@ paths:
       summary: returns a list of smart-service instances
       tags:
       - instances
+  /instances-by-process-id/{id}:
+    get:
+      description: get smart-service instance by process-instance-id
+      parameters:
+      - description: Process-Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceInstance'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: get smart-service instance by process-instance-id
+      tags:
+      - instances
+      - process-id
   /instances-by-process-id/{id}/error:
     put:
       consumes:
@@ -842,6 +891,130 @@ paths:
       tags:
       - instances
       - parameter
+  /instances/{id}/maintenance-procedures:
+    get:
+      description: lists smart-service maintenance procedure information
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.MaintenanceProcedure'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: lists smart-service maintenance procedure information
+      tags:
+      - instances
+      - maintenance-procedures
+  /instances/{id}/maintenance-procedures/{public_event_id}:
+    get:
+      description: get smart-service maintenance procedure information
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: public event id of maintenance-procedure
+        in: path
+        name: public_event_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.MaintenanceProcedure'
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: get smart-service maintenance procedure information
+      tags:
+      - instances
+      - maintenance-procedures
+  /instances/{id}/maintenance-procedures/{public_event_id}/parameters:
+    get:
+      description: returns parameters of a smart-service maintenance procedure
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: public event id of maintenance-procedure
+        in: path
+        name: public_event_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceExtendedParameter'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns parameters of a smart-service maintenance procedure
+      tags:
+      - instances
+      - maintenance-procedures
+      - parameter
+  /instances/{id}/maintenance-procedures/{public_event_id}/start:
+    post:
+      consumes:
+      - application/json
+      description: start a smart-service instance maintenance procedure
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: public event id of maintenance-procedure
+        in: path
+        name: public_event_id
+        required: true
+        type: string
+      - description: SmartServiceParameters
+        in: body
+        name: message
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.SmartServiceParameter'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: start a smart-service instance maintenance procedure
+      tags:
+      - instances
+      - maintenance-procedures
   /instances/{id}/modules:
     post:
       consumes:

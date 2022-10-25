@@ -71,6 +71,7 @@ type InstancesInterface interface {
 	UpdateInstanceInfo(token auth.Token, id string, element model.SmartServiceInstanceInfo) (model.SmartServiceInstance, error, int)
 	RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameter, releaseId string) (model.SmartServiceInstance, error, int)
 	GetInstanceUserIdByProcessInstanceId(processInstanceId string) (string, error, int)
+	GetInstanceByProcessInstanceId(processInstanceId string) (model.SmartServiceInstance, error, int)
 }
 
 type MaintenanceInterface interface {

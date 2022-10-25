@@ -400,6 +400,42 @@
                 }
             }
         },
+        "/instances-by-process-id/{id}": {
+            "get": {
+                "description": "get smart-service instance by process-instance-id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "process-id"
+                ],
+                "summary": "get smart-service instance by process-instance-id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process-Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceInstance"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/instances-by-process-id/{id}/error": {
             "put": {
                 "description": "sets smart-service instance error",
@@ -793,6 +829,190 @@
                         "description": ""
                     },
                     "404": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/maintenance-procedures": {
+            "get": {
+                "description": "lists smart-service maintenance procedure information",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "maintenance-procedures"
+                ],
+                "summary": "lists smart-service maintenance procedure information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.MaintenanceProcedure"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/maintenance-procedures/{public_event_id}": {
+            "get": {
+                "description": "get smart-service maintenance procedure information",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "maintenance-procedures"
+                ],
+                "summary": "get smart-service maintenance procedure information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "public event id of maintenance-procedure",
+                        "name": "public_event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.MaintenanceProcedure"
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/maintenance-procedures/{public_event_id}/parameters": {
+            "get": {
+                "description": "returns parameters of a smart-service maintenance procedure",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "maintenance-procedures",
+                    "parameter"
+                ],
+                "summary": "returns parameters of a smart-service maintenance procedure",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "public event id of maintenance-procedure",
+                        "name": "public_event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceExtendedParameter"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/maintenance-procedures/{public_event_id}/start": {
+            "post": {
+                "description": "start a smart-service instance maintenance procedure",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "maintenance-procedures"
+                ],
+                "summary": "start a smart-service instance maintenance procedure",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "public event id of maintenance-procedure",
+                        "name": "public_event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SmartServiceParameters",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceParameter"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "401": {
                         "description": ""
                     },
                     "500": {
@@ -1349,6 +1569,29 @@
                 }
             }
         },
+        "model.MaintenanceProcedure": {
+            "type": "object",
+            "properties": {
+                "bpmn_id": {
+                    "type": "string"
+                },
+                "internal_event_id": {
+                    "type": "string"
+                },
+                "message_ref": {
+                    "type": "string"
+                },
+                "parameter_descriptions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ParameterDescription"
+                    }
+                },
+                "public_event_id": {
+                    "type": "string"
+                }
+            }
+        },
         "model.ModuleDeleteInfo": {
             "type": "object",
             "properties": {
@@ -1385,6 +1628,9 @@
         "model.ParameterDescription": {
             "type": "object",
             "properties": {
+                "auto_select_all": {
+                    "type": "boolean"
+                },
                 "characteristic": {
                     "$ref": "#/definitions/model.Characteristic"
                 },
@@ -1551,6 +1797,12 @@
                 },
                 "release_id": {
                     "type": "string"
+                },
+                "running_maintenance_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "updated_at": {
                     "description": "unix timestamp, set by service on creation",
@@ -1723,6 +1975,12 @@
         "model.SmartServiceReleaseInfo": {
             "type": "object",
             "properties": {
+                "maintenance_procedures": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MaintenanceProcedure"
+                    }
+                },
                 "parameter_descriptions": {
                     "type": "array",
                     "items": {
