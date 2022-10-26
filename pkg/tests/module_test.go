@@ -458,7 +458,9 @@ func TestModuleKeyApi(t *testing.T) {
 
 	//time.Sleep(2 * time.Second)
 
+	processInstanceIds := []string{}
 	mocks.NewModuleWorker(ctx, wg, apiUrl, config, func(taskWorkerMsg mocks.ModuleWorkerMessage) (err error) {
+		processInstanceIds = append(processInstanceIds, taskWorkerMsg.ProcessInstanceId)
 		expectedVariables := map[string]mocks.CamundaVariable{
 			"Task_foo.parameter": {
 				Type:  "String",
@@ -557,6 +559,64 @@ func TestModuleKeyApi(t *testing.T) {
 				b, _ := json.Marshal(modules)
 				t.Error(instanceA.Id, string(b))
 			}
+		})
+	})
+
+	processInstanceId := ""
+	t.Run("find process-instance id of instanceA", func(t *testing.T) {
+		for _, id := range processInstanceIds {
+			req, err := http.NewRequest("GET", apiUrl+"/instances-by-process-id/"+url.PathEscape(id), nil)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			req.Header.Set("Authorization", adminToken)
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode >= 300 {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			respInstance := model.SmartServiceInstance{}
+			err = json.NewDecoder(resp.Body).Decode(&respInstance)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if respInstance.Id == instanceA.Id {
+				processInstanceId = id
+				return
+			}
+		}
+		t.Error("no matching process instance id found")
+	})
+
+	t.Run("list by process-instance-id and key="+url.QueryEscape("foo=bar"), func(t *testing.T) {
+		testModuleListExtendedWithToken(t, adminToken, apiUrl+"/instances-by-process-id/"+url.PathEscape(processInstanceId), "?key="+url.QueryEscape("foo=bar"), 1, []string{instanceA.Id}, []string{"test-module"}, func(modules []model.SmartServiceModule) {
+			if len(modules) != 1 || modules[0].InstanceId != instanceA.Id || len(modules[0].Keys) != 2 || modules[0].Keys[1] != "foo=bar" {
+				b, _ := json.Marshal(modules)
+				t.Error(instanceA.Id, string(b))
+			}
+		})
+	})
+
+	t.Run("list by process-instance-id and key=modulekey", func(t *testing.T) {
+		testModuleListExtendedWithToken(t, adminToken, apiUrl+"/instances-by-process-id/"+url.PathEscape(processInstanceId), "?key=modulekey", 1, []string{instanceA.Id}, []string{"test-module"}, func(modules []model.SmartServiceModule) {
+			if len(modules) != 1 || modules[0].InstanceId != instanceA.Id || len(modules[0].Keys) != 2 || modules[0].Keys[0] != "modulekey" {
+				b, _ := json.Marshal(modules)
+				t.Error(instanceA.Id, string(b))
+			}
+		})
+	})
+
+	t.Run("list by process-instance-id", func(t *testing.T) {
+		testModuleListExtendedWithToken(t, adminToken, apiUrl+"/instances-by-process-id/"+url.PathEscape(processInstanceId), "", 2, []string{instanceA.Id}, []string{"test-module", mocks.CAMUNDA_MODULE_WORKER_TOPIC}, func(modules []model.SmartServiceModule) {
+
 		})
 	})
 
@@ -893,7 +953,12 @@ func testModuleList(t *testing.T, apiUrl string, query string, expectedCount int
 }
 
 func testModuleListExtended(t *testing.T, apiUrl string, query string, expectedCount int, allowedInstanceIds []string, allowedModuleTypes []string, checkResult func([]model.SmartServiceModule)) {
-	resp, err := get(userToken, apiUrl+"/modules"+query)
+	testModuleListExtendedWithToken(t, userToken, apiUrl, query, expectedCount, allowedInstanceIds, allowedModuleTypes, checkResult)
+	return
+}
+
+func testModuleListExtendedWithToken(t *testing.T, token string, apiUrl string, query string, expectedCount int, allowedInstanceIds []string, allowedModuleTypes []string, checkResult func([]model.SmartServiceModule)) {
+	resp, err := get(token, apiUrl+"/modules"+query)
 	if err != nil {
 		t.Error(err)
 		return

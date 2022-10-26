@@ -77,6 +77,19 @@ func (this *Controller) ListModules(token auth.Token, query model.ModuleQueryOpt
 	return this.db.ListModules(token.GetUserId(), query)
 }
 
+func (this *Controller) ListModulesOfProcessInstance(processInstanceId string, query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int) {
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	if err != nil {
+		return result, err, code
+	}
+	userId, err, code := this.getInstanceUserId(businessKey)
+	if err != nil {
+		return result, err, code
+	}
+	query.InstanceIdFilter = &businessKey
+	return this.db.ListModules(userId, query)
+}
+
 func (this *Controller) ValidateModule(userId string, element model.SmartServiceModule) (error, int) {
 	if element.Id == "" {
 		return errors.New("missing id"), http.StatusBadRequest

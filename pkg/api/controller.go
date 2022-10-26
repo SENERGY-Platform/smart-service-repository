@@ -34,6 +34,7 @@ type Controller interface {
 type ModulesInterface interface {
 	SetModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit, moduleId string) (model.SmartServiceModule, error, int)
 	AddModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
+	ListModulesOfProcessInstance(processInstanceId string, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
 	AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
 	ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
 	DeleteModule(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)

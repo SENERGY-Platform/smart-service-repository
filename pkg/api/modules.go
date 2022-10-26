@@ -98,6 +98,51 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 	})
 }
 
+// ListByProcessInstance godoc
+// @Summary      list smart-service modules of process-instance
+// @Description  creates a smart-service module
+// @Tags         modules
+// @Produce      json
+// @Param        key query string false "filter by key"
+// @Param        module_type query string false "filter by module type"
+// @Param        id path string true "Process-Instance ID"
+// @Success      200 {array} model.SmartServiceModule
+// @Failure      500
+// @Failure      400
+// @Failure      401
+// @Router       /instances-by-process-id/{id}/modules [get]
+func (this *Modules) ListByProcessInstance(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/instances-by-process-id/:id/modules", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		if !token.IsAdmin() {
+			http.Error(writer, "only admins may ask for instances-by-process-id", http.StatusForbidden)
+			return
+		}
+
+		query := model.ModuleQueryOptions{}
+		keyFilter := request.URL.Query().Get("key")
+		if keyFilter != "" {
+			query.KeyFilter = &keyFilter
+		}
+		moduleTypeFilter := request.URL.Query().Get("module_type")
+		if moduleTypeFilter != "" {
+			query.TypeFilter = &moduleTypeFilter
+		}
+
+		result, err, code := ctrl.ListModulesOfProcessInstance(params.ByName("id"), query)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(result)
+	})
+}
+
 // CreateByProcessInstance godoc
 // @Summary      create a smart-service module
 // @Description  creates a smart-service module
