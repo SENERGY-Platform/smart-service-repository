@@ -279,11 +279,6 @@ func (this *Controller) parameterDescriptionsToSmartServiceExtendedParameter(tok
 		}
 		param.HasNoValidOption = !(param.Optional || paramDesc.IotDescription == nil || len(param.Options) > 0)
 
-		//set default value to nil if characteristic is requested
-		if param.CharacteristicId != nil && *param.CharacteristicId != "" {
-			param.DefaultValue = nil
-		}
-
 		//set default value to nil if it cont be found in options
 		if len(param.Options) > 0 && param.DefaultValue != nil {
 			found := false
