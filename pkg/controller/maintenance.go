@@ -65,6 +65,10 @@ func (this *Controller) StartMaintenanceProcedure(token auth.Token, instanceId s
 		return err, code
 	}
 
+	if instance.Deleting {
+		return fmt.Errorf("instance is deleting"), http.StatusBadRequest
+	}
+
 	if !instance.Ready {
 		return fmt.Errorf("instance init is not ready"), http.StatusBadRequest
 	}
