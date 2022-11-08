@@ -614,6 +614,15 @@ func TestModuleKeyApi(t *testing.T) {
 		})
 	})
 
+	t.Run("list by process-instance-id and key=modulekey and module_type=test-module", func(t *testing.T) {
+		testModuleListExtendedWithToken(t, adminToken, apiUrl+"/instances-by-process-id/"+url.PathEscape(processInstanceId), "?key=modulekey&module_type=test-module", 1, []string{instanceA.Id}, []string{"test-module"}, func(modules []model.SmartServiceModule) {
+			if len(modules) != 1 || modules[0].InstanceId != instanceA.Id || len(modules[0].Keys) != 2 || modules[0].Keys[0] != "modulekey" {
+				b, _ := json.Marshal(modules)
+				t.Error(instanceA.Id, string(b))
+			}
+		})
+	})
+
 	t.Run("list by process-instance-id", func(t *testing.T) {
 		testModuleListExtendedWithToken(t, adminToken, apiUrl+"/instances-by-process-id/"+url.PathEscape(processInstanceId), "", 2, []string{instanceA.Id}, []string{"test-module", mocks.CAMUNDA_MODULE_WORKER_TOPIC}, func(modules []model.SmartServiceModule) {
 

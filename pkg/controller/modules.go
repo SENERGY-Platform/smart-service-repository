@@ -82,11 +82,12 @@ func (this *Controller) ListModulesOfProcessInstance(processInstanceId string, q
 	if err != nil {
 		return result, err, code
 	}
-	userId, err, code := this.getInstanceUserId(businessKey)
+	instance, err, code := this.db.GetInstance(businessKey, "")
 	if err != nil {
 		return result, err, code
 	}
-	query.InstanceIdFilter = &businessKey
+	userId := instance.UserId
+	query.InstanceIdFilter = &instance.Id
 	return this.db.ListModules(userId, query)
 }
 
