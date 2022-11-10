@@ -61,6 +61,11 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 		element.Id = this.GetNewId()
 	}
 
+	err = ValidateDesign(design.BpmnXml)
+	if err != nil {
+		return result, fmt.Errorf("invalid design xml for release: %w", err), http.StatusBadRequest
+	}
+
 	parsedInfo, err := this.parseDesignXmlForReleaseInfo(token, design.BpmnXml, element)
 	if err != nil {
 		return result, fmt.Errorf("unable to parse design xml for release: %w", err), http.StatusBadRequest
