@@ -202,13 +202,13 @@ func (this *Instances) GetInstanceByProcessId(config configuration.Config, route
 			http.Error(writer, "only admins may ask for instances-by-process-id", http.StatusForbidden)
 			return
 		}
-		userId, err, code := ctrl.GetInstanceByProcessInstanceId(params.ByName("id"))
+		instance, err, code := ctrl.GetInstanceByProcessInstanceId(params.ByName("id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
 		}
 		writer.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(writer).Encode(userId)
+		json.NewEncoder(writer).Encode(instance)
 	})
 }
 

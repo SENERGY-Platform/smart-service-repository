@@ -186,3 +186,7 @@ func (this *Controller) deleteModule(module model.SmartServiceModule, ignoreModu
 	}
 	return this.db.DeleteModule(module.Id, module.UserId)
 }
+
+func (this *Controller) GetModule(token auth.Token, id string) (model.SmartServiceModule, error, int) {
+	return this.db.GetModule(id, token.GetUserId())
+}

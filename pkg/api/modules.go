@@ -296,3 +296,35 @@ func (this *Modules) Delete(config configuration.Config, router *httprouter.Rout
 		writer.WriteHeader(http.StatusOK)
 	})
 }
+
+// Get godoc
+// @Summary      read a smart-service module
+// @Description  read a smart-service module
+// @Tags         modules
+// @Param        id path string true "Module ID"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /modules/{id} [get]
+func (this *Modules) Get(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/modules/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		module, err, code := ctrl.GetModule(token, id)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(module)
+	})
+}
