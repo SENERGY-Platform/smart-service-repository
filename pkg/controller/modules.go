@@ -157,7 +157,7 @@ func (this *Controller) useModuleDeleteInfo(info model.ModuleDeleteInfo) error {
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 && resp.StatusCode != http.StatusNotFound {
 		temp, _ := io.ReadAll(resp.Body)
-		err = fmt.Errorf("unexpected response: %v, %v", resp.StatusCode, string(temp))
+		err = fmt.Errorf("unexpected response for %v: %v, %v", info.Url, resp.StatusCode, string(temp))
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return err
