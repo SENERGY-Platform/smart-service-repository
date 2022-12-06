@@ -72,6 +72,10 @@ var SelectionsResponse3Obj []model.Selectable
 var SelectionsResponse4 []byte
 var SelectionsResponse4Obj []model.Selectable
 
+//go:embed big_selections_response.json
+var BigSelectionsResponse []byte
+var BigSelectionsResponseObj []model.Selectable
+
 //go:embed expected_params_3.json
 var ExpectedParams3 []byte
 var ExpectedParams3Obj []model.SmartServiceExtendedParameter
@@ -81,6 +85,9 @@ var JsonLocationInputBpmn string
 
 //go:embed auto_select_all_input.bpmn
 var AutoSelectAllInputBpmn string
+
+//go:embed test_big_inputs.bpmn
+var BigInputBpmn string
 
 //go:embed empty-analytics-test.bpmn
 var EmptyAnalyticsTestBpmn string
@@ -132,6 +139,13 @@ func init() {
 	}
 
 	err = json.Unmarshal(SelectionsResponse4, &SelectionsResponse4Obj)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", err)
+		panic(err)
+	}
+
+	err = json.Unmarshal(BigSelectionsResponse, &BigSelectionsResponseObj)
 	if err != nil {
 		debug.PrintStack()
 		log.Println("ERROR:", err)
