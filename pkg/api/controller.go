@@ -28,6 +28,7 @@ type Controller interface {
 	ReleaseInterface
 	InstancesInterface
 	MaintenanceInterface
+	VariablesInterface
 	GetNewId() string
 }
 
@@ -81,4 +82,14 @@ type MaintenanceInterface interface {
 	GetMaintenanceProcedureOfInstance(token auth.Token, instanceId string, publicEventId string) (maintenanceProcedure model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int)
 	GetMaintenanceProcedureParametersOfInstance(token auth.Token, instanceId string, publicEventId string) ([]model.SmartServiceExtendedParameter, error, int)
 	StartMaintenanceProcedure(token auth.Token, instanceId string, publicEventId string, parameters model.SmartServiceParameters) (error, int)
+}
+
+type VariablesInterface interface {
+	SetVariable(token auth.Token, variable model.SmartServiceInstanceVariable) (result model.SmartServiceInstanceVariable, err error, code int)
+	GetVariablesMap(token auth.Token, instanceId string, query model.VariableQueryOptions) (map[string]interface{}, error, int)
+	ListVariables(token auth.Token, instanceId string, query model.VariableQueryOptions) ([]model.SmartServiceInstanceVariable, error, int)
+	DeleteVariable(token auth.Token, instanceId string, name string) (error, int)
+	GetVariable(token auth.Token, instanceId string, name string) (model.SmartServiceInstanceVariable, error, int)
+	SetVariablesMapOfProcessInstance(processInstanceId string, mappedVariableValues map[string]interface{}) (err error, code int)
+	GetVariablesMapOfProcessInstance(processInstanceId string) (map[string]interface{}, error, int)
 }

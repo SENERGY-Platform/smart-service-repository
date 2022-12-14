@@ -107,6 +107,10 @@ func (this *Mongo) DeleteInstance(id string, userId string) (err error, code int
 	if err != nil {
 		return err, code
 	}
+	err, code = this.RemoveVariablesOfInstance(id, userId)
+	if err != nil {
+		return err, code
+	}
 	ctx, _ := getTimeoutContext()
 	_, err = this.instanceCollection().DeleteMany(ctx, bson.M{
 		InstanceBson.Id:     id,

@@ -47,6 +47,7 @@ type Config struct {
 	MongoCollectionRelease               string   `json:"mongo_collection_release"`
 	MongoCollectionInstance              string   `json:"mongo_collection_instance"`
 	MongoCollectionModule                string   `json:"mongo_collection_module"`
+	MongoCollectionVariables             string   `json:"mongo_collection_variables"`
 	AuthEndpoint                         string   `json:"auth_endpoint"`
 	AuthClientId                         string   `json:"auth_client_id" config:"secret"`
 	AuthClientSecret                     string   `json:"auth_client_secret" config:"secret"`
@@ -56,7 +57,7 @@ type Config struct {
 	CleanupCycle                         string   `json:"cleanup_cycle"`
 }
 
-//loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)
+// loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)
 func Load(location string) (config Config, err error) {
 	file, err := os.Open(location)
 	if err != nil {

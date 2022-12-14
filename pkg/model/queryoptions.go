@@ -42,6 +42,27 @@ func (this ModuleQueryOptions) GetSort() string {
 	return this.Sort
 }
 
+type VariableQueryOptions struct {
+	Limit  int
+	Offset int
+	Sort   string
+}
+
+func (this VariableQueryOptions) GetLimit() int64 {
+	return int64(this.Limit)
+}
+
+func (this VariableQueryOptions) GetOffset() int64 {
+	return int64(this.Offset)
+}
+
+func (this VariableQueryOptions) GetSort() string {
+	if this.Sort == "" {
+		return "name.asc"
+	}
+	return this.Sort
+}
+
 type DesignQueryOptions struct {
 	Limit  int
 	Offset int

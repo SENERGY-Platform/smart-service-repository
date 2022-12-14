@@ -90,6 +90,13 @@ type SmartServiceInstanceInfo struct {
 	Description string `json:"description" bson:"description"`
 }
 
+type SmartServiceInstanceVariable struct {
+	InstanceId string      `json:"instance_id" bson:"instance_id"`
+	UserId     string      `json:"user_id" bson:"user_id"`
+	Name       string      `json:"name" bson:"name"`
+	Value      interface{} `json:"value" bson:"value"`
+}
+
 type SmartServiceModuleBase struct {
 	Id         string `json:"id"`
 	UserId     string `json:"user_id" bson:"user_id"`

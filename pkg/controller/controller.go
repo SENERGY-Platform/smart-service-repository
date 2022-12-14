@@ -20,7 +20,6 @@ import (
 	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/google/uuid"
@@ -72,7 +71,7 @@ type GenericProducerFactory[T Producer] func(ctx context.Context, config configu
 type ProducerFactory = GenericProducerFactory[Producer]
 type Consumer = func(ctx context.Context, config configuration.Config, topic string, listener func(delivery []byte) error) error
 
-func New(ctx context.Context, config configuration.Config, db *mongo.Mongo, permissions Permissions, camunda Camunda, selectables Selectables, consumer Consumer, producer ProducerFactory, userTokenProvider UserTokenProvider) (ctrl *Controller, err error) {
+func New(ctx context.Context, config configuration.Config, db Database, permissions Permissions, camunda Camunda, selectables Selectables, consumer Consumer, producer ProducerFactory, userTokenProvider UserTokenProvider) (ctrl *Controller, err error) {
 	ctrl = &Controller{
 		config:            config,
 		db:                db,

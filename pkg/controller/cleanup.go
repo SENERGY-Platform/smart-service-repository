@@ -34,6 +34,10 @@ func (this *Controller) Cleanup(ignoreModuleDeleteError bool) (result []error) {
 	if err != nil {
 		result = append(result, err...)
 	}
+	err = this.variableCleanup()
+	if err != nil {
+		result = append(result, err...)
+	}
 	return result
 }
 
@@ -59,6 +63,7 @@ func (this *Controller) instanceCleanup() (result []error) {
 func (this *Controller) moduleCleanup(ignoreModuleDeleteError bool) (result []error) {
 	offset := 0
 	limit := 1000
+	cache := map[string]bool{}
 	for {
 		modules, err, _ := this.db.ListAllModules(model.ModuleQueryOptions{
 			Limit:  limit,
@@ -70,18 +75,77 @@ func (this *Controller) moduleCleanup(ignoreModuleDeleteError bool) (result []er
 			return result
 		}
 		for _, module := range modules {
-			_, err, code := this.db.GetInstance(module.InstanceId, "")
-			if err != nil && code == http.StatusNotFound {
+			exists, checked := cache[module.InstanceId]
+			if !checked {
+				exists = true
+				_, err, code := this.db.GetInstance(module.InstanceId, "")
+				if err != nil && code == http.StatusNotFound {
+					exists = false
+					err = nil
+				}
+				if err != nil {
+					result = append(result, err)
+					log.Println("ERROR: unable to read instance for cleanup", err)
+				} else {
+					cache[module.InstanceId] = exists
+				}
+			}
+			if !exists {
 				log.Println("found orphaned module --> remove", module.Id, module.InstanceId)
 				err, _ = this.deleteModule(module, ignoreModuleDeleteError)
+				if err != nil {
+					result = append(result, err)
+					log.Println("ERROR: unable to remove module", err)
+				}
 			}
-			if err != nil {
-				result = append(result, err)
-				log.Println("ERROR: unable to remove module", err)
-			}
-
 		}
 		if len(modules) < limit {
+			return result
+		}
+		offset = offset + limit
+	}
+}
+
+func (this *Controller) variableCleanup() (result []error) {
+	offset := 0
+	limit := 1000
+	cache := map[string]bool{}
+	for {
+		variables, err, _ := this.db.ListAllVariables(model.VariableQueryOptions{
+			Limit:  limit,
+			Offset: offset,
+			Sort:   "name.asc",
+		})
+		if err != nil {
+			result = append(result, err)
+			return result
+		}
+		for _, variable := range variables {
+			exists, checked := cache[variable.InstanceId]
+			if !checked {
+				exists = true
+				_, err, code := this.db.GetInstance(variable.InstanceId, "")
+				if err != nil && code == http.StatusNotFound {
+					exists = false
+					err = nil
+				}
+				if err != nil {
+					result = append(result, err)
+					log.Println("ERROR: unable to read instance for cleanup", err)
+				} else {
+					cache[variable.InstanceId] = exists
+				}
+			}
+			if !exists {
+				log.Println("found orphaned variable --> remove", variable.InstanceId, variable.Name)
+				err, _ = this.db.DeleteVariable(variable.InstanceId, variable.UserId, variable.Name)
+				if err != nil {
+					result = append(result, err)
+					log.Println("ERROR: unable to remove variable", err)
+				}
+			}
+		}
+		if len(variables) < limit {
 			return result
 		}
 		offset = offset + limit

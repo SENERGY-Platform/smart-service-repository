@@ -80,6 +80,19 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 
 	//start with auto_select_all parameter
 	result.SmartServiceInstanceInit.Parameters = paramListWithAutoSelect
+
+	err = this.storeInstanceStartVariables(result)
+	if err != nil {
+		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
+		if err2 != nil {
+			log.Println("ERROR:", err2)
+			debug.PrintStack()
+		}
+		return result, err, http.StatusInternalServerError
+	}
+
+	result.SmartServiceInstanceInit.Parameters = replaceLongParameterWithVariableReference(paramListWithAutoSelect)
+
 	err = this.camunda.Start(result)
 	if err != nil {
 		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
@@ -155,8 +168,10 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 	result.Error = ""
 	result.Parameters = parameters
 	result.UpdatedAt = time.Now().Unix()
+
+	var release model.SmartServiceReleaseExtended
 	if releaseId != "" {
-		release, err, code := this.GetRelease(token, releaseId)
+		release, err, code = this.GetExtendedRelease(token, releaseId)
 		if err != nil {
 			return result, err, code
 		}
@@ -166,11 +181,46 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 		}
 		result.DesignId = release.DesignId
 		result.NewReleaseId = release.NewReleaseId
+	} else {
+		release, err, code = this.GetExtendedRelease(token, result.ReleaseId)
+		if err != nil {
+			return result, err, code
+		}
 	}
+
+	paramListWithoutAutoSelect := result.Parameters
+
+	paramListWithAutoSelect, err, code := this.appendAutoSelectParams(token, result.Parameters, release.ParsedInfo.ParameterDescriptions)
+	if err != nil {
+		return result, err, code
+	}
+
+	//store without auto_select_all parameter
+	result.Parameters = paramListWithoutAutoSelect
+
+	this.cleanupMux.Lock()
+	defer this.cleanupMux.Unlock()
+
 	err, code = this.db.SetInstance(result)
 	if err != nil {
 		return result, err, code
 	}
+
+	//start with auto_select_all parameter
+	result.SmartServiceInstanceInit.Parameters = paramListWithAutoSelect
+
+	err = this.storeInstanceStartVariables(result)
+	if err != nil {
+		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
+		if err2 != nil {
+			log.Println("ERROR:", err2)
+			debug.PrintStack()
+		}
+		return result, err, http.StatusInternalServerError
+	}
+
+	result.SmartServiceInstanceInit.Parameters = replaceLongParameterWithVariableReference(paramListWithAutoSelect)
+
 	err = this.camunda.Start(result)
 	if err != nil {
 		log.Println("ERROR:", err)
@@ -410,4 +460,33 @@ func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token,
 	}
 	wg.Wait()
 	return nil, http.StatusOK
+}
+
+func (this *Controller) storeInstanceStartVariables(result model.SmartServiceInstance) (err error) {
+	for _, param := range result.Parameters {
+		_, err, _ = this.db.SetVariable(model.SmartServiceInstanceVariable{
+			InstanceId: result.Id,
+			UserId:     result.UserId,
+			Name:       param.Id,
+			Value:      param.Value,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func replaceLongParameterWithVariableReference(params []model.SmartServiceParameter) []model.SmartServiceParameter {
+	for i, param := range params {
+		if str, ok := param.Value.(string); ok && len(str) >= 3000 {
+			param.Value = createRef(param.Id)
+			params[i] = param
+		}
+	}
+	return params
+}
+
+func createRef(id string) string {
+	return "{{." + id + "}}"
 }

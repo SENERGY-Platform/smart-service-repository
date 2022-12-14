@@ -22,6 +22,7 @@
     "mongo_collection_release": "releases",
     "mongo_collection_instance": "instances",
     "mongo_collection_module": "modules",
+    "mongo_collection_variables": "variables",
 
 
     "auth_endpoint": "",

@@ -51,6 +51,7 @@ func createFindOptions(query QueryOptions) *options.FindOptions {
 }
 
 func readCursorResult[T any](ctx context.Context, cursor *mongo.Cursor) (result []T, err error, code int) {
+	result = []T{}
 	for cursor.Next(ctx) {
 		element := new(T)
 		err = cursor.Decode(element)

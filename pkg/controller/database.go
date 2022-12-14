@@ -24,6 +24,7 @@ type Database interface {
 	InstanceInterface
 	ReleaseInterface
 	MaintenanceInterface
+	VariableInterface
 }
 
 type DesignsInterface interface {
@@ -62,4 +63,12 @@ type ReleaseInterface interface {
 type MaintenanceInterface interface {
 	RemoveFromRunningMaintenanceIds(instanceId string, removeMaintenanceIds []string) error
 	AddToRunningMaintenanceIds(instanceId string, maintenanceId string) error
+}
+
+type VariableInterface interface {
+	GetVariable(instanceId string, userId string, variableName string) (result model.SmartServiceInstanceVariable, err error, code int)
+	SetVariable(element model.SmartServiceInstanceVariable) (model.SmartServiceInstanceVariable, error, int)
+	DeleteVariable(instanceId string, userId string, variableName string) (error, int)
+	ListVariables(instanceId string, userId string, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int)
+	ListAllVariables(query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int)
 }
