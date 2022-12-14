@@ -488,6 +488,57 @@ const docTemplate = `{
             }
         },
         "/instances-by-process-id/{id}/modules": {
+            "get": {
+                "description": "creates a smart-service module",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules"
+                ],
+                "summary": "list smart-service modules of process-instance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "filter by key",
+                        "name": "key",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "filter by module type",
+                        "name": "module_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Process-Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceModule"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
             "post": {
                 "description": "creates a smart-service module",
                 "consumes": [
@@ -673,6 +724,110 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances-by-process-id/{id}/variables-map": {
+            "get": {
+                "description": "returns smart-service instance variables as map",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "variables",
+                    "process-id"
+                ],
+                "summary": "returns smart-service instance variables as map",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limits size of result; 0 means unlimited",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset to be used in combination with limit",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "describes the sorting in the form of name.asc",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "description": "sets multiple smart-service instance variable values with a map; variables that are already stored but not present in the input map are NOT deleted",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "variables",
+                    "process-id"
+                ],
+                "summary": "sets multiple smart-service instance variable values with a map",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Process ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "mapped variable values",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
                         "description": ""
                     },
                     "401": {
@@ -1136,6 +1291,307 @@ const docTemplate = `{
                 }
             }
         },
+        "/instances/{id}/variables": {
+            "get": {
+                "description": "returns a list of smart-service instance variables",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "variables"
+                ],
+                "summary": "returns a list of smart-service instance variables",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limits size of result; 0 means unlimited",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset to be used in combination with limit",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "describes the sorting in the form of name.asc",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SmartServiceInstanceVariable"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/variables-map": {
+            "get": {
+                "description": "returns smart-service instance variables as a map",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "variables"
+                ],
+                "summary": "returns smart-service instance variables as a map",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limits size of result; 0 means unlimited",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset to be used in combination with limit",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "describes the sorting in the form of name.asc",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/variables/{name}": {
+            "get": {
+                "description": "gets a smart-service instance variable",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "variables"
+                ],
+                "summary": "gets a smart-service instance variable",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Variable Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceInstanceVariable"
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "description": "sets a smart-service instance variable value",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "variables"
+                ],
+                "summary": "sets a smart-service instance variable value",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Variable Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "value of variable",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SmartServiceInstanceVariable"
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "description": "removes a smart-service instance variable value",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "variables"
+                ],
+                "summary": "removes a smart-service instance variable value",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Variable Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/instances/{id}/variables/{name}/value": {
+            "get": {
+                "description": "gets a smart-service instance variable value",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "instances",
+                    "variables"
+                ],
+                "summary": "gets a smart-service instance variable value",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Instance ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Variable Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/modules": {
             "get": {
                 "description": "returns a list of smart-service models",
@@ -1198,6 +1654,33 @@ const docTemplate = `{
             }
         },
         "/modules/{id}": {
+            "get": {
+                "description": "read a smart-service module",
+                "tags": [
+                    "modules"
+                ],
+                "summary": "read a smart-service module",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Module ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            },
             "delete": {
                 "description": "removes a smart-service module",
                 "tags": [
@@ -1853,6 +2336,21 @@ const docTemplate = `{
                         "$ref": "#/definitions/model.SmartServiceParameter"
                     }
                 }
+            }
+        },
+        "model.SmartServiceInstanceVariable": {
+            "type": "object",
+            "properties": {
+                "instance_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "value": {}
             }
         },
         "model.SmartServiceModule": {

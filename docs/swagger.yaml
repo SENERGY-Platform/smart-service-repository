@@ -232,6 +232,16 @@ definitions:
           $ref: '#/definitions/model.SmartServiceParameter'
         type: array
     type: object
+  model.SmartServiceInstanceVariable:
+    properties:
+      instance_id:
+        type: string
+      name:
+        type: string
+      user_id:
+        type: string
+      value: {}
+    type: object
   model.SmartServiceModule:
     properties:
       delete_info:
@@ -660,6 +670,40 @@ paths:
       - process-id
       - error
   /instances-by-process-id/{id}/modules:
+    get:
+      description: creates a smart-service module
+      parameters:
+      - description: filter by key
+        in: query
+        name: key
+        type: string
+      - description: filter by module type
+        in: query
+        name: module_type
+        type: string
+      - description: Process-Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceModule'
+            type: array
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: list smart-service modules of process-instance
+      tags:
+      - modules
     post:
       consumes:
       - application/json
@@ -792,6 +836,79 @@ paths:
       - instances
       - process-id
       - user-id
+  /instances-by-process-id/{id}/variables-map:
+    get:
+      description: returns smart-service instance variables as map
+      parameters:
+      - description: Process ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limits size of result; 0 means unlimited
+        in: query
+        name: limit
+        type: integer
+      - description: offset to be used in combination with limit
+        in: query
+        name: offset
+        type: integer
+      - description: describes the sorting in the form of name.asc
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns smart-service instance variables as map
+      tags:
+      - instances
+      - variables
+      - process-id
+    put:
+      consumes:
+      - application/json
+      description: sets multiple smart-service instance variable values with a map;
+        variables that are already stored but not present in the input map are NOT
+        deleted
+      parameters:
+      - description: Process ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: mapped variable values
+        in: body
+        name: message
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: sets multiple smart-service instance variable values with a map
+      tags:
+      - instances
+      - variables
+      - process-id
   /instances/{id}:
     delete:
       description: removes a smart-service instance with all modules
@@ -1094,6 +1211,209 @@ paths:
       tags:
       - instances
       - parameter
+  /instances/{id}/variables:
+    get:
+      description: returns a list of smart-service instance variables
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limits size of result; 0 means unlimited
+        in: query
+        name: limit
+        type: integer
+      - description: offset to be used in combination with limit
+        in: query
+        name: offset
+        type: integer
+      - description: describes the sorting in the form of name.asc
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SmartServiceInstanceVariable'
+            type: array
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns a list of smart-service instance variables
+      tags:
+      - instances
+      - variables
+  /instances/{id}/variables-map:
+    get:
+      description: returns smart-service instance variables as a map
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limits size of result; 0 means unlimited
+        in: query
+        name: limit
+        type: integer
+      - description: offset to be used in combination with limit
+        in: query
+        name: offset
+        type: integer
+      - description: describes the sorting in the form of name.asc
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: returns smart-service instance variables as a map
+      tags:
+      - instances
+      - variables
+  /instances/{id}/variables/{name}:
+    delete:
+      description: removes a smart-service instance variable value
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variable Name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: removes a smart-service instance variable value
+      tags:
+      - instances
+      - variables
+    get:
+      description: gets a smart-service instance variable
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variable Name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceInstanceVariable'
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: gets a smart-service instance variable
+      tags:
+      - instances
+      - variables
+    put:
+      consumes:
+      - application/json
+      description: sets a smart-service instance variable value
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variable Name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: value of variable
+        in: body
+        name: message
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SmartServiceInstanceVariable'
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: sets a smart-service instance variable value
+      tags:
+      - instances
+      - variables
+  /instances/{id}/variables/{name}/value:
+    get:
+      description: gets a smart-service instance variable value
+      parameters:
+      - description: Instance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Variable Name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: gets a smart-service instance variable value
+      tags:
+      - instances
+      - variables
   /modules:
     get:
       description: returns a list of smart-service models
@@ -1155,6 +1475,24 @@ paths:
         "500":
           description: ""
       summary: removes a smart-service module
+      tags:
+      - modules
+    get:
+      description: read a smart-service module
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: ""
+        "500":
+          description: ""
+      summary: read a smart-service module
       tags:
       - modules
   /releases:

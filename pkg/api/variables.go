@@ -32,6 +32,20 @@ func init() {
 
 type Variables struct{}
 
+// Set godoc
+// @Summary      sets a smart-service instance variable value
+// @Description  sets a smart-service instance variable value
+// @Tags         instances, variables
+// @Param        id path string true "Instance ID"
+// @Param        name path string true "Variable Name"
+// @Accept       json
+// @Produce      json
+// @Param        message body interface{} true "value of variable"
+// @Success      200 {object} model.SmartServiceInstanceVariable
+// @Failure      500
+// @Failure      400
+// @Failure      401
+// @Router       /instances/{id}/variables/{name} [put]
 func (this *Variables) Set(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.PUT("/instances/:id/variables/:name", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
@@ -73,6 +87,18 @@ func (this *Variables) Set(config configuration.Config, router *httprouter.Route
 	})
 }
 
+// Get godoc
+// @Summary      gets a smart-service instance variable
+// @Description  gets a smart-service instance variable
+// @Tags         instances, variables
+// @Param        id path string true "Instance ID"
+// @Param        name path string true "Variable Name"
+// @Produce      json
+// @Success      200 {object} model.SmartServiceInstanceVariable
+// @Failure      500
+// @Failure      400
+// @Failure      401
+// @Router       /instances/{id}/variables/{name} [get]
 func (this *Variables) Get(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.GET("/instances/:id/variables/:name", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
@@ -102,6 +128,18 @@ func (this *Variables) Get(config configuration.Config, router *httprouter.Route
 	})
 }
 
+// GetValue godoc
+// @Summary      gets a smart-service instance variable value
+// @Description  gets a smart-service instance variable value
+// @Tags         instances, variables
+// @Param        id path string true "Instance ID"
+// @Param        name path string true "Variable Name"
+// @Produce      json
+// @Success      200 {object} interface{}
+// @Failure      500
+// @Failure      400
+// @Failure      401
+// @Router       /instances/{id}/variables/{name}/value [get]
 func (this *Variables) GetValue(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.GET("/instances/:id/variables/:name/value", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
@@ -131,6 +169,19 @@ func (this *Variables) GetValue(config configuration.Config, router *httprouter.
 	})
 }
 
+// List godoc
+// @Summary      returns a list of smart-service instance variables
+// @Description  returns a list of smart-service instance variables
+// @Tags         instances, variables
+// @Param        id path string true "Instance ID"
+// @Param        limit query integer false "limits size of result; 0 means unlimited"
+// @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        sort query string false "describes the sorting in the form of name.asc"
+// @Produce      json
+// @Success      200 {array}  model.SmartServiceInstanceVariable
+// @Failure      500
+// @Failure      401
+// @Router       /instances/{id}/variables [get]
 func (this *Variables) List(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.GET("/instances/:id/variables", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
@@ -177,6 +228,19 @@ func (this *Variables) List(config configuration.Config, router *httprouter.Rout
 	})
 }
 
+// Map godoc
+// @Summary      returns smart-service instance variables as a map
+// @Description  returns smart-service instance variables as a map
+// @Tags         instances, variables
+// @Param        id path string true "Instance ID"
+// @Param        limit query integer false "limits size of result; 0 means unlimited"
+// @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        sort query string false "describes the sorting in the form of name.asc"
+// @Produce      json
+// @Success      200 {object}  map[string]interface{}
+// @Failure      500
+// @Failure      401
+// @Router       /instances/{id}/variables-map [get]
 func (this *Variables) Map(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.GET("/instances/:id/variables-map", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
@@ -223,6 +287,18 @@ func (this *Variables) Map(config configuration.Config, router *httprouter.Route
 	})
 }
 
+// Delete godoc
+// @Summary      removes a smart-service instance variable value
+// @Description  removes a smart-service instance variable value
+// @Tags         instances, variables
+// @Param        id path string true "Instance ID"
+// @Param        name path string true "Variable Name"
+// @Produce      json
+// @Success      200
+// @Failure      500
+// @Failure      400
+// @Failure      401
+// @Router       /instances/{id}/variables/{name} [delete]
 func (this *Variables) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.DELETE("/instances/:id/variables/:name", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
@@ -251,7 +327,19 @@ func (this *Variables) Delete(config configuration.Config, router *httprouter.Ro
 	})
 }
 
-// no existing variable is deleted
+// SetVariablesMapByProcessInstance godoc
+// @Summary      sets multiple smart-service instance variable values with a map
+// @Description  sets multiple smart-service instance variable values with a map; variables that are already stored but not present in the input map are NOT deleted
+// @Tags         instances, variables, process-id
+// @Param        id path string true "Process ID"
+// @Accept       json
+// @Produce      json
+// @Param        message body map[string]interface{} true "mapped variable values"
+// @Success      200
+// @Failure      500
+// @Failure      400
+// @Failure      401
+// @Router       /instances-by-process-id/{id}/variables-map [put]
 func (this *Instances) SetVariablesMapByProcessInstance(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.PUT("/instances-by-process-id/:id/variables-map", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
@@ -278,6 +366,19 @@ func (this *Instances) SetVariablesMapByProcessInstance(config configuration.Con
 	})
 }
 
+// GetVariablesMapByProcessInstance godoc
+// @Summary      returns smart-service instance variables as map
+// @Description  returns smart-service instance variables as map
+// @Tags         instances, variables, process-id
+// @Param        id path string true "Process ID"
+// @Param        limit query integer false "limits size of result; 0 means unlimited"
+// @Param        offset query integer false "offset to be used in combination with limit"
+// @Param        sort query string false "describes the sorting in the form of name.asc"
+// @Produce      json
+// @Success      200 {object}  map[string]interface{}
+// @Failure      500
+// @Failure      401
+// @Router       /instances-by-process-id/{id}/variables-map [get]
 func (this *Instances) GetVariablesMapByProcessInstance(config configuration.Config, router *httprouter.Router, ctrl Controller) {
 	router.GET("/instances-by-process-id/:id/variables-map", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.GetParsedToken(request)
