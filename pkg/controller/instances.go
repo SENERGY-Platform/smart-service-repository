@@ -17,6 +17,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
@@ -479,9 +480,23 @@ func (this *Controller) storeInstanceStartVariables(result model.SmartServiceIns
 
 func replaceLongParameterWithVariableReference(params []model.SmartServiceParameter) []model.SmartServiceParameter {
 	for i, param := range params {
-		if str, ok := param.Value.(string); ok && len(str) >= 3000 {
-			param.Value = createRef(param.Id)
-			params[i] = param
+		switch v := param.Value.(type) {
+		case string:
+			if len(v) >= 3000 {
+				param.Value = createRef(param.Id)
+				params[i] = param
+			}
+		default:
+			temp, err := json.Marshal(v)
+			if err != nil {
+				log.Println("ERROR:", err)
+				debug.PrintStack()
+				continue
+			}
+			if len(string(temp)) >= 3000 {
+				param.Value = createRef(param.Id)
+				params[i] = param
+			}
 		}
 	}
 	return params
