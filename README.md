@@ -1,3 +1,7 @@
+<a href="https://github.com/SENERGY-Platform/smart-service-repository/.github/workflows/tests.yml" rel="nofollow">
+    <img src="https://github.com/SENERGY-Platform/smart-service-repository/.github/workflows/tests.yml/badge.svg" alt="Tests" />
+</a>
+
 ## Parameter
 parameters returned by `GET /releases/:id/parameters` depend on form fields defined on the start-event element in the design process.
 those form fields can have the following properties
