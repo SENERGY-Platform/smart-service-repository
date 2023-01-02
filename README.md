@@ -1,5 +1,5 @@
-<a href="https://github.com/SENERGY-Platform/smart-service-repository/.github/workflows/tests.yml" rel="nofollow">
-    <img src="https://github.com/SENERGY-Platform/smart-service-repository/.github/workflows/tests.yml/badge.svg" alt="Tests" />
+<a href="https://github.com/SENERGY-Platform/smart-service-repository/actions/workflows/tests.yml" rel="nofollow">
+    <img src="https://github.com/SENERGY-Platform/smart-service-repository/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests" />
 </a>
 
 ## Parameter
