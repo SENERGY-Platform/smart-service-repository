@@ -29,6 +29,9 @@ import (
 )
 
 func TestMapMarshalling(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 

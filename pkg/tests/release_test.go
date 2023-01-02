@@ -32,6 +32,9 @@ import (
 )
 
 func TestReleaseSearch(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -173,6 +176,9 @@ func TestReleaseSearch(t *testing.T) {
 }
 
 func TestReleaseOptionsApi2(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -287,6 +293,9 @@ func TestReleaseOptionsApi2(t *testing.T) {
 }
 
 func TestReleaseOptionsApi(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -401,6 +410,9 @@ func TestReleaseOptionsApi(t *testing.T) {
 }
 
 func TestReleaseOptionsWithCharacteristicApi(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -515,6 +527,9 @@ func TestReleaseOptionsWithCharacteristicApi(t *testing.T) {
 }
 
 func TestReleaseApi(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 

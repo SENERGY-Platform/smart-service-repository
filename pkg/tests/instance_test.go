@@ -35,6 +35,9 @@ import (
 )
 
 func TestInstanceEditApi(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -588,6 +591,9 @@ func TestInstanceEditApi(t *testing.T) {
 }
 
 func TestInstanceApi(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 

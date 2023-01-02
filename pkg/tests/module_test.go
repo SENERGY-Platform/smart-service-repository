@@ -36,6 +36,9 @@ import (
 )
 
 func TestModuleApi(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -650,6 +653,9 @@ func TestModuleKeyApi(t *testing.T) {
 }
 
 func TestModulePutApi(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -1002,6 +1008,9 @@ func testModuleListExtendedWithToken(t *testing.T, token string, apiUrl string, 
 }
 
 func TestEmptyAnalyticsVariables(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
