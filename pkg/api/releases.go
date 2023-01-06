@@ -222,7 +222,7 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 		if addUsableFlag {
 			withUsableFlat, err := addUsableFlagToReleases(ctrl, token, result)
 			if err != nil {
-				http.Error(writer, err.Error(), code)
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			writer.Header().Set("Content-Type", "application/json")
