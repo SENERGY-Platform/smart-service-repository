@@ -24,6 +24,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 func init() {
@@ -360,23 +361,33 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 }
 
 func addUsableFlagToExtendedReleases(ctrl Controller, token auth.Token, releases []model.SmartServiceReleaseExtended) (result []model.SmartServiceReleaseExtendedWithUsableFlag, err error) {
+	wg := sync.WaitGroup{}
+	mux := sync.Mutex{}
 	for _, release := range releases {
-		parameter, err, _ := ctrl.GetReleaseParameterWithoutAuthCheck(token, release.Id)
-		if err != nil {
-			return result, err
-		}
-		element := model.SmartServiceReleaseExtendedWithUsableFlag{
-			SmartServiceReleaseExtended: release,
-			Usable:                      true,
-		}
-		for _, param := range parameter {
-			if param.HasNoValidOption {
-				element.Usable = false
+		wg.Add(1)
+		go func(release model.SmartServiceReleaseExtended) {
+			defer wg.Done()
+			parameter, temperr, _ := ctrl.GetReleaseParameterWithoutAuthCheck(token, release.Id)
+			if temperr != nil {
+				err = temperr
+				return
 			}
-		}
-		result = append(result, element)
+			element := model.SmartServiceReleaseExtendedWithUsableFlag{
+				SmartServiceReleaseExtended: release,
+				Usable:                      true,
+			}
+			for _, param := range parameter {
+				if param.HasNoValidOption {
+					element.Usable = false
+				}
+			}
+			mux.Lock()
+			defer mux.Unlock()
+			result = append(result, element)
+		}(release)
 	}
-	return result, nil
+	wg.Wait()
+	return result, err
 }
 
 func addUsableFlagToReleases(ctrl Controller, token auth.Token, releases []model.SmartServiceRelease) (result []model.SmartServiceReleaseWithUsableFlag, err error) {
