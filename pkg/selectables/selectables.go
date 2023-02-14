@@ -70,6 +70,8 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 	req, err := http.NewRequest("POST", endpoint, requestBody)
 	if err != nil {
 		log.Println("ERROR: ", err)
+		temp, _ := json.Marshal(criteria)
+		log.Printf("used request=\n%v\n", string(temp))
 		debug.PrintStack()
 		return result, err, http.StatusInternalServerError
 	}
@@ -78,6 +80,8 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Println("ERROR: ", err)
+		temp, _ := json.Marshal(criteria)
+		log.Printf("used request=\n%v\n", string(temp))
 		debug.PrintStack()
 		return result, err, http.StatusInternalServerError
 	}

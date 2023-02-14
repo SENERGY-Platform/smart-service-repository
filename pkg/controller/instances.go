@@ -312,7 +312,7 @@ func (this *Controller) handleReadyAndErrorField(instance model.SmartServiceInst
 	}
 	if missing {
 		instance.Ready = false
-		instance.Error = "missing camunda process instance"
+		instance.Error = ErrMissingCamundaProcessInstance
 		err, _ = this.db.SetInstance(instance)
 		if err != nil {
 			log.Println("ERROR:", err)
