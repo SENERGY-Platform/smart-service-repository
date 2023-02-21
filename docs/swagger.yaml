@@ -350,7 +350,6 @@ definitions:
           $ref: '#/definitions/model.ParameterDescription'
         type: array
     type: object
-host: localhost:8080
 info:
   contact: {}
   license:

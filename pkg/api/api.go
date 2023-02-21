@@ -61,7 +61,6 @@ func Start(ctx context.Context, config configuration.Config, ctrl Controller) (e
 // @version       0.1
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
-// @host      localhost:8080
 // @BasePath  /
 // @securityDefinitions.apikey Bearer
 // @in header
