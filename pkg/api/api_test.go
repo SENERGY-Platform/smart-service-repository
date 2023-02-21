@@ -17,10 +17,33 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestReflect(t *testing.T) {
 	GetRouter(configuration.Config{}, nil)
+}
+
+func TestWagger(t *testing.T) {
+	s := httptest.NewServer(GetRouter(configuration.Config{}, nil))
+	defer s.Close()
+	resp, err := http.Get(s.URL + "/doc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	result := map[string]interface{}{}
+	temp, _ := io.ReadAll(resp.Body)
+	t.Log(string(temp))
+	err = json.Unmarshal(temp, &result)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%#v", result)
 }

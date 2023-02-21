@@ -1,0 +1,190 @@
+version: '3.3'
+services:
+  zookeeper:
+    restart: on-failure
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+  kafka:
+    restart: on-failure
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  elasticsearch:
+      restart: on-failure
+      image: docker.elastic.co/elasticsearch/elasticsearch:7.4.0
+      container_name: elasticsearch
+      environment:
+        - xpack.security.enabled=false
+        - discovery.type=single-node
+  permissions-search:
+      restart: on-failure
+      image: ghcr.io/senergy-platform/permission-search:prod
+      depends_on:
+        - kafka
+        - elasticsearch
+      environment:
+        KAFKA_URL: kafka:9092
+        ELASTIC_URL: http://elasticsearch:9200
+        DEBUG: "true"
+  device-repository-db:
+    image: mongo:4.1.11
+    restart: on-failure
+  device-manager:
+    image: ghcr.io/senergy-platform/device-manager:prod
+    restart: on-failure
+    ports:
+      - 8081:8080
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_URL: kafka:9092
+      PERMISSIONS_URL: http://permissions-search:8080
+      DEVICE_REPO_URL: http://device-repository:8080
+  device-repository:
+    image: ghcr.io/senergy-platform/device-repository:prod
+    restart: on-failure
+    depends_on:
+      - kafka
+      - device-repository-db
+    environment:
+      MONGO_URL: mongodb://device-repository-db
+      KAFKA_URL: kafka:9092
+      PERMISSIONS_URL: http://permissions-search:8080
+      MONGO_REPL_SET: "false"
+      GROUP_ID: device-repository
+  import-repository-db:
+    image: mongo:4.1.11
+    restart: on-failure
+  import-repository:
+    image: ghcr.io/senergy-platform/import-repository:prod
+    restart: on-failure
+    depends_on:
+      - permissions-search
+      - device-repository
+      - import-repository-db
+      - kafka
+    environment:
+      PERMISSIONS_URL: http://permissions-search:8080
+      DEVICE_REPO_URL: http://device-repository:8080
+      MONGO_URL: mongodb://import-repository-db
+      KAFKA_BOOTSTRAP: kafka:9092
+  import-deploy-db:
+    image: mongo:4.1.11
+    restart: on-failure
+  import-deploy:
+    image: ghcr.io/senergy-platform/import-deploy:prod
+    restart: on-failure
+    depends_on:
+      - import-deploy-db
+    environment:
+      PERMISSIONS_URL: http://permissions-search:8080
+      MONGO_URL: mongodb://import-deploy-db
+      KAFKA_BOOTSTRAP: kafka:9092
+      IMPORT_REPO_URL: http://import-repository:8080
+      DEPLOY_MODE: docker
+      #DOCKER_NETWORK: bridge
+      #DOCKER_HOST: "/var/run/docker.sock"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  device-selection:
+      image: ghcr.io/senergy-platform/device-selection:prod
+      restart: on-failure
+      environment:
+        API_PORT: 8080
+        DEVICE_REPO_URL: http://device-repository:8080
+        PERM_SEARCH_URL: http://permissions-search:8080
+        IMPORT_REPO_URL: http://import-repository:8080
+        IMPORT_DEPLOY_URL: http://import-deploy:8080
+        KAFKA_URL: kafka:9092
+      depends_on:
+        - kafka
+        - permissions-search
+        - device-repository
+        - import-repository
+        - import-deploy
+  keycloak-db:
+    image: postgres:11.2
+    restart: on-failure
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_PASSWORD: pw
+      POSTGRES_USER: usr
+  keycloak:
+    image: fgseitsrancher.wifa.intern.uni-leipzig.de:5000/auth-keycloak:prod
+    restart: on-failure
+    depends_on:
+      - keycloak-db
+    environment:
+      KEYCLOAK_PASSWORD: "pw"
+      KEYCLOAK_USER: "user"
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_USERNAME: usr
+      KC_DB_PASSWORD: pw
+  keycloak-config:
+    build: ./keycloak-config
+    restart: on-failure
+    depends_on:
+      - keycloak
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+  pg:
+      image: postgres:11.2
+      restart: on-failure
+      environment:
+        POSTGRES_DB: camunda
+        POSTGRES_PASSWORD: pw
+        POSTGRES_USER: usr
+  camunda:
+      image: ghcr.io/senergy-platform/process-engine:prod
+      restart: on-failure
+      depends_on:
+        - pg
+      environment:
+        DB_PASSWORD: pw
+        DB_URL: jdbc:postgresql://pg:5432/camunda
+        DB_PORT: 5432
+        DB_NAME: camunda
+        DB_HOST: pg
+        DB_DRIVER: org.postgresql.Driver
+        DB_USERNAME: usr
+        DATABASE: postgres
+  smart-service-repository-db:
+      image: mongo:4.1.11
+      restart: on-failure
+  smart-service-repository:
+      build: ../
+      restart: on-failure
+      depends_on:
+        - smart-service-repository-db
+        - permissions-search
+        - camunda
+        - device-selection
+      environment:
+        DEBUG: "true"
+        KAFKA_URL: kafka:9092
+        PERMISSIONS_URL: http://permissions-search:8080
+        PERMISSIONS_CMD_URL: http://permissions-search:8080
+        MONGO_URL: mongodb://smart-service-repository-db
+        CAMUNDA_URL: http://camunda:8080
+        AUTH_CLIENT_ID: "connector"
+        AUTH_CLIENT_SECRET: "00000000-0000-0000-0000-000000000000"
+        AUTH_ENDPOINT: http://keycloak:8080
+        DEVICE_SELECTION_API: http://device-selection:8080
+      ports:
+        - 8080:8080
+

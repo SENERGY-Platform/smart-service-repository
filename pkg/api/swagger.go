@@ -17,6 +17,7 @@
 package api
 
 import (
+	"encoding/json"
 	_ "github.com/SENERGY-Platform/smart-service-repository/docs"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/julienschmidt/httprouter"
@@ -45,6 +46,22 @@ func (this *SwaggerEndpoints) Swagger(config configuration.Config, router *httpr
 			http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		_, _ = writer.Write([]byte(doc))
+		//remove empty host field
+		documentMap := map[string]interface{}{}
+		err = json.Unmarshal([]byte(doc), &documentMap)
+		if err != nil {
+			http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		if host, ok := documentMap["host"]; ok && host == "" {
+			delete(documentMap, "host")
+		}
+		output, err := json.Marshal(documentMap)
+		if err != nil {
+			http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		_, _ = writer.Write(output)
 	})
 }
