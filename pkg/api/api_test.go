@@ -29,7 +29,7 @@ func TestReflect(t *testing.T) {
 	GetRouter(configuration.Config{}, nil)
 }
 
-func TestWagger(t *testing.T) {
+func TestSwagger(t *testing.T) {
 	s := httptest.NewServer(GetRouter(configuration.Config{}, nil))
 	defer s.Close()
 	resp, err := http.Get(s.URL + "/doc")

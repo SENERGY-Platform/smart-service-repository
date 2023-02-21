@@ -17,13 +17,13 @@
 package api
 
 import (
-	"encoding/json"
 	_ "github.com/SENERGY-Platform/smart-service-repository/docs"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/julienschmidt/httprouter"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"github.com/swaggo/swag"
 	"net/http"
+	"strings"
 )
 
 func init() {
@@ -46,22 +46,8 @@ func (this *SwaggerEndpoints) Swagger(config configuration.Config, router *httpr
 			http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		//remove empty host field
-		documentMap := map[string]interface{}{}
-		err = json.Unmarshal([]byte(doc), &documentMap)
-		if err != nil {
-			http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-		if host, ok := documentMap["host"]; ok && host == "" {
-			delete(documentMap, "host")
-		}
-		output, err := json.Marshal(documentMap)
-		if err != nil {
-			http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		_, _ = writer.Write(output)
+		//remove empty host to enable developer-swagger-api service to replace it; can not use cleaner delete on json object, because developer-swagger-api is sensible to formatting; better alternative is refactoring of developer-swagger-api/apis/db/db.py
+		doc = strings.Replace(doc, `"host": "",`, "", 1)
+		_, _ = writer.Write([]byte(doc))
 	})
 }
