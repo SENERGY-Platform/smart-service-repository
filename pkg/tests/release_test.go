@@ -749,7 +749,7 @@ func TestReleaseUpdate(t *testing.T) {
 	t.Run("create release", func(t *testing.T) {
 		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
 			DesignId:    design.Id,
-			Name:        "release name",
+			Name:        "release 1 name",
 			Description: "test description",
 		})
 		if err != nil {
@@ -845,7 +845,7 @@ func TestReleaseUpdate(t *testing.T) {
 	t.Run("create release 2", func(t *testing.T) {
 		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
 			DesignId:    design.Id,
-			Name:        "release name",
+			Name:        "release 2 name",
 			Description: "test description",
 		})
 		if err != nil {
@@ -1057,6 +1057,167 @@ func TestReleaseUpdate(t *testing.T) {
 
 		if instance.NewReleaseId != release3.Id {
 			t.Error(instance.NewReleaseId, release.Id, release2.Id, release3.Id)
+			return
+		}
+	})
+
+	t.Run("delete release 3", func(t *testing.T) {
+		resp, err := delete(userToken, apiUrl+"/releases/"+url.PathEscape(release3.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+	})
+
+	time.Sleep(10 * time.Second)
+
+	t.Run("read release1 new release id rollback", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		temp := model.SmartServiceRelease{}
+		err = json.NewDecoder(resp.Body).Decode(&temp)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if temp.NewReleaseId != release2.Id {
+			t.Error("id=", temp.Id, "new_release_id=", temp.NewReleaseId)
+			return
+		}
+	})
+
+	t.Run("read release2 new release id rollback", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release2.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		temp := model.SmartServiceRelease{}
+		err = json.NewDecoder(resp.Body).Decode(&temp)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if temp.NewReleaseId != "" {
+			t.Error("id=", temp.Id, "new_release_id=", temp.NewReleaseId)
+			return
+		}
+	})
+
+	release4 := model.SmartServiceRelease{}
+	t.Run("create release 4", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design.Id,
+			Name:        "release name",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release4)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	time.Sleep(10 * time.Second)
+
+	t.Run("read release1 new release id release4", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		temp := model.SmartServiceRelease{}
+		err = json.NewDecoder(resp.Body).Decode(&temp)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if temp.NewReleaseId != release4.Id {
+			t.Error(temp.NewReleaseId)
+			return
+		}
+	})
+
+	t.Run("read release2 new release id release4", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release2.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		temp := model.SmartServiceRelease{}
+		err = json.NewDecoder(resp.Body).Decode(&temp)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if temp.NewReleaseId != release4.Id {
+			t.Error(temp.NewReleaseId)
+			return
+		}
+	})
+
+	t.Run("read release4 no new release id", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release4.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		temp := model.SmartServiceRelease{}
+		err = json.NewDecoder(resp.Body).Decode(&temp)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if temp.NewReleaseId != "" {
+			t.Error(temp.NewReleaseId)
 			return
 		}
 	})

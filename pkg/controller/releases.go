@@ -444,7 +444,7 @@ func (this *Controller) HandleReleaseDelete(userId string, id string) error {
 			return err
 		}
 		sort.Slice(oldReleases, func(i, j int) bool {
-			return oldReleases[i].CreatedAt > oldReleases[i].CreatedAt
+			return oldReleases[i].CreatedAt > oldReleases[j].CreatedAt
 		})
 		youngestRelease := model.SmartServiceReleaseExtended{}
 		for _, value := range oldReleases {
@@ -465,7 +465,7 @@ func (this *Controller) HandleReleaseDelete(userId string, id string) error {
 		}
 		//other releases will be updated on update handling of youngestRelease because NewReleaseId == ""
 		//there is a race between the deletion of this release from the database and the update of releases that are not youngestRelease in HandleReleaseSave()
-		//but the retroactive create/uptdate of the releaste that is meant to be deleted is prevented by "if old.CreatedAt < release.CreatedAt {" in HandleReleaseSave()
+		//but the retroactive create/uptdate of the release that is meant to be deleted is prevented by "if old.CreatedAt < release.CreatedAt {" in HandleReleaseSave()
 	}
 
 	//delete release from db
