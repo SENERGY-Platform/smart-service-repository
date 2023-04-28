@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/SENERGY-Platform/permission-search/lib/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"io"
@@ -30,103 +31,46 @@ import (
 )
 
 type Permissions struct {
-	config configuration.Config
+	config           configuration.Config
+	permissionsearch client.Client
 }
 
 func New(config configuration.Config) *Permissions {
-	return &Permissions{config: config}
+	return &Permissions{config: config, permissionsearch: client.NewClient(config.PermissionsUrl)}
 }
 
 func (this *Permissions) CheckAccess(token auth.Token, topic string, id string, right string) (allowed bool, err error) {
-	req, err := http.NewRequest("GET", this.config.PermissionsUrl+"/v3/resources/"+url.QueryEscape(topic)+"/"+url.QueryEscape(id)+"/access?rights="+right, nil)
-	if err != nil {
-		debug.PrintStack()
-		return false, err
+	err = this.permissionsearch.CheckUserOrGroup(token.Jwt(), topic, id, right)
+	if err == nil {
+		return true, nil
 	}
-	req.Header.Set("Authorization", token.Jwt())
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Println("ERROR: ", err)
-		debug.PrintStack()
-		return false, err
+	if errors.Is(err, client.ErrAccessDenied) {
+		return false, nil
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		return false, errors.New(buf.String())
+	if errors.Is(err, client.ErrNotFound) {
+		return false, nil
 	}
-	err = json.NewDecoder(resp.Body).Decode(&allowed)
-	if err != nil {
-		debug.PrintStack()
-		return false, err
-	}
-	return allowed, nil
+	return allowed, err
 }
 
 func (this *Permissions) Query(token string, query QueryMessage, result interface{}) (err error, code int) {
-	requestBody := new(bytes.Buffer)
-	err = json.NewEncoder(requestBody).Encode(query)
+	temp, code, err := this.permissionsearch.Query(token, query)
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return err, code
 	}
-	req, err := http.NewRequest("POST", this.config.PermissionsUrl+"/v3/query", requestBody)
+	b, err := json.Marshal(temp)
 	if err != nil {
-		debug.PrintStack()
-		return err, http.StatusInternalServerError
+		return err, 500
 	}
-	req.Header.Set("Authorization", token)
-	resp, err := http.DefaultClient.Do(req)
+	err = json.Unmarshal(b, result)
 	if err != nil {
-		debug.PrintStack()
-		return err, http.StatusInternalServerError
+		return err, 500
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		err = errors.New(buf.String())
-		log.Println("ERROR: ", resp.StatusCode, err)
-		debug.PrintStack()
-		return err, resp.StatusCode
-	}
-	err = json.NewDecoder(resp.Body).Decode(result)
-	if err != nil {
-		debug.PrintStack()
-		return err, http.StatusInternalServerError
-	}
-
-	return nil, http.StatusOK
+	return nil, 200
 }
 
-func (this *Permissions) GetResourceRights(token string, topic string, id string) (rights ResourceRights, err error, code int) {
-	req, err := http.NewRequest("GET", this.config.PermissionsUrl+"/v3/administrate/rights/"+url.PathEscape(topic)+"/"+url.PathEscape(id), nil)
-	if err != nil {
-		debug.PrintStack()
-		return rights, err, http.StatusInternalServerError
-	}
-	req.Header.Set("Authorization", token)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		debug.PrintStack()
-		return rights, err, http.StatusInternalServerError
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		err = errors.New(buf.String())
-		log.Println("ERROR: ", resp.StatusCode, err)
-		debug.PrintStack()
-		return rights, err, resp.StatusCode
-	}
-	err = json.NewDecoder(resp.Body).Decode(&rights)
-	if err != nil {
-		debug.PrintStack()
-		return rights, err, http.StatusInternalServerError
-	}
-
-	return rights, nil, http.StatusOK
+func (this *Permissions) GetResourceRights(token string, topic string, id string) (rights ResourceRights, err error) {
+	return this.permissionsearch.GetRights(token, topic, id)
 }
 
 func (this *Permissions) SetResourceRights(token string, topic string, id string, rights ResourceRights, kafkaKey string) error {

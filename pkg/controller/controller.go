@@ -45,7 +45,7 @@ type Producer interface {
 type Permissions interface {
 	CheckAccess(token auth.Token, topic string, id string, right string) (bool, error)
 	Query(token string, query permissions.QueryMessage, result interface{}) (err error, code int)
-	GetResourceRights(token string, topic string, id string) (rights permissions.ResourceRights, err error, code int)
+	GetResourceRights(token string, topic string, id string) (rights permissions.ResourceRights, err error)
 	SetResourceRights(token string, topic string, id string, rights permissions.ResourceRights, kafkaKey string) error
 }
 

@@ -480,9 +480,9 @@ func (this *Controller) copyRightsOfRelease(owner string, oldRelease model.Smart
 		debug.PrintStack()
 		return err
 	}
-	rights, err, code := this.permissions.GetResourceRights(token, this.config.KafkaSmartServiceReleaseTopic, oldRelease.Id)
+	rights, err := this.permissions.GetResourceRights(token, this.config.KafkaSmartServiceReleaseTopic, oldRelease.Id)
 	if err != nil {
-		log.Println("ERROR:", code, err)
+		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return err
 	}

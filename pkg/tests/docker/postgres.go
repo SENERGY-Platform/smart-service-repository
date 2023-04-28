@@ -2,54 +2,53 @@ package docker
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"log"
 	"sync"
 )
 
 func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr string, ip string, port string, err error) {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		return "", ip, port, err
-	}
-	container, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "postgres",
-		Tag:        "11.2",
-		Env:        []string{"POSTGRES_DB=" + dbname, "POSTGRES_PASSWORD=pw", "POSTGRES_USER=usr"},
-	}, func(config *docker.HostConfig) {
-		config.Tmpfs = map[string]string{"/var/lib/postgresql/data": "rw"}
+	log.Println("start postgres")
+	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image: "postgres:11.2",
+			Env: map[string]string{
+				"POSTGRES_DB":       dbname,
+				"POSTGRES_PASSWORD": "pw",
+				"POSTGRES_USER":     "usr",
+			},
+			ExposedPorts: []string{"5432/tcp"},
+			WaitingFor: wait.ForAll(
+				wait.ForListeningPort("5432/tcp"),
+			),
+			Tmpfs: map[string]string{"/var/lib/postgresql/data": "rw"},
+		},
+		Started: true,
 	})
 	if err != nil {
-		return "", ip, port, err
+		return "", "", "", err
 	}
+
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		<-ctx.Done()
-		log.Println("DEBUG: remove container " + container.Container.Name)
-		container.Close()
-		wg.Done()
+		log.Println("DEBUG: remove container postgres", c.Terminate(context.Background()))
 	}()
-	ip = container.Container.NetworkSettings.IPAddress
-	port = "5432"
+
+	ip, err = c.ContainerIP(ctx)
+	if err != nil {
+		return "", "", "", err
+	}
+	temp, err := c.MappedPort(ctx, "5432/tcp")
+	if err != nil {
+		return "", "", "", err
+	}
+	port = temp.Port()
 	conStr = fmt.Sprintf("postgres://usr:pw@%s:%s/%s?sslmode=disable", ip, port, dbname)
-	err = pool.Retry(func() error {
-		var err error
-		log.Println("try connecting to pg")
-		db, err := sql.Open("postgres", conStr)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		err = db.Ping()
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		return nil
-	})
-	return
+
+	return conStr, ip, port, err
 }

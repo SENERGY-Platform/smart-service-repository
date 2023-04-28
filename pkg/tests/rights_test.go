@@ -112,7 +112,7 @@ func TestReleaseRights(t *testing.T) {
 	time.Sleep(5 * time.Second) //allow async cqrs
 
 	t.Run("read release1 rights", func(t *testing.T) {
-		rights, err, _ := permissions.New(config).GetResourceRights(adminToken, config.KafkaSmartServiceReleaseTopic, release.Id)
+		rights, err := permissions.New(config).GetResourceRights(adminToken, config.KafkaSmartServiceReleaseTopic, release.Id)
 		if err != nil {
 			t.Error(err)
 			return
@@ -132,21 +132,23 @@ func TestReleaseRights(t *testing.T) {
 
 	t.Run("set release 1 right", func(t *testing.T) {
 		err = permissions.New(config).SetResourceRights(adminToken, config.KafkaSmartServiceReleaseTopic, release.Id, permissions.ResourceRights{
-			UserRights: map[string]permissions.Right{
-				userId: {
-					Read:         true,
-					Write:        true,
-					Execute:      true,
-					Administrate: true,
+			ResourceRightsBase: permissions.ResourceRightsBase{
+				UserRights: map[string]permissions.Right{
+					userId: {
+						Read:         true,
+						Write:        true,
+						Execute:      true,
+						Administrate: true,
+					},
+					adminId: {
+						Read:         true,
+						Write:        true,
+						Execute:      true,
+						Administrate: true,
+					},
 				},
-				adminId: {
-					Read:         true,
-					Write:        true,
-					Execute:      true,
-					Administrate: true,
-				},
+				GroupRights: map[string]permissions.Right{},
 			},
-			GroupRights: map[string]permissions.Right{},
 		}, release.DesignId+"/"+release.Id+"_"+"rights")
 		if err != nil {
 			t.Error(err)
@@ -183,7 +185,7 @@ func TestReleaseRights(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	t.Run("read release2 rights", func(t *testing.T) {
-		rights, err, _ := permissions.New(config).GetResourceRights(adminToken, config.KafkaSmartServiceReleaseTopic, release2.Id)
+		rights, err := permissions.New(config).GetResourceRights(adminToken, config.KafkaSmartServiceReleaseTopic, release2.Id)
 		if err != nil {
 			t.Error(err)
 			return

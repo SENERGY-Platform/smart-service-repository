@@ -93,12 +93,12 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 			return "", config, err
 		}
 		time.Sleep(5 * time.Second)
-		_, camundaPgIp, camundaPgPort, err := docker.Postgres(ctx, wg, "camunda")
+		_, camundaPgIp, _, err := docker.Postgres(ctx, wg, "camunda")
 		if err != nil {
 			return "", config, err
 		}
 
-		config.CamundaUrl, err = docker.Camunda(ctx, wg, camundaPgIp, camundaPgPort)
+		config.CamundaUrl, err = docker.Camunda(ctx, wg, camundaPgIp, "5432")
 		if err != nil {
 			return "", config, err
 		}
@@ -109,7 +109,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 			return "", config, err
 		}
 
-		_, permIp, err := docker.PermSearch(ctx, wg, config.KafkaUrl, elasticIp)
+		_, permIp, err := docker.PermSearch(ctx, wg, true, config.KafkaUrl, elasticIp)
 		if err != nil {
 			return "", config, err
 		}

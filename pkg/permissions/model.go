@@ -16,78 +16,37 @@
 
 package permissions
 
-type QueryMessage struct {
-	Resource           string         `json:"resource"`
-	Find               *QueryFind     `json:"find"`
-	ListIds            *QueryListIds  `json:"list_ids"`
-	CheckIds           *QueryCheckIds `json:"check_ids"`
-	TermAggregate      *string        `json:"term_aggregate"`
-	TermAggregateLimit int            `json:"term_aggregate_limit"`
-}
-
-type QueryFind struct {
-	QueryListCommons
-	Search string     `json:"search"`
-	Filter *Selection `json:"filter"`
-}
-
-type QueryListIds struct {
-	QueryListCommons
-	Ids []string `json:"ids"`
-}
-
-type QueryCheckIds struct {
-	Ids    []string `json:"ids"`
-	Rights string   `json:"rights"`
-}
-
-type QueryListCommons struct {
-	Limit    int        `json:"limit"`
-	Offset   int        `json:"offset"`
-	After    *ListAfter `json:"after"`
-	Rights   string     `json:"rights"`
-	SortBy   string     `json:"sort_by"`
-	SortDesc bool       `json:"sort_desc"`
-}
-
-type ListAfter struct {
-	SortFieldValue interface{} `json:"sort_field_value"`
-	Id             string      `json:"id"`
-}
-
-type QueryOperationType string
-
-const (
-	QueryEqualOperation             QueryOperationType = "=="
-	QueryUnequalOperation           QueryOperationType = "!="
-	QueryAnyValueInFeatureOperation QueryOperationType = "any_value_in_feature"
+import (
+	"github.com/SENERGY-Platform/permission-search/lib/client"
+	"github.com/SENERGY-Platform/permission-search/lib/model"
 )
 
-type ConditionConfig struct {
-	Feature   string             `json:"feature"`
-	Operation QueryOperationType `json:"operation"`
-	Value     interface{}        `json:"value"`
-	Ref       string             `json:"ref"`
-}
+type QueryMessage = client.QueryMessage
 
-type Selection struct {
-	And       []Selection     `json:"and"`
-	Or        []Selection     `json:"or"`
-	Not       *Selection      `json:"not"`
-	Condition ConditionConfig `json:"condition"`
-}
+type QueryFind = client.QueryFind
 
-type ResourceRights struct {
-	ResourceId  string                 `json:"resource_id"`
-	Features    map[string]interface{} `json:"features"`
-	UserRights  map[string]Right       `json:"user_rights"`
-	GroupRights map[string]Right       `json:"group_rights"`
-	Creator     string                 `json:"creator"`
-}
+type QueryListIds = client.QueryListIds
 
-type Right struct {
-	Read         bool `json:"read"`
-	Write        bool `json:"write"`
-	Execute      bool `json:"execute"`
-	Administrate bool `json:"administrate"`
-}
+type QueryCheckIds = client.QueryCheckIds
+
+type QueryListCommons = client.QueryListCommons
+
+type ListAfter = client.ListAfter
+
+type QueryOperationType = client.QueryOperationType
+
+const (
+	QueryEqualOperation             = client.QueryEqualOperation
+	QueryUnequalOperation           = client.QueryUnequalOperation
+	QueryAnyValueInFeatureOperation = client.QueryAnyValueInFeatureOperation
+)
+
+type ConditionConfig = client.ConditionConfig
+
+type Selection = client.Selection
+
+type ResourceRights = model.ResourceRights
+
+type ResourceRightsBase = model.ResourceRightsBase
+
+type Right = model.Right

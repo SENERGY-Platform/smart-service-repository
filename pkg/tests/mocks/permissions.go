@@ -52,8 +52,8 @@ func (this *Permissions) SetQueryFindResponses(queryFindResponses map[string]map
 	this.queryFindResponses = queryFindResponses
 }
 
-func (this *Permissions) GetResourceRights(token string, topic string, id string) (rights permissions.ResourceRights, err error, code int) {
-	return rights, nil, 200
+func (this *Permissions) GetResourceRights(token string, topic string, id string) (rights permissions.ResourceRights, err error) {
+	return rights, nil
 }
 
 func (this *Permissions) SetResourceRights(token string, topic string, id string, rights permissions.ResourceRights, kafkaKey string) error {
