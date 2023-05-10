@@ -19,7 +19,7 @@ func Camunda(ctx context.Context, wg *sync.WaitGroup, pgIp string, pgPort string
 			ExposedPorts: []string{"8080/tcp"},
 			WaitingFor: wait.ForAll(
 				wait.ForListeningPort("8080/tcp"),
-				wait.ForLog("Server initialization in"),
+				wait.ForLog("Server startup in"),
 			),
 			Env: map[string]string{
 				"DB_PASSWORD": "pw",

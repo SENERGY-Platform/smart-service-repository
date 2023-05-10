@@ -32,6 +32,11 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 		return "", "", "", err
 	}
 
+	//err = docker.Dockerlog(ctx, c, "POSTGRES-"+dbname)
+	if err != nil {
+		return "", "", "", err
+	}
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -48,7 +53,7 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 		return "", "", "", err
 	}
 	port = temp.Port()
-	conStr = fmt.Sprintf("postgres://usr:pw@%s:%s/%s?sslmode=disable", ip, port, dbname)
+	conStr = fmt.Sprintf("postgres://usr:pw@%s:%s/%s?sslmode=disable", ip, "5432", dbname)
 
 	return conStr, ip, port, err
 }
