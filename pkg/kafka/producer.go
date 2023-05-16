@@ -40,12 +40,7 @@ func NewProducerWithKeySeparationBalancer(ctx context.Context, config configurat
 
 func NewProducerWithBalancer(ctx context.Context, config configuration.Config, topic string, balancer kafka.Balancer) (*Producer, error) {
 	result := &Producer{ctx: ctx}
-	broker, err := GetBroker(config.KafkaUrl)
-	if err != nil {
-		log.Println("ERROR: unable to get broker list", err)
-		return nil, err
-	}
-	err = InitTopic(config.KafkaUrl, topic)
+	err := InitTopic(config.KafkaUrl, topic)
 	if err != nil {
 		log.Println("ERROR: unable to create topic", err)
 		return nil, err
@@ -57,7 +52,7 @@ func NewProducerWithBalancer(ctx context.Context, config configuration.Config, t
 	}
 
 	result.writer = &kafka.Writer{
-		Addr:        kafka.TCP(broker...),
+		Addr:        kafka.TCP(config.KafkaUrl),
 		Topic:       topic,
 		Async:       false,
 		Logger:      logger,

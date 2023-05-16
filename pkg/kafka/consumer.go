@@ -22,8 +22,8 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/segmentio/kafka-go"
 	"io"
-	"io/ioutil"
 	"log"
+	"os"
 	"time"
 )
 
@@ -34,25 +34,21 @@ func NewConsumer(ctx context.Context, config configuration.Config, topic string,
 }
 
 func NewConsumerWithFullMessage(ctx context.Context, config configuration.Config, topic string, listener func(delivery kafka.Message) error) error {
-	broker, err := GetBroker(config.KafkaUrl)
-	if err != nil {
-		log.Println("ERROR: unable to get broker list", err)
-		return err
-	}
-
-	err = InitTopic(config.KafkaUrl, topic)
+	err := InitTopic(config.KafkaUrl, topic)
 	if err != nil {
 		log.Println("ERROR: unable to create topic", err)
 		return err
 	}
 	r := kafka.NewReader(kafka.ReaderConfig{
-		CommitInterval: 0, //synchronous commits
-		Brokers:        broker,
-		GroupID:        config.ConsumerGroup,
-		Topic:          topic,
-		MaxWait:        1 * time.Second,
-		Logger:         log.New(ioutil.Discard, "", 0),
-		ErrorLogger:    log.New(ioutil.Discard, "", 0),
+		CommitInterval:         0, //synchronous commits
+		Brokers:                []string{config.KafkaUrl},
+		GroupID:                config.ConsumerGroup,
+		Topic:                  topic,
+		MaxWait:                1 * time.Second,
+		Logger:                 log.New(io.Discard, "", 0),
+		ErrorLogger:            log.New(os.Stdout, "[KAFKA-ERR] ", log.LstdFlags),
+		WatchPartitionChanges:  true,
+		PartitionWatchInterval: time.Minute,
 	})
 	go func() {
 		defer r.Close()
