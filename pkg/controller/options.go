@@ -49,6 +49,7 @@ func (this *Controller) getIotOptions(token auth.Token, description *model.IotDe
 }
 
 func (this *Controller) selectablesToOptions(selectables []model.Selectable, entityOnly bool, sameEntityInParameter string) (result []model.Option, err error, code int) {
+	result = []model.Option{} //SNRGY-2756: iot options may not be nil. they have to be at least an empty list.
 	for _, selectable := range selectables {
 		if selectable.Device != nil {
 			options, err, code := this.selectableToDeviceOptions(selectable, entityOnly, sameEntityInParameter)

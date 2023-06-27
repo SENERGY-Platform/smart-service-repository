@@ -98,6 +98,13 @@ var MaintenanceTestBpmn string
 //go:embed "maintenance test.svg"
 var MaintenanceTestSvg string
 
+//go:embed no_device_option.bpmn
+var ProcessDeploymentNoDeviceOptionBpmn string
+
+//go:embed expected_no_device_option_params.json
+var ExpectedNoDeviceOptionParams []byte
+var ExpectedNoDeviceOptionParamsObj []model.SmartServiceExtendedParameter
+
 func init() {
 	err := json.Unmarshal(SelectionsResponse1, &SelectionsResponse1Obj)
 	if err != nil {
@@ -106,6 +113,13 @@ func init() {
 		panic(err)
 	}
 	err = json.Unmarshal(ExpectedParams1, &ExpectedParams1Obj)
+	if err != nil {
+		debug.PrintStack()
+		log.Println("ERROR:", err)
+		panic(err)
+	}
+
+	err = json.Unmarshal(ExpectedNoDeviceOptionParams, &ExpectedNoDeviceOptionParamsObj)
 	if err != nil {
 		debug.PrintStack()
 		log.Println("ERROR:", err)

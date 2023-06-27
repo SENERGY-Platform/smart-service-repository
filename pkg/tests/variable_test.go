@@ -574,3 +574,110 @@ func TestVariableApi(t *testing.T) {
 		}
 	})
 }
+
+// SNRGY-2756: iot options may not be nil. they have to be at least an empty list.
+func TestNoDeviceOptionVariableApi(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, _, err := apiTestEnv(ctx, wg, true, []model.Selectable{}, func(err error) {
+		debug.PrintStack()
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	design := model.SmartServiceDesign{}
+	t.Run("create design", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml: resources.ProcessDeploymentNoDeviceOptionBpmn,
+			SvgXml:  resources.ProcessDeploymentSvg,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if design.BpmnXml != resources.ProcessDeploymentNoDeviceOptionBpmn {
+			t.Error(design.BpmnXml)
+			return
+		}
+		if design.SvgXml != resources.ProcessDeploymentSvg {
+			t.Error(design.SvgXml)
+			return
+		}
+		if design.Id == "" {
+			t.Error(design.Id)
+			return
+		}
+	})
+
+	release := model.SmartServiceRelease{}
+	t.Run("create release", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design.Id,
+			Name:        "release name",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	time.Sleep(5 * time.Second) //allow async cqrs
+
+	t.Run("read params", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases/"+url.PathEscape(release.Id)+"/parameters")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		parameters := []model.SmartServiceExtendedParameter{}
+		err = json.NewDecoder(resp.Body).Decode(&parameters)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if !reflect.DeepEqual(resources.ExpectedNoDeviceOptionParamsObj, parameters) {
+			temp1, _ := json.Marshal(parameters)
+			temp2, _ := json.Marshal(resources.ExpectedNoDeviceOptionParamsObj)
+			t.Error("\n", string(temp1), "\n", string(temp2))
+		}
+
+	})
+
+}
