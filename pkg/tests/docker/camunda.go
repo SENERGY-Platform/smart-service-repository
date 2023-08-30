@@ -3,7 +3,6 @@ package docker
 import (
 	"context"
 	"fmt"
-	"github.com/SENERGY-Platform/permission-search/lib/tests/docker"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"log"
@@ -34,11 +33,6 @@ func Camunda(ctx context.Context, wg *sync.WaitGroup, pgIp string, pgPort string
 		},
 		Started: true,
 	})
-	if err != nil {
-		return "", err
-	}
-
-	err = docker.Dockerlog(ctx, c, "CAMUNDA")
 	if err != nil {
 		return "", err
 	}

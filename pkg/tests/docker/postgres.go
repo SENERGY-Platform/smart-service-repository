@@ -32,11 +32,6 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 		return "", "", "", err
 	}
 
-	//err = docker.Dockerlog(ctx, c, "POSTGRES-"+dbname)
-	if err != nil {
-		return "", "", "", err
-	}
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

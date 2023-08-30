@@ -17,6 +17,7 @@
     "forwarded_endpoints": ["releases"],
 
     "mongo_url": "",
+    "mongo_with_transactions": true,
     "mongo_table": "smart_services",
     "mongo_collection_design": "designs",
     "mongo_collection_release": "releases",

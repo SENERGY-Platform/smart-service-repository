@@ -42,6 +42,7 @@ type Config struct {
 	EditForward                          string   `json:"edit_forward"`
 	ForwardedEndpoints                   []string `json:"forwarded_endpoints"`
 	MongoUrl                             string   `json:"mongo_url"`
+	MongoWithTransactions                bool     `json:"mongo_with_transactions"`
 	MongoTable                           string   `json:"mongo_table"`
 	MongoCollectionDesign                string   `json:"mongo_collection_design"`
 	MongoCollectionRelease               string   `json:"mongo_collection_release"`

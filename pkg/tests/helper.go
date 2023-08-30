@@ -66,11 +66,13 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 	}()
 	config.NotificationUrl = notificationMock.URL
 
-	config.MongoUrl, err = mocks.Mongo(ctx, wg)
+	port, _, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		debug.PrintStack()
 		return "", config, err
 	}
+	config.MongoUrl = "mongodb://localhost:" + port
+	config.MongoWithTransactions = false
 
 	db, err := mongo.New(config)
 	if err != nil {
@@ -104,12 +106,12 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 		}
 		//config.CamundaUrl = "http://foo:barr@defectUrl:8080"
 
-		_, elasticIp, err := docker.Elasticsearch(ctx, wg)
+		_, searchIp, err := docker.OpenSearch(ctx, wg)
 		if err != nil {
 			return "", config, err
 		}
 
-		_, permIp, err := docker.PermSearch(ctx, wg, true, config.KafkaUrl, elasticIp)
+		_, permIp, err := docker.PermSearch(ctx, wg, false, config.KafkaUrl, searchIp)
 		if err != nil {
 			return "", config, err
 		}

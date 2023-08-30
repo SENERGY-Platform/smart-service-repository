@@ -17,6 +17,7 @@
 package mongo
 
 import (
+	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -32,15 +33,11 @@ func (this *Mongo) SetModules(elements []model.SmartServiceModule) (error, int) 
 		return this.SetModule(elements[0]) //no need for transactions
 	}
 	ctx, _ := getTimeoutContext()
-	session, err := this.client.StartSession()
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	defer session.EndSession(ctx)
-	_, err = session.WithTransaction(ctx, func(sessionContext mongo.SessionContext) (transactionResult interface{}, err error) {
+
+	f := func(ctx context.Context) (result interface{}, err error) {
 		for _, element := range elements {
-			transactionResult, err = this.moduleCollection().ReplaceOne(
-				sessionContext,
+			result, err = this.moduleCollection().ReplaceOne(
+				ctx,
 				bson.M{
 					ModuleBson.Id:     element.Id,
 					ModuleBson.UserId: element.UserId,
@@ -48,13 +45,29 @@ func (this *Mongo) SetModules(elements []model.SmartServiceModule) (error, int) 
 				element,
 				options.Replace().SetUpsert(true))
 			if err != nil {
-				return transactionResult, err
+				return result, err
 			}
 		}
-		return transactionResult, err
-	})
-	if err != nil {
-		return err, http.StatusInternalServerError
+		return result, err
 	}
+	if this.config.MongoWithTransactions {
+		session, err := this.client.StartSession()
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+		defer session.EndSession(ctx)
+		_, err = session.WithTransaction(ctx, func(sessionContext mongo.SessionContext) (transactionResult interface{}, err error) {
+			return f(sessionContext)
+		})
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+	} else {
+		_, err := f(ctx)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+	}
+
 	return nil, http.StatusOK
 }

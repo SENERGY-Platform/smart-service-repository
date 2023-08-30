@@ -22,7 +22,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
 	"reflect"
 	"sync"
 	"testing"
@@ -38,18 +38,19 @@ func TestMapMarshalling(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	mongoUrl, err := mocks.Mongo(ctx, wg)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
 	config, err := configuration.Load("../../config.json")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	config.MongoUrl = mongoUrl
+
+	port, _, err := docker.MongoDB(ctx, wg)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	config.MongoUrl = "mongodb://localhost:" + port
+	config.MongoWithTransactions = false
 
 	m, err := mongo.New(config)
 	if err != nil {
