@@ -18,9 +18,9 @@ package mongo
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 	"net/http"
 	"strings"
 )
@@ -46,7 +46,7 @@ func createFindOptions(query QueryOptions) *options.FindOptions {
 	if strings.HasSuffix(query.GetSort(), ".desc") {
 		direction = int32(-1)
 	}
-	opt.SetSort(bsonx.Doc{{sortby, bsonx.Int32(direction)}})
+	opt.SetSort(bson.D{{sortby, direction}})
 	return opt
 }
 

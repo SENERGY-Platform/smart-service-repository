@@ -22,7 +22,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 	"net/http"
 	"runtime/debug"
 )
@@ -43,10 +42,10 @@ func init() {
 
 		ctx, _ := getTimeoutContext()
 		_, err = collection.Indexes().CreateOne(ctx, mongo.IndexModel{
-			Keys: bsonx.Doc([]bsonx.Elem{
-				{Key: DesignBson.UserId, Value: bsonx.Int32(1)},
-				{Key: DesignBson.Name, Value: bsonx.String("text")},
-				{Key: DesignBson.Description, Value: bsonx.String("text")},
+			Keys: bson.D([]bson.E{
+				{Key: DesignBson.UserId, Value: 1},
+				{Key: DesignBson.Name, Value: "text"},
+				{Key: DesignBson.Description, Value: "text"},
 			}),
 			Options: options.Index().SetName("design_search_with_user_compound_index"),
 		})
