@@ -97,9 +97,11 @@ func handleEnvironmentVars(config *Config) {
 		envName := fieldNameToEnvName(fieldName)
 		envValue := os.Getenv(envName)
 		if envValue != "" {
-			if !strings.Contains(fieldConfig, "secret") {
-				fmt.Println("use environment variable: ", envName, " = ", envValue)
+			loggedEnvValue := envValue
+			if strings.Contains(fieldConfig, "secret") {
+				loggedEnvValue = "***"
 			}
+			fmt.Println("use environment variable: ", envName, " = ", loggedEnvValue)
 			if configValue.FieldByName(fieldName).Kind() == reflect.Int64 || configValue.FieldByName(fieldName).Kind() == reflect.Int {
 				i, _ := strconv.ParseInt(envValue, 10, 64)
 				configValue.FieldByName(fieldName).SetInt(i)
