@@ -391,22 +391,33 @@ func addUsableFlagToExtendedReleases(ctrl Controller, token auth.Token, releases
 }
 
 func addUsableFlagToReleases(ctrl Controller, token auth.Token, releases []model.SmartServiceRelease) (result []model.SmartServiceReleaseWithUsableFlag, err error) {
-	for _, release := range releases {
-		parameter, err, _ := ctrl.GetReleaseParameterWithoutAuthCheck(token, release.Id)
-		if err != nil {
-			return result, err
-		}
-		element := model.SmartServiceReleaseWithUsableFlag{
-			SmartServiceRelease: release,
-			Usable:              true,
-		}
-		for _, param := range parameter {
-			if param.HasNoValidOption {
-				element.Usable = false
+	mux := sync.Mutex{}
+	wg := sync.WaitGroup{}
+	result = make([]model.SmartServiceReleaseWithUsableFlag, len(releases))
+	for index, release := range releases {
+		wg.Add(1)
+		go func(index int, release model.SmartServiceRelease) {
+			defer wg.Done()
+			parameter, temperr, _ := ctrl.GetReleaseParameterWithoutAuthCheck(token, release.Id)
+			if err != nil {
+				err = temperr
+				return
 			}
-		}
-		result = append(result, element)
+			element := model.SmartServiceReleaseWithUsableFlag{
+				SmartServiceRelease: release,
+				Usable:              true,
+			}
+			for _, param := range parameter {
+				if param.HasNoValidOption {
+					element.Usable = false
+				}
+			}
+			mux.Lock()
+			defer mux.Unlock()
+			result[index] = element
+		}(index, release)
 	}
+	wg.Wait()
 	return result, nil
 }
 
