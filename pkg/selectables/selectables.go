@@ -44,10 +44,12 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 		return result, err, http.StatusInternalServerError
 	}
 	var query url.Values = map[string][]string{}
+
 	if len(searchedEntities) == 0 {
 		query.Set("include_devices", "true")
 		query.Set("include_groups", "true")
 		query.Set("include_imports", "true")
+		query.Set("import_path_trim_first_element", "true")
 	} else {
 		for _, searched := range searchedEntities {
 			if searched == model.DeviceFilter {
@@ -58,6 +60,7 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 			}
 			if searched == model.ImportFilter {
 				query.Set("include_imports", "true")
+				query.Set("import_path_trim_first_element", "true")
 			}
 			if searched == model.DeviceServiceGroupFilter {
 				query.Set("include_devices", "true")
