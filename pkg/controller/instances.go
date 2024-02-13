@@ -444,6 +444,8 @@ func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token,
 	}
 	wg := sync.WaitGroup{}
 	mux := sync.Mutex{}
+	errList := []error{}
+
 	for _, m := range modules {
 		if m.DeleteInfo != nil {
 			deleteInfo := *m.DeleteInfo
@@ -454,12 +456,16 @@ func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token,
 				if tempErr != nil && !ignoreModuleDeleteErrors {
 					mux.Lock()
 					defer mux.Unlock()
-					err = tempErr
+					errList = append(errList, tempErr)
 				}
 			}()
 		}
 	}
 	wg.Wait()
+	err = errors.Join(errList...)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
 	return nil, http.StatusOK
 }
 
