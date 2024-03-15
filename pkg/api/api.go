@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api/util"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/julienschmidt/httprouter"
@@ -75,7 +76,7 @@ func GetRouter(config configuration.Config, command Controller) http.Handler {
 	}
 
 	var handler http.Handler
-	handler = util.NewLogger(util.NewCors(router))
+	handler = accesslog.New(util.NewCors(router))
 	if config.EditForward != "" && config.EditForward != "-" {
 		isCqrsEndpoint := func(path string) bool {
 			for _, forwardedEndpoint := range config.ForwardedEndpoints {
