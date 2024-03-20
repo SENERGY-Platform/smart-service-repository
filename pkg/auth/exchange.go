@@ -19,22 +19,34 @@ package auth
 import (
 	"encoding/json"
 	"errors"
+	"github.com/SENERGY-Platform/service-commons/pkg/cache"
+	"github.com/SENERGY-Platform/service-commons/pkg/cache/localcache"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
 )
 
-func GetCachedTokenProvider(config configuration.Config) func(userid string) (token Token, err error) {
-	cache := NewCache(config.TokenCacheSizeInMb*MB, config.TokenCacheDefaultExpirationInSeconds)
-	return func(userid string) (token Token, err error) {
-		err = cache.UseWithExpirationInResult("token."+userid, func() (interface{}, int, error) {
-			return ExchangeUserToken(config, userid)
-		}, &token)
-		return
+func GetCachedTokenProvider(config configuration.Config) (func(userid string) (token Token, err error), error) {
+	c, err := cache.New(cache.Config{
+		L1Provider: localcache.NewProvider(time.Duration(config.TokenCacheDefaultExpirationInSeconds)*time.Second, time.Second),
+	})
+	if err != nil {
+		return nil, err
 	}
+	return func(userid string) (token Token, err error) {
+		return cache.UseWithExpInGet(c, "token."+userid, func() (Token, time.Duration, error) {
+			temp, exp, err := ExchangeUserToken(config, userid)
+			return temp, time.Duration(exp) * time.Second, err
+		}, func(token Token) error {
+			if token.Jwt() == "" {
+				return errors.New("invalid token loaded from cache")
+			}
+			return nil
+		}, time.Duration(config.TokenCacheDefaultExpirationInSeconds)*time.Second)
+	}, nil
 }
 
 func ExchangeUserToken(config configuration.Config, userid string) (token Token, expiration int, err error) {
@@ -48,7 +60,7 @@ func ExchangeUserToken(config configuration.Config, userid string) (token Token,
 		return
 	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		log.Println("ERROR: GetUserToken()", resp.StatusCode, string(body))
 		err = errors.New("access denied")
 		resp.Body.Close()

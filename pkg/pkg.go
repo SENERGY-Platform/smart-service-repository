@@ -36,6 +36,12 @@ func Start(ctx context.Context, config configuration.Config) error {
 	if err != nil {
 		return err
 	}
+
+	tokenprovider, err := auth.GetCachedTokenProvider(config)
+	if err != nil {
+		return err
+	}
+
 	cmd, err := controller.New(
 		ctx,
 		config,
@@ -45,7 +51,7 @@ func Start(ctx context.Context, config configuration.Config) error {
 		selectables.New(config),
 		kafka.NewConsumer,
 		controller.NewProducerFactory(kafka.NewProducerWithKeySeparationBalancer),
-		auth.GetCachedTokenProvider(config),
+		tokenprovider,
 	)
 	if err != nil {
 		return err

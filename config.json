@@ -31,7 +31,6 @@
     "auth_client_secret": "",
     "auth_expiration_time_buffer": 2,
     "token_cache_default_expiration_in_seconds": 60,
-    "token_cache_size_in_mb": 20,
 
     "cleanup_cycle": "1h"
 }

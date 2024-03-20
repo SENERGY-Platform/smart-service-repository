@@ -151,7 +151,12 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 
 	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
 
-	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, consumer, producer, auth.GetCachedTokenProvider(config))
+	tokenprovider, err := auth.GetCachedTokenProvider(config)
+	if err != nil {
+		return "", config, err
+	}
+
+	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, consumer, producer, tokenprovider)
 	if err != nil {
 		return "", config, err
 	}
