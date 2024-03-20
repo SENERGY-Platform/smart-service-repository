@@ -166,6 +166,7 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 		return result, err, code
 	}
 	result.Ready = false
+	result.Deleting = false
 	result.Error = ""
 	result.Parameters = parameters
 	result.UpdatedAt = time.Now().Unix()
