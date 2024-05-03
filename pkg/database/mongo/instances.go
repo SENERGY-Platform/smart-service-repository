@@ -142,3 +142,20 @@ func (this *Mongo) SetInstanceError(id string, userId string, errMsg string) err
 	})
 	return err
 }
+
+// ListInstancesOfRelease returns instances referencing the given release (only ReleaseId and not NewReleaseId)
+// userId is only used if the value is not empty
+func (this *Mongo) ListInstancesOfRelease(userId string, releaseId string) (result []model.SmartServiceInstance, err error, code int) {
+	filter := bson.M{
+		InstanceBson.ReleaseId: releaseId,
+	}
+	if userId != "" {
+		filter[InstanceBson.UserId] = userId
+	}
+	ctx, _ := getTimeoutContext()
+	cursor, err := this.instanceCollection().Find(ctx, filter)
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	return readCursorResult[model.SmartServiceInstance](ctx, cursor)
+}

@@ -49,6 +49,7 @@ type InstanceInterface interface {
 	DeleteInstance(id string, userId string) (error, int)
 	SetInstance(element model.SmartServiceInstance) (error, int)
 	ListInstances(userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, err error, code int)
+	ListInstancesOfRelease(userId string, releaseId string) (result []model.SmartServiceInstance, err error, code int)
 }
 
 type ReleaseInterface interface {

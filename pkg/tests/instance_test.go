@@ -588,6 +588,45 @@ func TestInstanceEditApi(t *testing.T) {
 			t.Error("call count:", callCount)
 		}
 	})
+
+	t.Run("delete release should error", func(t *testing.T) {
+		resp, err := delete(userToken, apiUrl+"/releases/"+url.PathEscape(instance.ReleaseId))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+	})
+
+	t.Run("delete instance", func(t *testing.T) {
+		resp, err := delete(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+	})
+
+	t.Run("delete release should work", func(t *testing.T) {
+		resp, err := delete(userToken, apiUrl+"/releases/"+url.PathEscape(instance.ReleaseId))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+	})
 }
 
 func TestInstanceApi(t *testing.T) {

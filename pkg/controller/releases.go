@@ -207,6 +207,14 @@ func (this *Controller) DeleteRelease(token auth.Token, releaseId string) (error
 		return errors.New("access denied"), http.StatusForbidden
 	}
 
+	instances, err, code := this.db.ListInstancesOfRelease("", releaseId)
+	if err != nil {
+		return err, code
+	}
+	if len(instances) > 0 {
+		return errors.New("a release may only deleted if it is not referenced by any smart-service instance"), http.StatusBadRequest
+	}
+
 	//find design-id to create correct kafka-key
 	wrapper := []ReleasePermissionsWrapper{}
 	oldReleas, err, code := this.db.GetRelease(releaseId) //try database
