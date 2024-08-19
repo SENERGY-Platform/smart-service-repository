@@ -53,12 +53,17 @@ type InstanceInterface interface {
 }
 
 type ReleaseInterface interface {
-	SetRelease(element model.SmartServiceReleaseExtended) (error, int)
-	SetReleaseError(id string, errMsg string) error
-	GetRelease(id string) (model.SmartServiceReleaseExtended, error, int)
-	GetReleaseListByIds(ids []string, sort string) ([]model.SmartServiceReleaseExtended, error)
-	DeleteRelease(id string) (error, int)
+	SetRelease(element model.SmartServiceReleaseExtended, markAsDone bool) (error, int)
+	MarkReleaseAsFinished(id string) (err error)
+
+	GetRelease(id string, withMarked bool) (model.SmartServiceReleaseExtended, error, int)
+	ListReleases(options model.ListReleasesOptions) ([]model.SmartServiceReleaseExtended, error)
 	GetReleasesByDesignId(designId string) ([]model.SmartServiceReleaseExtended, error)
+
+	MarlReleaseAsDeleted(id string) (error, int)
+	DeleteRelease(id string) (error, int)
+
+	GetMarkedReleases() (markedAsDeleted []model.SmartServiceReleaseExtended, markedAsUnfinished []model.SmartServiceReleaseExtended, err error)
 }
 
 type MaintenanceInterface interface {

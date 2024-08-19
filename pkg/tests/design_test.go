@@ -40,7 +40,7 @@ func TestDesignSearch(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, false, nil, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, false, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -160,7 +160,7 @@ func TestDesignApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, false, nil, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, false, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})

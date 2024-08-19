@@ -39,7 +39,7 @@ func TestVariableApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, config, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -583,7 +583,7 @@ func TestNoDeviceOptionVariableApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, true, []model.Selectable{}, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, true, []model.Selectable{}, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})

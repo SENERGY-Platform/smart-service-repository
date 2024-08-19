@@ -18,10 +18,12 @@ package controller
 
 import (
 	"context"
+	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
+	permclient "github.com/SENERGY-Platform/permissions-v2/pkg/client"
+	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/google/uuid"
 	"sync"
 )
@@ -30,24 +32,15 @@ type Controller struct {
 	config            configuration.Config
 	db                Database
 	camunda           Camunda
-	releasesProducer  Producer
 	permissions       Permissions
+	devicerepo        devicerepository.Interface
 	selectables       Selectables
 	userTokenProvider UserTokenProvider
 	adminAccess       *auth.OpenidToken
 	cleanupMux        sync.Mutex
 }
 
-type Producer interface {
-	Produce(key string, message []byte) error
-}
-
-type Permissions interface {
-	CheckAccess(token auth.Token, topic string, id string, right string) (bool, error)
-	Query(token string, query permissions.QueryMessage, result interface{}) (err error, code int)
-	GetResourceRights(token string, topic string, id string) (rights permissions.ResourceRights, err error)
-	SetResourceRights(token string, topic string, id string, rights permissions.ResourceRights, kafkaKey string) error
-}
+type Permissions = permclient.Client
 
 type Camunda interface {
 	DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool)
@@ -67,11 +60,9 @@ type Selectables interface {
 
 type UserTokenProvider = func(userid string) (token auth.Token, err error)
 
-type GenericProducerFactory[T Producer] func(ctx context.Context, config configuration.Config, topic string) (T, error)
-type ProducerFactory = GenericProducerFactory[Producer]
 type Consumer = func(ctx context.Context, config configuration.Config, topic string, listener func(delivery []byte) error) error
 
-func New(ctx context.Context, config configuration.Config, db Database, permissions Permissions, camunda Camunda, selectables Selectables, consumer Consumer, producer ProducerFactory, userTokenProvider UserTokenProvider) (ctrl *Controller, err error) {
+func New(ctx context.Context, config configuration.Config, db Database, permissions Permissions, camunda Camunda, selectables Selectables, userTokenProvider UserTokenProvider, devicerepo devicerepository.Interface) (ctrl *Controller, err error) {
 	ctrl = &Controller{
 		config:            config,
 		db:                db,
@@ -80,16 +71,23 @@ func New(ctx context.Context, config configuration.Config, db Database, permissi
 		selectables:       selectables,
 		userTokenProvider: userTokenProvider,
 		adminAccess:       &auth.OpenidToken{},
+		devicerepo:        devicerepo,
 	}
-	if config.EditForward == "" || config.EditForward == "-" {
-		ctrl.releasesProducer, err = producer(ctx, config, config.KafkaSmartServiceReleaseTopic)
-		if err != nil {
-			return ctrl, err
-		}
-		err = consumer(ctx, config, config.KafkaSmartServiceReleaseTopic, ctrl.HandleReleaseMessage)
-		if err != nil {
-			return ctrl, err
-		}
+	_, err, _ = permissions.SetTopic(permclient.InternalAdminToken, permclient.Topic{
+		Id: config.SmartServiceReleasePermissionsTopic,
+		DefaultPermissions: permmodel.ResourcePermissions{
+			RolePermissions: map[string]permmodel.PermissionsMap{
+				"admin": {
+					Read:         true,
+					Write:        true,
+					Execute:      true,
+					Administrate: true,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
 	}
 	return ctrl, nil
 }

@@ -33,8 +33,8 @@ type SmartServiceRelease struct {
 	Name         string `json:"name" bson:"name"`
 	Description  string `json:"description" bson:"description"`
 	CreatedAt    int64  `json:"created_at" bson:"created_at"` //unix timestamp, set by service on creation
-	Error        string `json:"error,omitempty" bson:"error"` //is set if errors occurred while releasing
 	NewReleaseId string `json:"new_release_id,omitempty"`
+	Creator      string `json:"creator"`
 }
 
 type SmartServiceReleaseWithUsableFlag struct {

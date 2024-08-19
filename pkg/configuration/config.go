@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -32,15 +33,11 @@ type Config struct {
 	EnableSwaggerUi                      bool     `json:"enable_swagger_ui"`
 	CamundaUrl                           string   `json:"camunda_url" config:"secret"`
 	DeviceSelectionApi                   string   `json:"device_selection_api"`
-	PermissionsUrl                       string   `json:"permissions_url"`
-	PermissionsCmdUrl                    string   `json:"permissions_cmd_url"`
+	PermissionsUrl                       string   `json:"permissions_url"` //for migration
+	PermissionsV2Url                     string   `json:"permissions_v2_url"`
+	DeviceRepositoryUrl                  string   `json:"device_repository_url"`
+	SmartServiceReleasePermissionsTopic  string   `json:"smart_service_release_permissions_topic"`
 	NotificationUrl                      string   `json:"notification_url"`
-	KafkaUrl                             string   `json:"kafka_url"`
-	ConsumerGroup                        string   `json:"consumer_group"`
-	KafkaSmartServiceReleaseTopic        string   `json:"kafka_smart_service_release_topic"`
-	KafkaCharacteristicsTopic            string   `json:"kafka_characteristics_topic"` //used for permissions-search-query
-	EditForward                          string   `json:"edit_forward"`
-	ForwardedEndpoints                   []string `json:"forwarded_endpoints"`
 	MongoUrl                             string   `json:"mongo_url"`
 	MongoWithTransactions                bool     `json:"mongo_with_transactions"`
 	MongoTable                           string   `json:"mongo_table"`
@@ -55,6 +52,7 @@ type Config struct {
 	AuthExpirationTimeBuffer             float64  `json:"auth_expiration_time_buffer"`
 	TokenCacheDefaultExpirationInSeconds int      `json:"token_cache_default_expiration_in_seconds"`
 	CleanupCycle                         string   `json:"cleanup_cycle"`
+	MarkAgeLimit                         Duration `json:"mark_age_limit"`
 }
 
 // loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)
@@ -67,7 +65,10 @@ func Load(location string) (config Config, err error) {
 	if err != nil {
 		return config, err
 	}
-	handleEnvironmentVars(&config)
+	err = handleEnvironmentVars(&config)
+	if err != nil {
+		return config, err
+	}
 	return config, nil
 }
 
@@ -87,7 +88,7 @@ func fieldNameToEnvName(s string) string {
 }
 
 // preparations for docker
-func handleEnvironmentVars(config *Config) {
+func handleEnvironmentVars(config *Config) (err error) {
 	configValue := reflect.Indirect(reflect.ValueOf(config))
 	configType := configValue.Type()
 	for index := 0; index < configType.NumField(); index++ {
@@ -101,6 +102,20 @@ func handleEnvironmentVars(config *Config) {
 				loggedEnvValue = "***"
 			}
 			fmt.Println("use environment variable: ", envName, " = ", loggedEnvValue)
+			if field := configValue.FieldByName(fieldName); field.Kind() == reflect.Struct && field.CanInterface() {
+				fieldPtrInterface := field.Addr().Interface()
+				setter, setterOk := fieldPtrInterface.(interface{ SetString(string) })
+				errSetter, errSetterOk := fieldPtrInterface.(interface{ SetString(string) error })
+				if setterOk {
+					setter.SetString(envValue)
+				}
+				if errSetterOk {
+					err = errSetter.SetString(envValue)
+					if err != nil {
+						return fmt.Errorf("invalid env variable %v=%v: %w", envName, envValue, err)
+					}
+				}
+			}
 			if configValue.FieldByName(fieldName).Kind() == reflect.Int64 || configValue.FieldByName(fieldName).Kind() == reflect.Int {
 				i, _ := strconv.ParseInt(envValue, 10, 64)
 				configValue.FieldByName(fieldName).SetInt(i)
@@ -135,4 +150,38 @@ func handleEnvironmentVars(config *Config) {
 			}
 		}
 	}
+	return nil
+}
+
+type Duration struct {
+	dur time.Duration
+}
+
+func (this *Duration) GetDuration() time.Duration {
+	return this.dur
+}
+
+func (this *Duration) SetDuration(dur time.Duration) {
+	this.dur = dur
+}
+
+func (this *Duration) SetString(str string) error {
+	if str == "" {
+		return nil
+	}
+	duration, err := time.ParseDuration(str)
+	if err != nil {
+		return err
+	}
+	this.SetDuration(duration)
+	return nil
+}
+
+func (this *Duration) UnmarshalJSON(bytes []byte) (err error) {
+	var str string
+	err = json.Unmarshal(bytes, &str)
+	if err != nil {
+		return err
+	}
+	return this.SetString(str)
 }

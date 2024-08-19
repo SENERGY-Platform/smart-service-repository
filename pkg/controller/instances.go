@@ -19,6 +19,7 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/notification"
@@ -37,14 +38,14 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 	if releaseId == "" {
 		return result, errors.New("invalid release id"), http.StatusBadRequest
 	}
-	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, releaseId, "x")
+	access, err, _ := this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, releaseId, client.Execute)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
 	if !access {
 		return result, errors.New("missing release access"), http.StatusForbidden
 	}
-	release, err, code := this.db.GetRelease(releaseId)
+	release, err, code := this.db.GetRelease(releaseId, false)
 	if err != nil {
 		return result, err, code
 	}
@@ -154,7 +155,7 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 	if err != nil {
 		return result, err, code
 	}
-	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, result.ReleaseId, "x")
+	access, err, _ := this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, result.ReleaseId, client.Execute)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}

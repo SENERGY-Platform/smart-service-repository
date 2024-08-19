@@ -120,6 +120,30 @@ func (this ReleaseQueryOptions) GetSortAsc() bool {
 	return !strings.HasSuffix(this.GetSort(), ".desc")
 }
 
+type ListReleasesOptions struct {
+	InIds  []string //use option only if InIds != nil
+	Latest bool     //new_release_id==""
+	Limit  int
+	Offset int
+	Sort   string
+	Search string
+}
+
+func (this ListReleasesOptions) GetLimit() int64 {
+	return int64(this.Limit)
+}
+
+func (this ListReleasesOptions) GetOffset() int64 {
+	return int64(this.Offset)
+}
+
+func (this ListReleasesOptions) GetSort() string {
+	if this.Sort == "" {
+		return "name.asc"
+	}
+	return this.Sort
+}
+
 type InstanceQueryOptions struct {
 	Limit  int
 	Offset int

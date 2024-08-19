@@ -18,14 +18,14 @@ package pkg
 
 import (
 	"context"
+	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
+	permclient "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/camunda"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/selectables"
 	"log"
 	"time"
@@ -46,37 +46,34 @@ func Start(ctx context.Context, config configuration.Config) error {
 		ctx,
 		config,
 		db,
-		permissions.New(config),
+		permclient.New(config.PermissionsV2Url),
 		camunda.New(config),
 		selectables.New(config),
-		kafka.NewConsumer,
-		controller.NewProducerFactory(kafka.NewProducerWithKeySeparationBalancer),
 		tokenprovider,
+		devicerepository.NewClient(config.DeviceRepositoryUrl),
 	)
 	if err != nil {
 		return err
 	}
-	if config.EditForward == "" && config.CleanupCycle != "" && config.CleanupCycle != "-" {
-		cleanupResult := cmd.Cleanup(false)
-		log.Println("cleanup result =", cleanupResult)
-		duration, err := time.ParseDuration(config.CleanupCycle)
-		if err != nil {
-			log.Println("ERROR: unable to start cleanup cycle")
-		} else {
-			ticker := time.NewTicker(duration)
-			go func() {
-				for {
-					select {
-					case <-ctx.Done():
-						ticker.Stop()
-						return
-					case <-ticker.C:
-						cleanupResult := cmd.Cleanup(false)
-						log.Println("cleanup result =", cleanupResult)
-					}
+	cleanupResult := cmd.Cleanup(false)
+	log.Println("cleanup result =", cleanupResult)
+	duration, err := time.ParseDuration(config.CleanupCycle)
+	if err != nil {
+		log.Println("ERROR: unable to start cleanup cycle")
+	} else {
+		ticker := time.NewTicker(duration)
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					ticker.Stop()
+					return
+				case <-ticker.C:
+					cleanupResult = cmd.Cleanup(false)
+					log.Println("cleanup result =", cleanupResult)
 				}
-			}()
-		}
+			}
+		}()
 	}
 
 	return api.Start(ctx, config, cmd)

@@ -19,8 +19,9 @@ package tests
 import (
 	"context"
 	"encoding/json"
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
+	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 	"io"
 	"net/http"
@@ -41,7 +42,7 @@ func TestReleaseRights(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, config, _, perm, err := apiTestEnvWithPermClient(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -112,12 +113,12 @@ func TestReleaseRights(t *testing.T) {
 	time.Sleep(5 * time.Second) //allow async cqrs
 
 	t.Run("read release1 rights", func(t *testing.T) {
-		rights, err := permissions.New(config).GetResourceRights(adminToken, config.KafkaSmartServiceReleaseTopic, release.Id)
+		rights, err, _ := perm.GetResource(adminToken, config.SmartServiceReleasePermissionsTopic, release.Id)
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if !reflect.DeepEqual(rights.UserRights, map[string]permissions.Right{
+		if !reflect.DeepEqual(rights.UserPermissions, map[string]client.PermissionsMap{
 			userId: {
 				Read:         true,
 				Write:        true,
@@ -125,31 +126,28 @@ func TestReleaseRights(t *testing.T) {
 				Administrate: true,
 			},
 		}) {
-			t.Error(rights.UserRights)
+			t.Error(rights.UserPermissions)
 			return
 		}
 	})
 
 	t.Run("set release 1 right", func(t *testing.T) {
-		err = permissions.New(config).SetResourceRights(adminToken, config.KafkaSmartServiceReleaseTopic, release.Id, permissions.ResourceRights{
-			ResourceRightsBase: permissions.ResourceRightsBase{
-				UserRights: map[string]permissions.Right{
-					userId: {
-						Read:         true,
-						Write:        true,
-						Execute:      true,
-						Administrate: true,
-					},
-					adminId: {
-						Read:         true,
-						Write:        true,
-						Execute:      true,
-						Administrate: true,
-					},
+		_, err, _ = perm.SetPermission(adminToken, config.SmartServiceReleasePermissionsTopic, release.Id, client.ResourcePermissions{
+			UserPermissions: map[string]permmodel.PermissionsMap{
+				userId: {
+					Read:         true,
+					Write:        true,
+					Execute:      true,
+					Administrate: true,
 				},
-				GroupRights: map[string]permissions.Right{},
+				adminId: {
+					Read:         true,
+					Write:        true,
+					Execute:      true,
+					Administrate: true,
+				},
 			},
-		}, release.DesignId+"/"+release.Id+"_"+"rights")
+		})
 		if err != nil {
 			t.Error(err)
 			return
@@ -185,26 +183,20 @@ func TestReleaseRights(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	t.Run("read release2 rights", func(t *testing.T) {
-		rights, err := permissions.New(config).GetResourceRights(adminToken, config.KafkaSmartServiceReleaseTopic, release2.Id)
+		rights, err, _ := perm.GetResource(adminToken, config.SmartServiceReleasePermissionsTopic, release2.Id)
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if !reflect.DeepEqual(rights.UserRights, map[string]permissions.Right{
+		if !reflect.DeepEqual(rights.UserPermissions, map[string]client.PermissionsMap{
 			userId: {
 				Read:         true,
 				Write:        true,
 				Execute:      true,
 				Administrate: true,
 			},
-			adminId: {
-				Read:         true,
-				Write:        true,
-				Execute:      true,
-				Administrate: true,
-			},
 		}) {
-			t.Error(rights.UserRights)
+			t.Error(rights.UserPermissions)
 			return
 		}
 	})

@@ -41,7 +41,7 @@ func TestReleaseSearch(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -116,7 +116,7 @@ func TestReleaseSearch(t *testing.T) {
 
 	expectedSearchCount := map[string]int{
 		"foo":     2,
-		"foo bar": 2, //finds elements that contain foo and bar
+		"foo bar": 1, //finds elements that contain "foo bar"
 		"bar":     3,
 		"42":      2,
 		"batz":    2,
@@ -185,7 +185,7 @@ func TestReleaseOptionsApi2(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, false, resources.SelectionsResponse2Obj, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, false, resources.SelectionsResponse2Obj, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -302,7 +302,7 @@ func TestReleaseOptionsApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, false, nil, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, false, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -419,7 +419,7 @@ func TestReleaseOptionsWithCharacteristicApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, false, resources.SelectionsResponse3Obj, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, false, resources.SelectionsResponse3Obj, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -536,7 +536,7 @@ func TestReleaseApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -632,10 +632,6 @@ func TestReleaseApi(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		if temp.Error != "" {
-			t.Error(temp.Error)
-			return
-		}
 	})
 
 	t.Run("delete release", func(t *testing.T) {
@@ -701,7 +697,7 @@ func TestReleaseUpdate(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})

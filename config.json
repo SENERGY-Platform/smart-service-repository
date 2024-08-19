@@ -4,17 +4,13 @@
     "enable_swagger_ui": false,
 
     "permissions_url": "",
-    "permissions_cmd_url": "",
+    "permissions_v2_url": "",
+    "device_repository_url": "",
     "device_selection_api": "",
     "camunda_url": "",
     "notification_url": "",
 
-    "kafka_url": "",
-    "consumer_group": "smart_service_repository",
-    "kafka_smart_service_release_topic": "smart_service_releases",
-    "kafka_characteristics_topic": "characteristics",
-    "edit_forward": "",
-    "forwarded_endpoints": ["releases"],
+    "smart_service_release_permissions_topic": "smart_service_releases",
 
     "mongo_url": "",
     "mongo_with_transactions": true,
@@ -32,5 +28,6 @@
     "auth_expiration_time_buffer": 2,
     "token_cache_default_expiration_in_seconds": 60,
 
-    "cleanup_cycle": "1h"
+    "cleanup_cycle": "1h",
+    "mark_age_limit": "5m"
 }

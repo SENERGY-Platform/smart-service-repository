@@ -42,7 +42,7 @@ func TestModuleBulkApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, config, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		t.Error(err)
 	})
 	if err != nil {

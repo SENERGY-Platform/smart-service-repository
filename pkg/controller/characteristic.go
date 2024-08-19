@@ -17,34 +17,17 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 )
 
 type PermSearchCharacteristicsWrapper struct {
 	Raw model.Characteristic `json:"raw"`
 }
 
-func (this *Controller) GetCharacteristic(token string, id string) (characteristic *model.Characteristic, err error) {
-	characteristicList := []PermSearchCharacteristicsWrapper{}
-	err, code := this.permissions.Query(token, permissions.QueryMessage{
-		Resource: this.config.KafkaCharacteristicsTopic,
-		ListIds: &permissions.QueryListIds{
-			QueryListCommons: permissions.QueryListCommons{
-				Limit:  1,
-				Offset: 0,
-				Rights: "r",
-				SortBy: "name",
-			},
-			Ids: []string{id},
-		},
-	}, &characteristicList)
+func (this *Controller) GetCharacteristic(id string) (characteristic *model.Characteristic, err error) {
+	result, err, _ := this.devicerepo.GetCharacteristic(id)
 	if err != nil {
-		return nil, fmt.Errorf("unexpected permissions search query response for %v %v (%v: %w)", this.config.KafkaCharacteristicsTopic, id, code, err)
+		return nil, err
 	}
-	if len(characteristicList) != 1 {
-		return nil, fmt.Errorf("unexpected permissions search query response for %v %v (expect 1 element, got %v)", this.config.KafkaCharacteristicsTopic, id, len(characteristicList))
-	}
-	return &characteristicList[0].Raw, nil
+	return &result, nil
 }

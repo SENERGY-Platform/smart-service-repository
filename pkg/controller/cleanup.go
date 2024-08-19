@@ -26,6 +26,7 @@ func (this *Controller) Cleanup(ignoreModuleDeleteError bool) (result []error) {
 	log.Println("start cleanup")
 	this.cleanupMux.Lock()
 	defer this.cleanupMux.Unlock()
+	this.retryMarkedReleases()
 	err := this.instanceCleanup()
 	if err != nil {
 		result = append(result, err...)

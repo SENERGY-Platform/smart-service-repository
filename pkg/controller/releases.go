@@ -20,25 +20,44 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
+	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/beevik/etree"
 	"log"
 	"net/http"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
-//---------- API -------------
+func (this *Controller) retryMarkedReleases() {
+	toDelete, unfinised, err := this.db.GetMarkedReleases()
+	if err != nil {
+		log.Println("ERROR: retryMarkedReleases()", err)
+		return
+	}
+	for _, release := range toDelete {
+		err = this.deleteRelease(release.Id)
+		if err != nil {
+			log.Println("ERROR: retryMarkedReleases()::deleteRelease()", release.Id, err)
+			return
+		}
+	}
+	for _, release := range unfinised {
+		err = this.deleteRelease(release.Id)
+		if err != nil {
+			log.Println("ERROR: retryMarkedReleases()::deleteRelease()", release.Id, err)
+			return
+		}
+	}
+}
 
 func (this *Controller) CreateRelease(token auth.Token, element model.SmartServiceRelease) (result model.SmartServiceRelease, err error, code int) {
-	if this.releasesProducer == nil {
-		return result, errors.New("edit is disabled"), http.StatusInternalServerError
-	}
 	if element.DesignId == "" {
 		return result, errors.New("missing design id"), http.StatusBadRequest
 	}
@@ -56,6 +75,7 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 		element.Description = design.Description
 	}
 	element.CreatedAt = time.Now().Unix()
+	element.Creator = token.GetUserId()
 
 	if element.Id == "" {
 		element.Id = this.GetNewId()
@@ -75,7 +95,7 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 		return result, err, http.StatusBadRequest
 	}
 
-	err = this.publishReleaseUpdate(token.GetUserId(), model.SmartServiceReleaseExtended{
+	err = this.saveReleaseCreate(model.SmartServiceReleaseExtended{
 		SmartServiceRelease: element,
 		BpmnXml:             design.BpmnXml,
 		SvgXml:              design.SvgXml,
@@ -88,22 +108,90 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 	return element, nil, http.StatusOK
 }
 
-func (this *Controller) publishReleaseUpdate(owner string, release model.SmartServiceReleaseExtended) (err error) {
-	msg, err := json.Marshal(ReleaseCommand{
-		Command: "PUT",
-		Id:      release.Id,
-		Owner:   owner,
-		Release: &release,
+func (this *Controller) saveReleaseCreate(release model.SmartServiceReleaseExtended) (err error) {
+	if release.Creator == "" {
+		return errors.New("missing creator")
+	}
+	oldReleases := []model.SmartServiceReleaseExtended{}
+	if release.NewReleaseId == "" {
+		oldReleases, err = this.db.GetReleasesByDesignId(release.DesignId)
+		if err != nil {
+			return err
+		}
+	}
+	sort.Slice(oldReleases, func(i, j int) bool {
+		return oldReleases[i].CreatedAt > oldReleases[i].CreatedAt
+	})
+	if len(oldReleases) > 0 {
+		err = this.copyRightsOfRelease(release.Creator, oldReleases[len(oldReleases)-1], release)
+		if err != nil {
+			return err
+		}
+	}
+
+	err, _ = this.db.SetRelease(release, false)
+	if err != nil {
+		return err
+	}
+
+	err = this.deployRelease(release, oldReleases)
+	if err != nil {
+		temperr := this.deleteRelease(release.Id)
+		if temperr != nil {
+			log.Println("WARNING: error while rolling back deployRelease(); will be retired", release.Id, temperr)
+		}
+		return err
+	}
+	err = this.db.MarkReleaseAsFinished(release.Id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (this *Controller) deployRelease(release model.SmartServiceReleaseExtended, oldReleases []model.SmartServiceReleaseExtended) (err error) {
+	if oldReleases == nil {
+		oldReleases = []model.SmartServiceReleaseExtended{}
+		if release.NewReleaseId == "" {
+			oldReleases, err = this.db.GetReleasesByDesignId(release.DesignId)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	_, err, _ = this.permissions.SetPermission(client.InternalAdminToken, this.config.SmartServiceReleasePermissionsTopic, release.Id, client.ResourcePermissions{
+		UserPermissions: map[string]permmodel.PermissionsMap{
+			release.Creator: {
+				Read:         true,
+				Write:        true,
+				Execute:      true,
+				Administrate: true,
+			}},
 	})
 	if err != nil {
 		return err
 	}
 
-	return this.releasesProducer.Produce(release.DesignId+"/"+release.Id, msg)
+	err, _ = this.camunda.DeployRelease(release.Creator, release)
+	if err != nil {
+		return err
+	}
+
+	for _, old := range oldReleases {
+		if old.CreatedAt < release.CreatedAt && old.Id != release.Id { //"if" to prevent race from  HandleReleaseDelete() to recreate deleted release
+			old.NewReleaseId = release.Id
+			err = this.saveReleaseCreate(old)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (this *Controller) GetRelease(token auth.Token, id string) (result model.SmartServiceRelease, err error, code int) {
-	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, id, "r")
+	access, err, _ := this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, id, client.Read)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
@@ -111,15 +199,8 @@ func (this *Controller) GetRelease(token auth.Token, id string) (result model.Sm
 		return result, errors.New("access denied"), http.StatusForbidden
 	}
 	var extended model.SmartServiceReleaseExtended
-	extended, err, code = this.db.GetRelease(id)
+	extended, err, code = this.db.GetRelease(id, false)
 	return extended.SmartServiceRelease, err, code
-}
-
-type ReleasePermissionsWrapper struct {
-	Id          string          `json:"id"`
-	Shared      bool            `json:"shared"`
-	Permissions map[string]bool `json:"permissions"`
-	DesignId    string          `json:"design_id"`
 }
 
 func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceRelease, err error, code int) {
@@ -134,72 +215,67 @@ func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryO
 }
 
 func (this *Controller) GetExtendedRelease(token auth.Token, id string) (result model.SmartServiceReleaseExtended, err error, code int) {
-	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, id, "r")
+	access, err, _ := this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, id, client.Read)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
 	if !access {
 		return result, errors.New("access denied"), http.StatusForbidden
 	}
-	return this.db.GetRelease(id)
+	return this.db.GetRelease(id, false)
 }
 
 func (this *Controller) ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, err error, code int) {
-	permWrapper := []ReleasePermissionsWrapper{}
-	var filter *permissions.Selection
-	if query.Latest {
-		filter = &permissions.Selection{
-			Condition: permissions.ConditionConfig{
-				Feature:   "features.new_release_id",
-				Operation: permissions.QueryEqualOperation,
-				Value:     "",
-			},
-		}
+	checkedRigths, err := permmodel.PermissionListFromString(query.Rights)
+	if err != nil {
+		return result, err, http.StatusBadRequest
 	}
-	err, _ = this.permissions.Query(token.Jwt(), permissions.QueryMessage{
-		Resource: this.config.KafkaSmartServiceReleaseTopic,
-		Find: &permissions.QueryFind{
-			QueryListCommons: permissions.QueryListCommons{
-				Limit:    query.Limit,
-				Offset:   query.Offset,
-				Rights:   query.Rights,
-				SortBy:   query.GetSortField(),
-				SortDesc: !query.GetSortAsc(),
-			},
-			Filter: filter,
-			Search: query.Search,
-		},
-	}, &permWrapper)
+	ids, err, _ := this.permissions.ListAccessibleResourceIds(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, client.ListOptions{}, checkedRigths...)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
-	idList := []string{}
-	for _, id := range permWrapper {
-		idList = append(idList, id.Id)
-	}
-	temp, err := this.db.GetReleaseListByIds(idList, query.GetSort())
+	temp, err := this.db.ListReleases(model.ListReleasesOptions{
+		InIds:  ids,
+		Latest: query.Latest,
+		Limit:  query.Limit,
+		Offset: query.Offset,
+		Sort:   query.GetSort(),
+		Search: query.Search,
+	})
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
-	permissionsInfoIndex := map[string]model.PermissionsInfo{}
+	filteredIds := []string{}
+	for _, release := range temp {
+		filteredIds = append(filteredIds, release.Id)
+	}
+	permWrapper, err, _ := this.permissions.ListComputedPermissions(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, filteredIds)
+
+	permissionsIndex := map[string]map[string]bool{}
 	for _, perm := range permWrapper {
-		permissionsInfoIndex[perm.Id] = model.PermissionsInfo{
-			Shared:      perm.Shared,
-			Permissions: perm.Permissions,
-		}
+		permissionsIndex[perm.Id] = computedPermissionsToMap(perm)
 	}
 	for _, release := range temp {
-		release.PermissionsInfo = permissionsInfoIndex[release.Id]
+		release.PermissionsInfo = model.PermissionsInfo{
+			Shared:      token.GetUserId() != release.Creator,
+			Permissions: permissionsIndex[release.Id],
+		}
 		result = append(result, release)
 	}
 	return result, nil, http.StatusOK
 }
 
-func (this *Controller) DeleteRelease(token auth.Token, releaseId string) (error, int) {
-	if this.releasesProducer == nil {
-		return errors.New("edit is disabled"), http.StatusInternalServerError
+func computedPermissionsToMap(perm permmodel.ComputedPermissions) map[string]bool {
+	return map[string]bool{
+		"r": perm.Read,
+		"w": perm.Write,
+		"x": perm.Execute,
+		"a": perm.Administrate,
 	}
-	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, releaseId, "a")
+}
+
+func (this *Controller) DeleteRelease(token auth.Token, releaseId string) (error, int) {
+	access, err, _ := this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, releaseId, client.Administrate)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -215,48 +291,77 @@ func (this *Controller) DeleteRelease(token auth.Token, releaseId string) (error
 		return errors.New("a release may only deleted if it is not referenced by any smart-service instance"), http.StatusBadRequest
 	}
 
-	//find design-id to create correct kafka-key
-	wrapper := []ReleasePermissionsWrapper{}
-	oldReleas, err, code := this.db.GetRelease(releaseId) //try database
-	if err != nil && code == http.StatusNotFound {
-		//if not found in the database: try permissions-search
-		err, code = this.permissions.Query(token.Jwt(), permissions.QueryMessage{
-			Resource: this.config.KafkaSmartServiceReleaseTopic,
-			ListIds: &permissions.QueryListIds{
-				QueryListCommons: permissions.QueryListCommons{
-					Limit:  1,
-					Rights: "a",
-				},
-				Ids: []string{releaseId},
-			},
-		}, &wrapper)
-		if err != nil {
-			return err, code
-		}
-		if len(wrapper) == 0 {
-			return fmt.Errorf("unknown release id: %v", releaseId), http.StatusNotFound
-		}
-		oldReleas.DesignId = wrapper[0].DesignId
-		err = nil
+	err = this.deleteRelease(releaseId)
+	if err != nil {
+		return err, http.StatusInternalServerError
 	}
-	key := oldReleas.DesignId + "/" + releaseId
 
-	msg, err := json.Marshal(ReleaseCommand{
-		Command: "DELETE",
-		Id:      releaseId,
-	})
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	err = this.releasesProducer.Produce(key, msg)
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
 	return nil, http.StatusOK
 }
 
+func (this *Controller) deleteRelease(id string) error {
+	err, _ := this.db.MarlReleaseAsDeleted(id) //to enable retry if permissions.RemoveResource() fails
+	if err != nil {
+		return err
+	}
+
+	//remove release from camunda
+	err = this.camunda.RemoveRelease(id)
+	if err != nil {
+		return err
+	}
+
+	//update NewReleaseId on other releases if this release is the newest one
+	currentRelease, err, code := this.db.GetRelease(id, true)
+	if err != nil && code != http.StatusNotFound {
+		return err
+	}
+	if err == nil && currentRelease.NewReleaseId == "" {
+		oldReleases, err := this.db.GetReleasesByDesignId(currentRelease.DesignId)
+		if err != nil {
+			return err
+		}
+		sort.Slice(oldReleases, func(i, j int) bool {
+			return oldReleases[i].CreatedAt > oldReleases[j].CreatedAt
+		})
+		youngestRelease := model.SmartServiceReleaseExtended{}
+		for _, value := range oldReleases {
+			if value.Id == currentRelease.Id {
+				continue
+			}
+			if youngestRelease.Id == "" {
+				youngestRelease = value
+				break
+			}
+		}
+		if youngestRelease.Id != "" {
+			youngestRelease.NewReleaseId = ""
+			err = this.saveReleaseCreate(youngestRelease)
+			if err != nil {
+				return err
+			}
+		}
+		//other releases will be updated on update handling of youngestRelease because NewReleaseId == ""
+		//there is a race between the deletion of this release from the database and the update of releases that are not youngestRelease in HandleReleaseSave()
+		//but the retroactive create/uptdate of the release that is meant to be deleted is prevented by "if old.CreatedAt < release.CreatedAt {" in HandleReleaseSave()
+	}
+
+	//delete release from db
+	err, _ = this.permissions.RemoveResource(client.InternalAdminToken, this.config.SmartServiceReleasePermissionsTopic, id)
+	if err != nil {
+		log.Println("WARNING: permissions.RemoveResource() failed but will be retried", this.config.SmartServiceReleasePermissionsTopic, id, err)
+		return nil
+	}
+	err, _ = this.db.DeleteRelease(id)
+	if err != nil {
+		log.Println("WARNING: db.DeleteRelease() failed but will be retried", id, err)
+		return nil
+	}
+	return nil
+}
+
 func (this *Controller) GetReleaseParameter(token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int) {
-	access, err := this.permissions.CheckAccess(token, this.config.KafkaSmartServiceReleaseTopic, id, "x")
+	access, err, _ := this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, id, client.Execute)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
@@ -320,7 +425,7 @@ func (this *Controller) parameterDescriptionsToSmartServiceExtendedParameter(tok
 }
 
 func (this *Controller) GetReleaseParameterWithoutAuthCheck(token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int) {
-	release, err, code := this.db.GetRelease(id)
+	release, err, code := this.db.GetRelease(id, false)
 	if err != nil {
 		return result, err, code
 	}
@@ -342,145 +447,6 @@ func getSchemaOrgType(t string) model.Type {
 	}
 }
 
-//---------- CQRS -------------
-
-type ReleaseCommand struct {
-	Command string                             `json:"command"`
-	Id      string                             `json:"id"`
-	Owner   string                             `json:"owner"`
-	Release *model.SmartServiceReleaseExtended `json:"release"`
-}
-
-func (this *Controller) HandleReleaseMessage(delivery []byte) error {
-	release := ReleaseCommand{}
-	err := json.Unmarshal(delivery, &release)
-	if err != nil {
-		log.Println("ERROR: consumed invalid message --> ignore", err)
-		debug.PrintStack()
-		return err
-	}
-	return this.HandleRelease(release)
-}
-
-func (this *Controller) HandleRelease(cmd ReleaseCommand) (err error) {
-	switch cmd.Command {
-	case "PUT":
-		if cmd.Release == nil {
-			log.Println("WARNING: missing release in release put command", cmd)
-			return nil
-		}
-		err = this.HandleReleaseSave(cmd.Owner, *cmd.Release)
-		if err != nil {
-			return err
-		}
-		return nil
-	case "RIGHTS":
-		return nil
-	case "DELETE":
-		err = this.HandleReleaseDelete(cmd.Owner, cmd.Id)
-		if err != nil {
-			return err
-		}
-		return nil
-	default:
-		return errors.New("unable to handle command: " + cmd.Command)
-	}
-}
-
-func (this *Controller) HandleReleaseSave(owner string, release model.SmartServiceReleaseExtended) (err error) {
-	oldReleases := []model.SmartServiceReleaseExtended{}
-	if release.NewReleaseId == "" {
-		oldReleases, err = this.db.GetReleasesByDesignId(release.DesignId)
-		if err != nil {
-			return err
-		}
-	}
-	sort.Slice(oldReleases, func(i, j int) bool {
-		return oldReleases[i].CreatedAt > oldReleases[i].CreatedAt
-	})
-	if len(oldReleases) > 0 {
-		err = this.copyRightsOfRelease(owner, oldReleases[len(oldReleases)-1], release)
-		if err != nil {
-			return err
-		}
-	}
-
-	err, _ = this.db.SetRelease(release)
-	if err != nil {
-		return err
-	}
-	err, isInvalidCamundaDeployment := this.camunda.DeployRelease(owner, release)
-	if err != nil {
-		errOnErrNotification := this.db.SetReleaseError(release.Id, err.Error())
-		if isInvalidCamundaDeployment {
-			return errOnErrNotification
-		} else {
-			return err
-		}
-	}
-	err = this.db.SetReleaseError(release.Id, "")
-	if err != nil {
-		return err
-	}
-	for _, old := range oldReleases {
-		if old.CreatedAt < release.CreatedAt { //"if" to prevent race from  HandleReleaseDelete() to recreate deleted release
-			old.NewReleaseId = release.Id
-			err = this.publishReleaseUpdate(owner, old)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (this *Controller) HandleReleaseDelete(userId string, id string) error {
-	//remove release from camunda
-	err := this.camunda.RemoveRelease(id)
-	if err != nil {
-		return err
-	}
-
-	//update NewReleaseId on other releases if this release is the newest one
-	currentRelease, err, code := this.db.GetRelease(id)
-	if err != nil && code != http.StatusNotFound {
-		return err
-	}
-	if err == nil && currentRelease.NewReleaseId == "" {
-		oldReleases, err := this.db.GetReleasesByDesignId(currentRelease.DesignId)
-		if err != nil {
-			return err
-		}
-		sort.Slice(oldReleases, func(i, j int) bool {
-			return oldReleases[i].CreatedAt > oldReleases[j].CreatedAt
-		})
-		youngestRelease := model.SmartServiceReleaseExtended{}
-		for _, value := range oldReleases {
-			if value.Id == currentRelease.Id {
-				continue
-			}
-			if youngestRelease.Id == "" {
-				youngestRelease = value
-				break
-			}
-		}
-		if youngestRelease.Id != "" {
-			youngestRelease.NewReleaseId = ""
-			err = this.publishReleaseUpdate(userId, youngestRelease)
-			if err != nil {
-				return err
-			}
-		}
-		//other releases will be updated on update handling of youngestRelease because NewReleaseId == ""
-		//there is a race between the deletion of this release from the database and the update of releases that are not youngestRelease in HandleReleaseSave()
-		//but the retroactive create/uptdate of the release that is meant to be deleted is prevented by "if old.CreatedAt < release.CreatedAt {" in HandleReleaseSave()
-	}
-
-	//delete release from db
-	err, _ = this.db.DeleteRelease(id)
-	return err
-}
-
 func (this *Controller) copyRightsOfRelease(owner string, oldRelease model.SmartServiceReleaseExtended, newRelease model.SmartServiceReleaseExtended) error {
 	token, err := this.adminAccess.EnsureAccess(this.config)
 	if err != nil {
@@ -488,22 +454,25 @@ func (this *Controller) copyRightsOfRelease(owner string, oldRelease model.Smart
 		debug.PrintStack()
 		return err
 	}
-	rights, err := this.permissions.GetResourceRights(token, this.config.KafkaSmartServiceReleaseTopic, oldRelease.Id)
+	rights, err, _ := this.permissions.GetResource(token, this.config.SmartServiceReleasePermissionsTopic, oldRelease.Id)
 	if err != nil {
 		log.Println("ERROR:", err)
 		debug.PrintStack()
 		return err
 	}
-	rights.UserRights[owner] = permissions.Right{
+	rights.UserPermissions[owner] = client.PermissionsMap{
 		Read:         true,
 		Write:        true,
 		Execute:      true,
 		Administrate: true,
 	}
-	//same prefix as release PUT/DELETE to ensure same partition (preserved order when consuming)
-	//butt different suffix to ensure separate compaction
-	kafkaKey := newRelease.DesignId + "/" + newRelease.Id + "_rights"
-	return this.permissions.SetResourceRights(token, this.config.KafkaSmartServiceReleaseTopic, newRelease.Id, rights, kafkaKey)
+	_, err, _ = this.permissions.SetPermission(token, this.config.SmartServiceReleasePermissionsTopic, newRelease.Id, rights.ResourcePermissions)
+	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
+		return err
+	}
+	return nil
 }
 
 //------------ Parsing ----------------
@@ -533,8 +502,8 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 				label = id
 			}
 			fieldType := formField.SelectAttrValue("type", "")
-			if id == "" {
-				return result, errors.New("missing type in camunda:formField")
+			if fieldType == "" {
+				return result, errors.New("missing type in camunda:fieldType")
 			}
 			var defaultValue interface{}
 			defaultValueField := formField.SelectAttr("defaultValue")
@@ -581,7 +550,7 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 			}
 			if chId, ok := properties["characteristic_id"]; ok {
 				param.CharacteristicId = &chId
-				param.Characteristic, err = this.GetCharacteristic(token.Jwt(), chId)
+				param.Characteristic, err = this.GetCharacteristic(chId)
 				if err != nil {
 					return result, fmt.Errorf("unable to find characteristics_id for formField %v: %w", id, err)
 				}
@@ -709,7 +678,7 @@ func (this *Controller) validateParsedReleaseInfos(info model.SmartServiceReleas
 		}
 		if param.IotDescription != nil {
 			if param.IotDescription.NeedsSameEntityIdInParameter != "" {
-				if !ListContains(info.ParameterDescriptions, func(p model.ParameterDescription) bool {
+				if !slices.ContainsFunc(info.ParameterDescriptions, func(p model.ParameterDescription) bool {
 					return p.Id == param.IotDescription.NeedsSameEntityIdInParameter
 				}) {
 					return fmt.Errorf("%v: parameter property \"entity_only\" references unknown parameter \"%v\"", param.Id, param.IotDescription.NeedsSameEntityIdInParameter)

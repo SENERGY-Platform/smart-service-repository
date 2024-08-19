@@ -21,6 +21,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"net/http"
+	"slices"
 )
 
 type Selectables struct {
@@ -40,13 +41,13 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 		return result, nil, http.StatusOK
 	}
 	return controller.ListFilter(result, func(s model.Selectable) bool {
-		if s.Device != nil && !controller.ListContains(searchedEntities, func(element string) bool { return element == model.DeviceFilter }) {
+		if s.Device != nil && !slices.ContainsFunc(searchedEntities, func(element string) bool { return element == model.DeviceFilter }) {
 			return false
 		}
-		if s.DeviceGroup != nil && !controller.ListContains(searchedEntities, func(element string) bool { return element == model.GroupFilter }) {
+		if s.DeviceGroup != nil && !slices.ContainsFunc(searchedEntities, func(element string) bool { return element == model.GroupFilter }) {
 			return false
 		}
-		if s.Import != nil && !controller.ListContains(searchedEntities, func(element string) bool { return element == model.ImportFilter }) {
+		if s.Import != nil && !slices.ContainsFunc(searchedEntities, func(element string) bool { return element == model.ImportFilter }) {
 			return false
 		}
 		return true

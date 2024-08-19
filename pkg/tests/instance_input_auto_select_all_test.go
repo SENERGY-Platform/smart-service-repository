@@ -19,7 +19,7 @@ package tests
 import (
 	"context"
 	"encoding/json"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
+	"github.com/SENERGY-Platform/models/go/models"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
@@ -43,7 +43,7 @@ func TestInstanceAutoSelectAllInput(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, resources.SelectionsResponse4Obj, func(err error) {
+	apiUrl, config, testDeviceRepoDb, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -52,30 +52,14 @@ func TestInstanceAutoSelectAllInput(t *testing.T) {
 		return
 	}
 
-	characteristicsProducer, err := kafka.NewProducer(ctx, config, config.KafkaCharacteristicsTopic)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	characteristicMsg, err := json.Marshal(map[string]interface{}{
-		"command": "PUT",
-		"id":      "urn:infai:ses:characteristic:0b041ea3-8efd-4ce4-8130-d8af320326a4",
-		"owner":   userId,
-		"characteristic": model.Characteristic{
-			Id:   "urn:infai:ses:characteristic:0b041ea3-8efd-4ce4-8130-d8af320326a4",
-			Name: "location",
-		},
+	err = testDeviceRepoDb.SetCharacteristic(ctx, models.Characteristic{
+		Id:   "urn:infai:ses:characteristic:0b041ea3-8efd-4ce4-8130-d8af320326a4",
+		Name: "location",
 	})
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = characteristicsProducer.Produce("location", characteristicMsg)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	time.Sleep(10 * time.Second)
 
 	topicBackup := mocks.CAMUNDA_MODULE_WORKER_TOPIC
 	defer func() {

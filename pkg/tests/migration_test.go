@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 InfAI (CC SES)
+ * Copyright 2024 InfAI (CC SES)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-package controller
+package tests
 
-func ListFilter[T any](in []T, filter func(T) bool) (out []T) {
-	for _, e := range in {
-		if filter(e) {
-			out = append(out, e)
-		}
-	}
-	return
+import "testing"
+
+func TestReleasePermissionsMigration(t *testing.T) {
+	t.Error("TODO") //TODO
+}
+
+func TestReleaseDeleteRetry(t *testing.T) {
+	t.Error("TODO") //TODO
+}
+
+func TestReleaseDeploymentRollback(t *testing.T) {
+	t.Error("TODO") //TODO
+}
+
+func TestReleaseDeploymentRollbackAtCleanup(t *testing.T) {
+	t.Error("TODO") //TODO
 }

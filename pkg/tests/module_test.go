@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
@@ -30,6 +29,7 @@ import (
 	"net/url"
 	"reflect"
 	"runtime/debug"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -45,7 +45,7 @@ func TestModuleApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, config, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		t.Error(err)
 	})
 	if err != nil {
@@ -318,7 +318,7 @@ func TestModuleKeyApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, config, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		t.Error(err)
 	})
 	if err != nil {
@@ -662,7 +662,7 @@ func TestModulePutApi(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, config, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		t.Error(err)
 	})
 	if err != nil {
@@ -995,11 +995,11 @@ func testModuleListExtendedWithToken(t *testing.T, token string, apiUrl string, 
 		return
 	}
 	for _, element := range result {
-		if !controller.ListContains(allowedInstanceIds, func(s string) bool { return s == element.InstanceId }) {
+		if !slices.ContainsFunc(allowedInstanceIds, func(s string) bool { return s == element.InstanceId }) {
 			t.Error(element.InstanceId, allowedInstanceIds)
 			return
 		}
-		if !controller.ListContains(allowedModuleTypes, func(s string) bool { return s == element.ModuleType }) {
+		if !slices.ContainsFunc(allowedModuleTypes, func(s string) bool { return s == element.ModuleType }) {
 			t.Error(element.InstanceId, allowedInstanceIds)
 			return
 		}
@@ -1017,7 +1017,7 @@ func TestEmptyAnalyticsVariables(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, config, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, config, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})

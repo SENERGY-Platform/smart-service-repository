@@ -17,6 +17,7 @@
 package mongo
 
 import (
+	"context"
 	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,11 +25,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"runtime/debug"
+	"strings"
+	"time"
 )
 
 var ReleaseBson = getBsonFieldObject[model.SmartServiceReleaseExtended]()
 
+const ReleaseBsonMarkedAsUnfinished = "marked_as_unfinished"
+const ReleaseBsonMarkedAsDeleted = "marked_as_deleted"
+const ReleaseBsonMarkedAtUnixTimestamp = "marked_at_unix_timestamp"
+
 var ErrReleaseNotFound = errors.New("release not found")
+
+type SyncMarks struct {
+	MarkedAtUnixTimestamp int64 `json:"marked_at_unix_timestamp" bson:"marked_at_unix_timestamp"`
+	MarkedAsUnfinished    bool  `json:"marked_as_unfinished" bson:"marked_as_unfinished"`
+	MarkedAsDeleted       bool  `json:"marked_as_deleted" bson:"marked_as_deleted"`
+}
+
+type SmartServiceReleaseExtendedWithSyncMarks struct {
+	model.SmartServiceReleaseExtended `bson:",inline"`
+	SyncMarks                         `bson:",inline"`
+}
 
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
@@ -49,6 +67,11 @@ func init() {
 			debug.PrintStack()
 			return err
 		}
+		err = migrateReleasePermissions(db.config, collection)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
 		return nil
 	})
 }
@@ -57,7 +80,45 @@ func (this *Mongo) releaseCollection() *mongo.Collection {
 	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionRelease)
 }
 
-func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended) (error, int) {
+func (this *Mongo) MarkReleaseAsFinished(id string) (err error) {
+	ctx, _ := getTimeoutContext()
+	_, err = this.releaseCollection().UpdateOne(ctx, bson.M{
+		ReleaseBson.Id: id,
+	}, bson.M{
+		"$set": bson.M{ReleaseBsonMarkedAsUnfinished: false},
+	})
+	return err
+}
+
+func (this *Mongo) GetMarkedReleases() (markedAsDeleted []model.SmartServiceReleaseExtended, markedAsUnfinished []model.SmartServiceReleaseExtended, err error) {
+	filter := bson.M{
+		ReleaseBsonMarkedAtUnixTimestamp: bson.M{"$lt": time.Now().Add(-1 * this.config.MarkAgeLimit.GetDuration()).UnixMilli()},
+		"$or": []interface{}{
+			bson.M{ReleaseBsonMarkedAsDeleted: true},
+			bson.M{ReleaseBsonMarkedAsUnfinished: true},
+		},
+	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Minute)
+	cursor, err := this.releaseCollection().Find(ctx, filter)
+	if err != nil {
+		return markedAsDeleted, markedAsUnfinished, err
+	}
+	fullList, err, _ := readCursorResult[SmartServiceReleaseExtendedWithSyncMarks](ctx, cursor)
+	if err != nil {
+		return markedAsDeleted, markedAsUnfinished, err
+	}
+	for _, element := range fullList {
+		if element.MarkedAsDeleted {
+			markedAsDeleted = append(markedAsDeleted, element.SmartServiceReleaseExtended)
+		} else if !element.MarkedAsUnfinished {
+			markedAsUnfinished = append(markedAsUnfinished, element.SmartServiceReleaseExtended)
+		}
+	}
+	return markedAsDeleted, markedAsUnfinished, err
+
+}
+
+func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended, markAsDone bool) (error, int) {
 	//store release
 	ctx, _ := getTimeoutContext()
 	_, err := this.releaseCollection().ReplaceOne(
@@ -65,7 +126,14 @@ func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended) (error,
 		bson.M{
 			ReleaseBson.Id: element.Id,
 		},
-		element,
+		SmartServiceReleaseExtendedWithSyncMarks{
+			SmartServiceReleaseExtended: element,
+			SyncMarks: SyncMarks{
+				MarkedAtUnixTimestamp: time.Now().UnixMilli(),
+				MarkedAsUnfinished:    markAsDone,
+				MarkedAsDeleted:       false,
+			},
+		},
 		options.Replace().SetUpsert(true))
 	if err != nil {
 		return err, http.StatusInternalServerError
@@ -84,19 +152,19 @@ func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended) (error,
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) SetReleaseError(id string, errMsg string) error {
+func (this *Mongo) GetRelease(id string, withMarked bool) (result model.SmartServiceReleaseExtended, err error, code int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.releaseCollection().UpdateOne(ctx, bson.M{
-		ReleaseBson.Id: id,
-	}, bson.M{
-		"$set": bson.M{ReleaseBson.Error: errMsg},
-	})
-	return err
-}
-
-func (this *Mongo) GetRelease(id string) (result model.SmartServiceReleaseExtended, err error, code int) {
-	ctx, _ := getTimeoutContext()
-	temp := this.releaseCollection().FindOne(ctx, bson.M{ReleaseBson.Id: id})
+	filter := bson.M{
+		ReleaseBson.Id:                id,
+		ReleaseBsonMarkedAsDeleted:    bson.M{"$ne": true},
+		ReleaseBsonMarkedAsUnfinished: bson.M{"$ne": true},
+	}
+	if withMarked {
+		filter = bson.M{
+			ReleaseBson.Id: id,
+		}
+	}
+	temp := this.releaseCollection().FindOne(ctx, filter)
 	err = temp.Err()
 	if err == mongo.ErrNoDocuments {
 		return result, ErrReleaseNotFound, http.StatusNotFound
@@ -122,10 +190,58 @@ func (this *Mongo) DeleteRelease(id string) (error, int) {
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) GetReleaseListByIds(ids []string, sort string) (result []model.SmartServiceReleaseExtended, err error) {
+func (this *Mongo) MarlReleaseAsDeleted(id string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	opt := createFindOptions(model.ReleaseQueryOptions{Sort: sort})
-	cursor, err := this.releaseCollection().Find(ctx, bson.M{ReleaseBson.Id: bson.M{"$in": ids}}, opt)
+	_, err := this.releaseCollection().UpdateOne(ctx, bson.M{
+		ReleaseBson.Id: id,
+	}, bson.M{
+		"$set": bson.M{ReleaseBsonMarkedAsDeleted: true},
+	})
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	return err, http.StatusOK
+}
+
+func addAndFilter(filter bson.M, add bson.M) bson.M {
+	andInterface, ok := filter["$and"]
+	and := []interface{}{}
+	if ok {
+		and = andInterface.([]interface{})
+	}
+	and = append(and, add)
+	filter["$and"] = and
+	return filter
+}
+
+func (this *Mongo) ListReleases(options model.ListReleasesOptions) (result []model.SmartServiceReleaseExtended, err error) {
+	ctx, _ := getTimeoutContext()
+	opt := createFindOptions(options)
+	filter := bson.M{
+		ReleaseBsonMarkedAsDeleted:    bson.M{"$ne": true},
+		ReleaseBsonMarkedAsUnfinished: bson.M{"$ne": true},
+	}
+	if options.InIds != nil {
+		filter[ReleaseBson.Id] = bson.M{"$in": options.InIds}
+	}
+	search := strings.TrimSpace(options.Search)
+	if search != "" {
+		filter = addAndFilter(filter, bson.M{
+			"$or": []interface{}{
+				bson.M{ReleaseBson.Name: bson.M{"$regex": search, "$options": "i"}},
+				bson.M{ReleaseBson.Description: bson.M{"$regex": search, "$options": "i"}},
+			},
+		})
+	}
+	if options.Latest {
+		filter = addAndFilter(filter, bson.M{
+			"$or": []interface{}{
+				bson.M{ReleaseBson.NewReleaseId: ""},
+				bson.M{ReleaseBson.NewReleaseId: bson.M{"$exists": false}},
+			},
+		})
+	}
+	cursor, err := this.releaseCollection().Find(ctx, filter, opt)
 	if err != nil {
 		return result, err
 	}
@@ -135,7 +251,7 @@ func (this *Mongo) GetReleaseListByIds(ids []string, sort string) (result []mode
 
 func (this *Mongo) GetReleasesByDesignId(designId string) (result []model.SmartServiceReleaseExtended, err error) {
 	ctx, _ := getTimeoutContext()
-	cursor, err := this.releaseCollection().Find(ctx, bson.M{ReleaseBson.DesignId: designId})
+	cursor, err := this.releaseCollection().Find(ctx, bson.M{ReleaseBson.DesignId: designId, ReleaseBsonMarkedAsDeleted: bson.M{"$ne": true}})
 	if err != nil {
 		return result, err
 	}

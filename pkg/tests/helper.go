@@ -20,15 +20,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
+	"github.com/SENERGY-Platform/device-repository/lib/database"
+	permissionsv2 "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/camunda"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/kafka"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/permissions"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
@@ -43,14 +44,19 @@ import (
 	"time"
 )
 
-func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, selectionResp []model.Selectable, errHandler func(error)) (apiUrl string, config configuration.Config, err error) {
+func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, selectionResp []model.Selectable, errHandler func(error)) (apiUrl string, config configuration.Config, devicerepoTestDb database.Database, err error) {
+	apiUrl, config, devicerepoTestDb, _, err = apiTestEnvWithPermClient(ctx, wg, camundaAndCqrsDependencies, selectionResp, errHandler)
+	return
+}
+
+func apiTestEnvWithPermClient(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, selectionResp []model.Selectable, errHandler func(error)) (apiUrl string, config configuration.Config, devicerepoTestDb database.Database, perm permissionsv2.Client, err error) {
 	if selectionResp == nil {
 		selectionResp = resources.SelectionsResponse1Obj
 	}
 
 	config, err = configuration.Load("../../config.json")
 	if err != nil {
-		return "", config, err
+		return "", config, devicerepoTestDb, perm, err
 	}
 	config.Debug = true
 
@@ -69,67 +75,37 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 	port, _, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		debug.PrintStack()
-		return "", config, err
+		return "", config, devicerepoTestDb, perm, err
 	}
 	config.MongoUrl = "mongodb://localhost:" + port
 	config.MongoWithTransactions = false
 
 	db, err := mongo.New(config)
 	if err != nil {
-		return "", config, err
+		return "", config, devicerepoTestDb, perm, err
 	}
 
-	var consumer controller.Consumer
-	var producer controller.ProducerFactory
-	var perm controller.Permissions
+	devicerepo, devicerepoTestDb, err := devicerepository.NewTestClient()
+	if err != nil {
+		return "", config, devicerepoTestDb, perm, err
+	}
+	perm, err = permissionsv2.NewTestClient(ctx)
+	if err != nil {
+		return "", config, devicerepoTestDb, perm, err
+	}
 
 	if camundaAndCqrsDependencies {
-		_, zkIp, err := docker.Zookeeper(ctx, wg)
-		if err != nil {
-			return "", config, err
-		}
-		zkUrl := zkIp + ":2181"
-
-		config.KafkaUrl, err = docker.Kafka(ctx, wg, zkUrl)
-		if err != nil {
-			return "", config, err
-		}
-		time.Sleep(5 * time.Second)
 		_, camundaPgIp, _, err := docker.Postgres(ctx, wg, "camunda")
 		if err != nil {
-			return "", config, err
+			return "", config, devicerepoTestDb, perm, err
 		}
 
 		config.CamundaUrl, err = docker.Camunda(ctx, wg, camundaPgIp, "5432")
 		if err != nil {
-			return "", config, err
-		}
-		//config.CamundaUrl = "http://foo:barr@defectUrl:8080"
-
-		_, searchIp, err := docker.OpenSearch(ctx, wg)
-		if err != nil {
-			return "", config, err
-		}
-
-		_, permIp, err := docker.PermSearch(ctx, wg, false, config.KafkaUrl, searchIp)
-		if err != nil {
-			return "", config, err
+			return "", config, devicerepoTestDb, perm, err
 		}
 		time.Sleep(5 * time.Second)
-		config.PermissionsUrl = "http://" + permIp + ":8080"
-		config.PermissionsCmdUrl = "http://" + permIp + ":8080"
-		perm = permissions.New(config)
-		consumer = kafka.NewConsumer
-		producer = controller.NewProducerFactory(kafka.NewProducerWithKeySeparationBalancer)
 	} else {
-		var sender func(topic string, message []byte)
-		sender, consumer = mocks.NewConsumer(errHandler)
-		producer = mocks.NewProducer(func(topic string, key string, message []byte) error {
-			go sender(topic, message)
-			return nil
-		})
-		perm = mocks.NewPermissions()
-
 		camundaMock := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			element := map[string]interface{}{"id": "foobar", "deploymentId": "foo"}
 			if strings.HasSuffix(request.URL.Path, "process-definition") {
@@ -145,6 +121,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 			wg.Done()
 		}()
 		config.CamundaUrl = camundaMock.URL
+
 	}
 
 	selectablesMock := mocks.NewSelectables(selectionResp)
@@ -153,12 +130,12 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 
 	tokenprovider, err := auth.GetCachedTokenProvider(config)
 	if err != nil {
-		return "", config, err
+		return "", config, devicerepoTestDb, perm, err
 	}
 
-	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, consumer, producer, tokenprovider)
+	ctrl, err := controller.New(ctx, config, db, perm, camunda.New(config), selectablesMock, tokenprovider, devicerepo)
 	if err != nil {
-		return "", config, err
+		return "", config, devicerepoTestDb, perm, err
 	}
 
 	router := api.GetRouter(config, ctrl)
@@ -169,7 +146,7 @@ func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependenc
 		server.Close()
 		wg.Done()
 	}()
-	return server.URL, config, nil
+	return server.URL, config, devicerepoTestDb, perm, nil
 }
 
 var SleepAfterEdit = 0 * time.Second
