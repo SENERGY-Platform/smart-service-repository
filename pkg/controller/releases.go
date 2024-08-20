@@ -129,7 +129,7 @@ func (this *Controller) saveReleaseCreate(release model.SmartServiceReleaseExten
 		}
 	}
 
-	err, _ = this.db.SetRelease(release, false)
+	err, _ = this.db.SetRelease(release, true)
 	if err != nil {
 		return err
 	}

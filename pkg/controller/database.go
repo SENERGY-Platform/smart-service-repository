@@ -53,7 +53,7 @@ type InstanceInterface interface {
 }
 
 type ReleaseInterface interface {
-	SetRelease(element model.SmartServiceReleaseExtended, markAsDone bool) (error, int)
+	SetRelease(element model.SmartServiceReleaseExtended, markAsUnfinished bool) (error, int)
 	MarkReleaseAsFinished(id string) (err error)
 
 	GetRelease(id string, withMarked bool) (model.SmartServiceReleaseExtended, error, int)

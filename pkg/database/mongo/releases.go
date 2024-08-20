@@ -24,6 +24,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"regexp"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -110,7 +111,7 @@ func (this *Mongo) GetMarkedReleases() (markedAsDeleted []model.SmartServiceRele
 	for _, element := range fullList {
 		if element.MarkedAsDeleted {
 			markedAsDeleted = append(markedAsDeleted, element.SmartServiceReleaseExtended)
-		} else if !element.MarkedAsUnfinished {
+		} else if element.MarkedAsUnfinished {
 			markedAsUnfinished = append(markedAsUnfinished, element.SmartServiceReleaseExtended)
 		}
 	}
@@ -118,7 +119,7 @@ func (this *Mongo) GetMarkedReleases() (markedAsDeleted []model.SmartServiceRele
 
 }
 
-func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended, markAsDone bool) (error, int) {
+func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended, markAsUnfinished bool) (error, int) {
 	//store release
 	ctx, _ := getTimeoutContext()
 	_, err := this.releaseCollection().ReplaceOne(
@@ -130,7 +131,7 @@ func (this *Mongo) SetRelease(element model.SmartServiceReleaseExtended, markAsD
 			SmartServiceReleaseExtended: element,
 			SyncMarks: SyncMarks{
 				MarkedAtUnixTimestamp: time.Now().UnixMilli(),
-				MarkedAsUnfinished:    markAsDone,
+				MarkedAsUnfinished:    markAsUnfinished,
 				MarkedAsDeleted:       false,
 			},
 		},
@@ -226,10 +227,11 @@ func (this *Mongo) ListReleases(options model.ListReleasesOptions) (result []mod
 	}
 	search := strings.TrimSpace(options.Search)
 	if search != "" {
+		escapedSearch := regexp.QuoteMeta(search)
 		filter = addAndFilter(filter, bson.M{
 			"$or": []interface{}{
-				bson.M{ReleaseBson.Name: bson.M{"$regex": search, "$options": "i"}},
-				bson.M{ReleaseBson.Description: bson.M{"$regex": search, "$options": "i"}},
+				bson.M{ReleaseBson.Name: bson.M{"$regex": escapedSearch, "$options": "i"}},
+				bson.M{ReleaseBson.Description: bson.M{"$regex": escapedSearch, "$options": "i"}},
 			},
 		})
 	}

@@ -47,7 +47,7 @@ type SmartServiceReleaseExtended struct {
 	BpmnXml             string                  `json:"bpmn_xml" bson:"bpmn_xml"`
 	SvgXml              string                  `json:"svg_xml" bson:"svg_xml"`
 	ParsedInfo          SmartServiceReleaseInfo `json:"parsed_info" bson:"parsed_info"`
-	PermissionsInfo     PermissionsInfo         `json:"permissions_info,omitempty"` //optional, set if query parameter permissions_info=true
+	PermissionsInfo     PermissionsInfo         `json:"permissions_info,omitempty" bson:"-"` //optional, set if query parameter permissions_info=true
 }
 
 type SmartServiceReleaseExtendedWithUsableFlag struct {

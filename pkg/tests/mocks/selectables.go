@@ -18,7 +18,6 @@ package mocks
 
 import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"net/http"
 	"slices"
@@ -40,7 +39,7 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 	if len(searchedEntities) == 0 {
 		return result, nil, http.StatusOK
 	}
-	return controller.ListFilter(result, func(s model.Selectable) bool {
+	return ListFilter(result, func(s model.Selectable) bool {
 		if s.Device != nil && !slices.ContainsFunc(searchedEntities, func(element string) bool { return element == model.DeviceFilter }) {
 			return false
 		}
@@ -52,4 +51,13 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 		}
 		return true
 	}), nil, http.StatusOK
+}
+
+func ListFilter[T any](in []T, filter func(T) bool) (out []T) {
+	for _, e := range in {
+		if filter(e) {
+			out = append(out, e)
+		}
+	}
+	return
 }

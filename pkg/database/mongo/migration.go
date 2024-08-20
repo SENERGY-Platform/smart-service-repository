@@ -26,9 +26,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
+	"net/http"
 	"time"
 )
 
+// TODO: will be removed once permissions-search removes smart-service-releases
 func migrateReleasePermissions(config configuration.Config, releases *mongo.Collection) error {
 	if config.PermissionsUrl == "" || config.PermissionsUrl == "-" {
 		log.Printf("skip migrateReleasePermissions because config.PermissionsUrl = '%v'\n", config.PermissionsUrl)
@@ -49,7 +51,22 @@ func migrateReleasePermissions(config configuration.Config, releases *mongo.Coll
 	if err != nil {
 		return err
 	}
+	init := false
 	for cursor.Next(context.Background()) {
+		if !init {
+			init = true
+			topic := configuration.GetTopicDesc(config)
+			_, err, code := permV2Client.GetTopic(permissionsv2.InternalAdminToken, topic.Id)
+			if err != nil && code != http.StatusNotFound {
+				return err
+			}
+			if code == http.StatusNotFound {
+				_, err, _ := permV2Client.SetTopic(permissionsv2.InternalAdminToken, topic)
+				if err != nil {
+					return err
+				}
+			}
+		}
 		element := SmartServiceReleaseExtendedWithSyncMarks{}
 		err = cursor.Decode(&element)
 		if err != nil {

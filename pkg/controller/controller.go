@@ -20,7 +20,6 @@ import (
 	"context"
 	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
 	permclient "github.com/SENERGY-Platform/permissions-v2/pkg/client"
-	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
@@ -73,19 +72,7 @@ func New(ctx context.Context, config configuration.Config, db Database, permissi
 		adminAccess:       &auth.OpenidToken{},
 		devicerepo:        devicerepo,
 	}
-	_, err, _ = permissions.SetTopic(permclient.InternalAdminToken, permclient.Topic{
-		Id: config.SmartServiceReleasePermissionsTopic,
-		DefaultPermissions: permmodel.ResourcePermissions{
-			RolePermissions: map[string]permmodel.PermissionsMap{
-				"admin": {
-					Read:         true,
-					Write:        true,
-					Execute:      true,
-					Administrate: true,
-				},
-			},
-		},
-	})
+	_, err, _ = permissions.SetTopic(permclient.InternalAdminToken, configuration.GetTopicDesc(config))
 	if err != nil {
 		return nil, err
 	}
