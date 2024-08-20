@@ -18,10 +18,10 @@ github.com/SENERGY-Platform/device-repository v0.0.32 h1:kgNnH5yOtLsTg7LevtEy/XL
 github.com/SENERGY-Platform/device-repository v0.0.32/go.mod h1:5FPODq2Hs8V9AcjSkAUrCUvuN6nU0ARM0Jq/s6IP/78=
 github.com/SENERGY-Platform/models/go v0.0.0-20240627082833-157bd627a94f h1:nFZkMoKp6RtsbYijj071sVQ3uZqloDILMWCIDaInUSI=
 github.com/SENERGY-Platform/models/go v0.0.0-20240627082833-157bd627a94f/go.mod h1:bCREPNRN4P8oxLgpC3/ZKK4jXSy4MSPXoiomhohE+aw=
-github.com/SENERGY-Platform/permission-search v0.0.16 h1:MhKNr9Fnwcf50AguaSb8697ScD0iNw/Tkk1L1ccZnP0=
-github.com/SENERGY-Platform/permission-search v0.0.16/go.mod h1:b2ckm6kM+XuDBZxx+cdv6YbM6SRk2EJi7Ny5ffTWhfc=
-github.com/SENERGY-Platform/permissions-v2 v0.0.18 h1:u4UmSeop/xFPapDNzDbUeZJdc+9VJkeLjM2EVNnWrKA=
-github.com/SENERGY-Platform/permissions-v2 v0.0.18/go.mod h1:C5cajCotaGI1CvgvdlEPZ5Ig/yAiJUCVNJYPqu2SNvg=
+github.com/SENERGY-Platform/permission-search v0.0.20 h1:s4kzF2ol9P0zpi5unPpXVSqAsUJp7dvLgcpTH3opGBw=
+github.com/SENERGY-Platform/permission-search v0.0.20/go.mod h1:b2ckm6kM+XuDBZxx+cdv6YbM6SRk2EJi7Ny5ffTWhfc=
+github.com/SENERGY-Platform/permissions-v2 v0.0.19 h1:rKSoayL5iZ2p1nFdfOsQbl17qARlXZq+MocBUlMei6I=
+github.com/SENERGY-Platform/permissions-v2 v0.0.19/go.mod h1:C5cajCotaGI1CvgvdlEPZ5Ig/yAiJUCVNJYPqu2SNvg=
 github.com/SENERGY-Platform/service-commons v0.0.0-20240813072046-91b3195dd8fc h1:FbGDfHiDukp8wD1w4YNxjwiDpSNkRUG+Ymq9jjz3Auc=
 github.com/SENERGY-Platform/service-commons v0.0.0-20240813072046-91b3195dd8fc/go.mod h1:1p2CQPNtler5leXqNgaOfr7DlgZUydrQlQYA97ycm4k=
 github.com/aws/aws-sdk-go v1.42.27/go.mod h1:OGr6lGMAKGlG9CVrYnWYDKIyb829c6EVBRjxqjmPepc=

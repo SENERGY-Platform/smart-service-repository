@@ -84,6 +84,8 @@ func TestReleasePermissionsMigration(t *testing.T) {
 		return
 	}
 
+	time.Sleep(time.Second)
+
 	_, permIp, err := docker.PermSearch(ctx, wg, false, kafkaUrl, searchIp)
 	if err != nil {
 		t.Error(err)

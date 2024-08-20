@@ -27,6 +27,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"time"
 )
 
@@ -74,9 +75,14 @@ func migrateReleasePermissions(config configuration.Config, releases *mongo.Coll
 		}
 		rights, err := permSearchClient.GetRights(permissionsv2.InternalAdminToken, config.SmartServiceReleasePermissionsTopic, element.Id)
 		if err != nil {
+			log.Println("ERROR: unable to get permission-search rights", config.PermissionsUrl, config.SmartServiceReleasePermissionsTopic, element.Id, err)
+			debug.PrintStack()
 			return err
 		}
 		element.Creator = rights.Creator
+		if element.Creator == "" {
+			element.Creator = "placeholder-for-invalid-data"
+		}
 		element.SyncMarks = SyncMarks{
 			MarkedAtUnixTimestamp: time.Now().UnixMilli(),
 			MarkedAsUnfinished:    false,
@@ -87,12 +93,16 @@ func migrateReleasePermissions(config configuration.Config, releases *mongo.Coll
 			GroupPermissions: map[string]permmodel.PermissionsMap{},
 			RolePermissions:  map[string]permmodel.PermissionsMap{},
 		}
+		hasAdminUser := false
 		for user, right := range rights.UserRights {
 			permissions.UserPermissions[user] = permmodel.PermissionsMap{
 				Read:         right.Read,
 				Write:        right.Write,
 				Execute:      right.Execute,
 				Administrate: right.Administrate,
+			}
+			if right.Administrate {
+				hasAdminUser = true
 			}
 		}
 		for group, right := range rights.GroupRights {
@@ -103,8 +113,18 @@ func migrateReleasePermissions(config configuration.Config, releases *mongo.Coll
 				Administrate: right.Administrate,
 			}
 		}
+		if !hasAdminUser {
+			permissions.UserPermissions[element.Creator] = permmodel.PermissionsMap{
+				Read:         true,
+				Write:        true,
+				Execute:      true,
+				Administrate: true,
+			}
+		}
 		_, err, _ = permV2Client.SetPermission(permissionsv2.InternalAdminToken, config.SmartServiceReleasePermissionsTopic, element.Id, permissions)
 		if err != nil {
+			log.Println("ERROR: unable to set permissions-v2 permissions", config.SmartServiceReleasePermissionsTopic, element.Id, err)
+			debug.PrintStack()
 			return err
 		}
 		_, err = releases.ReplaceOne(ctx, bson.M{ReleaseBson.Id: element.Id}, element, options.Replace().SetUpsert(true))

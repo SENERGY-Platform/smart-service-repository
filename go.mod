@@ -5,8 +5,8 @@ go 1.22
 require (
 	github.com/SENERGY-Platform/device-repository v0.0.32
 	github.com/SENERGY-Platform/models/go v0.0.0-20240627082833-157bd627a94f
-	github.com/SENERGY-Platform/permission-search v0.0.16
-	github.com/SENERGY-Platform/permissions-v2 v0.0.18
+	github.com/SENERGY-Platform/permission-search v0.0.20
+	github.com/SENERGY-Platform/permissions-v2 v0.0.19
 	github.com/SENERGY-Platform/service-commons v0.0.0-20240813072046-91b3195dd8fc
 	github.com/beevik/etree v1.4.0
 	github.com/google/uuid v1.6.0
