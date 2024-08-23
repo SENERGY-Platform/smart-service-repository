@@ -68,11 +68,6 @@ func init() {
 			debug.PrintStack()
 			return err
 		}
-		err = migrateReleasePermissions(db.config, collection)
-		if err != nil {
-			debug.PrintStack()
-			return err
-		}
 		return nil
 	})
 }

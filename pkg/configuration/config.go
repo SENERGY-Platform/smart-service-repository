@@ -33,7 +33,6 @@ type Config struct {
 	EnableSwaggerUi                      bool     `json:"enable_swagger_ui"`
 	CamundaUrl                           string   `json:"camunda_url" config:"secret"`
 	DeviceSelectionApi                   string   `json:"device_selection_api"`
-	PermissionsUrl                       string   `json:"permissions_url"` //for migration
 	PermissionsV2Url                     string   `json:"permissions_v2_url"`
 	DeviceRepositoryUrl                  string   `json:"device_repository_url"`
 	SmartServiceReleasePermissionsTopic  string   `json:"smart_service_release_permissions_topic"`

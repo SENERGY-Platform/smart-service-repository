@@ -3,7 +3,6 @@
     "debug": false,
     "enable_swagger_ui": false,
 
-    "permissions_url": "",
     "permissions_v2_url": "",
     "device_repository_url": "",
     "device_selection_api": "",
