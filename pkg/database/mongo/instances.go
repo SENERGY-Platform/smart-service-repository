@@ -17,6 +17,7 @@
 package mongo
 
 import (
+	"context"
 	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -129,6 +130,7 @@ func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
+	defer cursor.Close(context.Background())
 	return readCursorResult[model.SmartServiceInstance](ctx, cursor)
 }
 
@@ -157,5 +159,6 @@ func (this *Mongo) ListInstancesOfRelease(userId string, releaseId string) (resu
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
+	defer cursor.Close(context.Background())
 	return readCursorResult[model.SmartServiceInstance](ctx, cursor)
 }

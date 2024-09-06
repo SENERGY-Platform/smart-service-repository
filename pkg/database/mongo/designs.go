@@ -17,6 +17,7 @@
 package mongo
 
 import (
+	"context"
 	"errors"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -113,5 +114,6 @@ func (this *Mongo) ListDesigns(userId string, query model.DesignQueryOptions) (r
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
+	defer cursor.Close(context.Background())
 	return readCursorResult[model.SmartServiceDesign](ctx, cursor)
 }

@@ -99,6 +99,7 @@ func (this *Mongo) GetMarkedReleases() (markedAsDeleted []model.SmartServiceRele
 	if err != nil {
 		return markedAsDeleted, markedAsUnfinished, err
 	}
+	defer cursor.Close(context.Background())
 	fullList, err, _ := readCursorResult[SmartServiceReleaseExtendedWithSyncMarks](ctx, cursor)
 	if err != nil {
 		return markedAsDeleted, markedAsUnfinished, err
@@ -242,6 +243,7 @@ func (this *Mongo) ListReleases(options model.ListReleasesOptions) (result []mod
 	if err != nil {
 		return result, err
 	}
+	defer cursor.Close(context.Background())
 	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
 	return result, err
 }
@@ -252,6 +254,7 @@ func (this *Mongo) GetReleasesByDesignId(designId string) (result []model.SmartS
 	if err != nil {
 		return result, err
 	}
+	defer cursor.Close(context.Background())
 	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
 	return result, err
 }
