@@ -5,15 +5,15 @@ go 1.23
 toolchain go1.23.1
 
 require (
-	github.com/SENERGY-Platform/device-repository v0.1.17
-	github.com/SENERGY-Platform/models/go v0.0.0-20240829060132-21bc8cc47937
-	github.com/SENERGY-Platform/permission-search v0.0.22
-	github.com/SENERGY-Platform/permissions-v2 v0.0.26
+	github.com/SENERGY-Platform/device-repository v0.1.36
+	github.com/SENERGY-Platform/models/go v0.0.0-20241007061544-de7132ae94e4
+	github.com/SENERGY-Platform/permissions-v2 v0.0.27
 	github.com/SENERGY-Platform/service-commons v0.0.0-20240813072046-91b3195dd8fc
 	github.com/beevik/etree v1.4.0
 	github.com/google/uuid v1.6.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/lib/pq v1.10.9
+	github.com/segmentio/kafka-go v0.4.47
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
 	github.com/testcontainers/testcontainers-go v0.33.0
@@ -73,13 +73,11 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
-	github.com/opensearch-project/opensearch-go v1.1.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/segmentio/kafka-go v0.4.47 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
