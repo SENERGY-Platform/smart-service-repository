@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.1
 
 require (
-	github.com/SENERGY-Platform/device-repository v0.1.36
+	github.com/SENERGY-Platform/device-repository v0.1.51
 	github.com/SENERGY-Platform/models/go v0.0.0-20241007061544-de7132ae94e4
 	github.com/SENERGY-Platform/permissions-v2 v0.0.27
 	github.com/SENERGY-Platform/service-commons v0.0.0-20240813072046-91b3195dd8fc
