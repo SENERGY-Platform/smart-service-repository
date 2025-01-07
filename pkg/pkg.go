@@ -50,7 +50,7 @@ func Start(ctx context.Context, config configuration.Config) error {
 		camunda.New(config),
 		selectables.New(config),
 		tokenprovider,
-		devicerepository.NewClient(config.DeviceRepositoryUrl),
+		devicerepository.NewClient(config.DeviceRepositoryUrl, nil),
 	)
 	if err != nil {
 		return err

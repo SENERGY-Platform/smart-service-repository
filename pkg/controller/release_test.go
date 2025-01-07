@@ -88,7 +88,7 @@ func TestReleaseDeleteRetry(t *testing.T) {
 		camundaMock,
 		selectables.New(config),
 		tokenprovider,
-		devicerepository.NewClient(config.DeviceRepositoryUrl),
+		devicerepository.NewClient(config.DeviceRepositoryUrl, nil),
 	)
 	if err != nil {
 		t.Error(err)
@@ -238,7 +238,7 @@ func TestUnfinishedReleaseRollback(t *testing.T) {
 		camundaMock,
 		selectables.New(config),
 		tokenprovider,
-		devicerepository.NewClient(config.DeviceRepositoryUrl),
+		devicerepository.NewClient(config.DeviceRepositoryUrl, nil),
 	)
 	if err != nil {
 		t.Error(err)
@@ -391,7 +391,7 @@ func TestReleaseDeploymentRollback(t *testing.T) {
 		camundaMock,
 		selectables.New(config),
 		tokenprovider,
-		devicerepository.NewClient(config.DeviceRepositoryUrl),
+		devicerepository.NewClient(config.DeviceRepositoryUrl, nil),
 	)
 	if err != nil {
 		t.Error(err)
