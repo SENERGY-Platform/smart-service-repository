@@ -14,7 +14,7 @@ func Camunda(ctx context.Context, wg *sync.WaitGroup, pgIp string, pgPort string
 	dbName := "camunda"
 	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        "ghcr.io/senergy-platform/process-engine:dev",
+			Image:        "ghcr.io/senergy-platform/process-engine:v1.0.2", // dev | v1.0.2 | v1.0.4
 			ExposedPorts: []string{"8080/tcp"},
 			WaitingFor: wait.ForAll(
 				wait.ForListeningPort("8080/tcp"),

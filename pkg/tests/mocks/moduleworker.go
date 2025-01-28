@@ -106,7 +106,7 @@ func getTasks(config configuration.Config) (tasks []CamundaExternalTask, err err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		temp, err := ioutil.ReadAll(resp.Body)
+		temp, err := io.ReadAll(resp.Body)
 		err = errors.New(fmt.Sprintln(endpoint, resp.Status, resp.StatusCode, string(temp), err))
 		return tasks, err
 	}
