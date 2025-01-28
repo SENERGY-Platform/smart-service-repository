@@ -19,6 +19,8 @@ package tests
 import (
 	"context"
 	"encoding/json"
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
+	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 	"io"
@@ -697,7 +699,7 @@ func TestReleaseUpdate(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	apiUrl, _, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+	apiUrl, conf, _, perm, err := apiTestEnvWithPermClient(ctx, wg, true, nil, func(err error) {
 		debug.PrintStack()
 		t.Error(err)
 	})
@@ -762,6 +764,21 @@ func TestReleaseUpdate(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 			return
+		}
+	})
+
+	t.Run("update release permissions", func(t *testing.T) {
+		_, err, _ := perm.SetPermission(userToken, conf.SmartServiceReleasePermissionsTopic, release.Id, client.ResourcePermissions{
+			UserPermissions: map[string]permmodel.PermissionsMap{
+				userId: {Read: true, Write: true, Execute: true, Administrate: true},
+			},
+			GroupPermissions: nil,
+			RolePermissions: map[string]permmodel.PermissionsMap{
+				"foo": {Read: true, Write: true, Execute: true, Administrate: true},
+			},
+		})
+		if err != nil {
+			t.Error(err)
 		}
 	})
 
@@ -935,6 +952,18 @@ func TestReleaseUpdate(t *testing.T) {
 		}
 	})
 
+	t.Run("check release permissions", func(t *testing.T) {
+		for i, id := range []string{release.Id, release2.Id} {
+			perm, err, _ := perm.GetResource(userToken, conf.SmartServiceReleasePermissionsTopic, id)
+			if err != nil {
+				t.Error(err)
+			}
+			if _, ok := perm.RolePermissions["foo"]; !ok {
+				t.Errorf("unexpected perm %v %#v", i, perm.ResourcePermissions)
+			}
+		}
+	})
+
 	release3 := model.SmartServiceRelease{}
 	t.Run("create release 3", func(t *testing.T) {
 		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
@@ -1030,6 +1059,18 @@ func TestReleaseUpdate(t *testing.T) {
 		if temp.NewReleaseId != "" {
 			t.Error(temp.NewReleaseId)
 			return
+		}
+	})
+
+	t.Run("check release permissions", func(t *testing.T) {
+		for i, id := range []string{release.Id, release2.Id, release3.Id} {
+			perm, err, _ := perm.GetResource(userToken, conf.SmartServiceReleasePermissionsTopic, id)
+			if err != nil {
+				t.Error(err)
+			}
+			if _, ok := perm.RolePermissions["foo"]; !ok {
+				t.Errorf("unexpected perm %v %#v", i, perm.ResourcePermissions)
+			}
 		}
 	})
 

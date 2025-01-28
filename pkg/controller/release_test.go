@@ -50,6 +50,8 @@ func TestReleaseDeleteRetry(t *testing.T) {
 
 	config.MarkAgeLimit.SetDuration(time.Millisecond)
 
+	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
+
 	_, mongoIp, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		t.Error(err)
@@ -200,6 +202,8 @@ func TestUnfinishedReleaseRollback(t *testing.T) {
 
 	config.MarkAgeLimit.SetDuration(time.Millisecond)
 
+	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
+
 	_, mongoIp, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		t.Error(err)
@@ -262,7 +266,7 @@ func TestUnfinishedReleaseRollback(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.deployRelease(release, []model.SmartServiceReleaseExtended{})
+	err = cmd.deployRelease(release)
 	if !errors.Is(err, camundaMock.Err) || err == nil {
 		t.Error(err)
 		return
@@ -352,6 +356,8 @@ func TestReleaseDeploymentRollback(t *testing.T) {
 	}
 
 	config.MarkAgeLimit.SetDuration(time.Millisecond)
+
+	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
 
 	_, mongoIp, err := docker.MongoDB(ctx, wg)
 	if err != nil {

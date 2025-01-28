@@ -112,29 +112,12 @@ func (this *Controller) saveReleaseCreate(release model.SmartServiceReleaseExten
 	if release.Creator == "" {
 		return errors.New("missing creator")
 	}
-	oldReleases := []model.SmartServiceReleaseExtended{}
-	if release.NewReleaseId == "" {
-		oldReleases, err = this.db.GetReleasesByDesignId(release.DesignId)
-		if err != nil {
-			return err
-		}
-	}
-	sort.Slice(oldReleases, func(i, j int) bool {
-		return oldReleases[i].CreatedAt > oldReleases[i].CreatedAt
-	})
-	if len(oldReleases) > 0 {
-		err = this.copyRightsOfRelease(release.Creator, oldReleases[len(oldReleases)-1], release)
-		if err != nil {
-			return err
-		}
-	}
-
 	err, _ = this.db.SetRelease(release, true)
 	if err != nil {
 		return err
 	}
 
-	err = this.deployRelease(release, oldReleases)
+	err = this.deployRelease(release)
 	if err != nil {
 		temperr := this.deleteRelease(release.Id)
 		if temperr != nil {
@@ -149,28 +132,81 @@ func (this *Controller) saveReleaseCreate(release model.SmartServiceReleaseExten
 	return nil
 }
 
-func (this *Controller) deployRelease(release model.SmartServiceReleaseExtended, oldReleases []model.SmartServiceReleaseExtended) (err error) {
-	if oldReleases == nil {
-		oldReleases = []model.SmartServiceReleaseExtended{}
-		if release.NewReleaseId == "" {
-			oldReleases, err = this.db.GetReleasesByDesignId(release.DesignId)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	_, err, _ = this.permissions.SetPermission(client.InternalAdminToken, this.config.SmartServiceReleasePermissionsTopic, release.Id, client.ResourcePermissions{
+func (this *Controller) getInitialReleasePermissions(release model.SmartServiceReleaseExtended, oldReleases []model.SmartServiceReleaseExtended) (permissionAlreadyExists bool, initialPermissions client.ResourcePermissions, err error) {
+	defaultInitialPermissions := client.ResourcePermissions{
 		UserPermissions: map[string]permmodel.PermissionsMap{
 			release.Creator: {
 				Read:         true,
 				Write:        true,
 				Execute:      true,
 				Administrate: true,
-			}},
+			},
+		},
+	}
+
+	token, err := this.adminAccess.EnsureAccess(this.config)
+	if err != nil {
+		log.Println("ERROR:", err)
+		debug.PrintStack()
+		return permissionAlreadyExists, initialPermissions, err
+	}
+	perm, err, code := this.permissions.GetResource(token, this.config.SmartServiceReleasePermissionsTopic, release.Id)
+	if err == nil {
+		return true, perm.ResourcePermissions, nil
+	}
+	if code != http.StatusNotFound && code != http.StatusForbidden {
+		return permissionAlreadyExists, initialPermissions, err
+	}
+
+	sort.Slice(oldReleases, func(i, j int) bool {
+		return oldReleases[i].CreatedAt > oldReleases[i].CreatedAt
 	})
+	if len(oldReleases) > 0 {
+		perm, err, code = this.permissions.GetResource(token, this.config.SmartServiceReleasePermissionsTopic, oldReleases[len(oldReleases)-1].Id)
+		if err == nil {
+			perm.UserPermissions[release.Creator] = client.PermissionsMap{
+				Read:         true,
+				Write:        true,
+				Execute:      true,
+				Administrate: true,
+			}
+			return false, perm.ResourcePermissions, nil
+		}
+		if code != http.StatusNotFound && code != http.StatusForbidden {
+			log.Println("WARNING: unable to get permission of old releases, fall back to default initial permissions", err)
+			return false, defaultInitialPermissions, nil
+		}
+	}
+	return false, defaultInitialPermissions, nil
+}
+
+func (this *Controller) getOldReleases(release model.SmartServiceReleaseExtended) (result []model.SmartServiceReleaseExtended, err error) {
+	oldReleases, err := this.db.GetReleasesByDesignId(release.DesignId)
+	if err != nil {
+		return result, err
+	}
+	for _, oldRelease := range oldReleases {
+		if oldRelease.Id != release.Id {
+			result = append(result, oldRelease)
+		}
+	}
+	return result, nil
+}
+
+func (this *Controller) deployRelease(release model.SmartServiceReleaseExtended) (err error) {
+	oldReleases := []model.SmartServiceReleaseExtended{}
+	if release.NewReleaseId == "" {
+		oldReleases, err = this.getOldReleases(release)
+	}
+	permAlreadyExist, initialPermissions, err := this.getInitialReleasePermissions(release, oldReleases)
 	if err != nil {
 		return err
+	}
+	if !permAlreadyExist {
+		_, err, _ = this.permissions.SetPermission(client.InternalAdminToken, this.config.SmartServiceReleasePermissionsTopic, release.Id, initialPermissions)
+		if err != nil {
+			return err
+		}
 	}
 
 	err, _ = this.camunda.DeployRelease(release.Creator, release)
@@ -181,7 +217,7 @@ func (this *Controller) deployRelease(release model.SmartServiceReleaseExtended,
 	for _, old := range oldReleases {
 		if old.CreatedAt < release.CreatedAt && old.Id != release.Id { //"if" to prevent race from  HandleReleaseDelete() to recreate deleted release
 			old.NewReleaseId = release.Id
-			err = this.saveReleaseCreate(old)
+			err, _ = this.db.SetRelease(old, false)
 			if err != nil {
 				return err
 			}
@@ -445,34 +481,6 @@ func getSchemaOrgType(t string) model.Type {
 	default:
 		return model.Type(t)
 	}
-}
-
-func (this *Controller) copyRightsOfRelease(owner string, oldRelease model.SmartServiceReleaseExtended, newRelease model.SmartServiceReleaseExtended) error {
-	token, err := this.adminAccess.EnsureAccess(this.config)
-	if err != nil {
-		log.Println("ERROR:", err)
-		debug.PrintStack()
-		return err
-	}
-	rights, err, _ := this.permissions.GetResource(token, this.config.SmartServiceReleasePermissionsTopic, oldRelease.Id)
-	if err != nil {
-		log.Println("ERROR:", err)
-		debug.PrintStack()
-		return err
-	}
-	rights.UserPermissions[owner] = client.PermissionsMap{
-		Read:         true,
-		Write:        true,
-		Execute:      true,
-		Administrate: true,
-	}
-	_, err, _ = this.permissions.SetPermission(token, this.config.SmartServiceReleasePermissionsTopic, newRelease.Id, rights.ResourcePermissions)
-	if err != nil {
-		log.Println("ERROR:", err)
-		debug.PrintStack()
-		return err
-	}
-	return nil
 }
 
 //------------ Parsing ----------------

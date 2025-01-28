@@ -195,6 +195,12 @@ func TestReleaseRights(t *testing.T) {
 				Execute:      true,
 				Administrate: true,
 			},
+			adminId: {
+				Read:         true,
+				Write:        true,
+				Execute:      true,
+				Administrate: true,
+			},
 		}) {
 			t.Error(rights.UserPermissions)
 			return
