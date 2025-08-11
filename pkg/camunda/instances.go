@@ -19,12 +19,12 @@ package camunda
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
 func (this *Camunda) GetProcessInstanceBusinessKey(processInstanceId string) (string, error, int) {
@@ -43,8 +43,7 @@ func (this *Camunda) getProcessInstanceHistory(processInstanceId string) (result
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		debug.PrintStack()
-		log.Println("ERROR:", err)
+		this.config.GetLogger().Error("error in getProcessInstanceHistory", "error", err, "stack", debug.Stack())
 		return result, err
 	}
 	defer resp.Body.Close()
@@ -64,8 +63,7 @@ func (this *Camunda) GetProcessInstanceList() (result []model.HistoricProcessIns
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		debug.PrintStack()
-		log.Println("ERROR:", err)
+		this.config.GetLogger().Error("error in GetProcessInstanceList", "error", err, "stack", debug.Stack())
 		return result, err
 	}
 	defer resp.Body.Close()

@@ -1,6 +1,6 @@
 {
     "server_port": "8080",
-    "debug": false,
+    "log_level": "info",
     "enable_swagger_ui": false,
 
     "permissions_v2_url": "",

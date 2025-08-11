@@ -18,6 +18,8 @@ package pkg
 
 import (
 	"context"
+	"time"
+
 	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
 	permclient "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
@@ -27,8 +29,6 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/database/mongo"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/selectables"
-	"log"
-	"time"
 )
 
 func Start(ctx context.Context, config configuration.Config) error {
@@ -56,10 +56,10 @@ func Start(ctx context.Context, config configuration.Config) error {
 		return err
 	}
 	cleanupResult := cmd.Cleanup(false)
-	log.Println("cleanup result =", cleanupResult)
+	config.GetLogger().Info("cleanup", "result", cleanupResult)
 	duration, err := time.ParseDuration(config.CleanupCycle)
 	if err != nil {
-		log.Println("ERROR: unable to start cleanup cycle")
+		config.GetLogger().Error("unable to parse cleanup cycle", "error", err)
 	} else {
 		ticker := time.NewTicker(duration)
 		go func() {
@@ -70,7 +70,7 @@ func Start(ctx context.Context, config configuration.Config) error {
 					return
 				case <-ticker.C:
 					cleanupResult = cmd.Cleanup(false)
-					log.Println("cleanup result =", cleanupResult)
+					config.GetLogger().Info("cleanup", "result", cleanupResult)
 				}
 			}
 		}()

@@ -20,6 +20,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"runtime/debug"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
 	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
 	"github.com/SENERGY-Platform/device-repository/lib/database"
 	permissionsv2 "github.com/SENERGY-Platform/permissions-v2/pkg/client"
@@ -33,15 +43,6 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
-	"io"
-	"log"
-	"net/http"
-	"net/http/httptest"
-	"runtime/debug"
-	"strings"
-	"sync"
-	"testing"
-	"time"
 )
 
 func apiTestEnv(ctx context.Context, wg *sync.WaitGroup, camundaAndCqrsDependencies bool, selectionResp []model.Selectable, errHandler func(error)) (apiUrl string, config configuration.Config, devicerepoTestDb database.Database, err error) {
@@ -58,7 +59,6 @@ func apiTestEnvWithPermClient(ctx context.Context, wg *sync.WaitGroup, camundaAn
 	if err != nil {
 		return "", config, devicerepoTestDb, perm, err
 	}
-	config.Debug = true
 
 	notificationMock := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		msg, _ := io.ReadAll(request.Body)

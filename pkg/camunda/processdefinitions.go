@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"runtime/debug"
@@ -32,15 +31,13 @@ func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, 
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(key), nil)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		log.Println("ERROR:", err)
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in getProcessDefinition", "error", err, "stack", debug.Stack())
 		return result, false, err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		log.Println("ERROR:", err)
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in getProcessDefinition", "error", err, "stack", debug.Stack())
 		return result, false, err
 	}
 	defer resp.Body.Close()
@@ -51,8 +48,7 @@ func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, 
 		temp, _ := io.ReadAll(resp.Body)
 		err = errors.New(string(temp))
 		err = this.filterUrlFromErr(err)
-		log.Println("ERROR:", err)
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in getProcessDefinition", "error", err, "stack", debug.Stack())
 		return result, false, err
 	}
 	exists = true
@@ -88,8 +84,7 @@ func (this *Camunda) getProcessDefinitionListByKey(key string) (result []Process
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		debug.PrintStack()
-		log.Println("ERROR:", err)
+		this.config.GetLogger().Error("error in getProcessDefinitionListByKey", "error", err, "stack", debug.Stack())
 		return result, err
 	}
 	defer resp.Body.Close()

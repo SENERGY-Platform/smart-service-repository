@@ -19,17 +19,19 @@ package configuration
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	struct_logger "github.com/SENERGY-Platform/go-service-base/struct-logger"
 )
 
 type Config struct {
 	ServerPort                           string   `json:"server_port"`
-	Debug                                bool     `json:"debug"`
 	EnableSwaggerUi                      bool     `json:"enable_swagger_ui"`
 	CamundaUrl                           string   `json:"camunda_url" config:"secret"`
 	DeviceSelectionApi                   string   `json:"device_selection_api"`
@@ -52,6 +54,9 @@ type Config struct {
 	TokenCacheDefaultExpirationInSeconds int      `json:"token_cache_default_expiration_in_seconds"`
 	CleanupCycle                         string   `json:"cleanup_cycle"`
 	MarkAgeLimit                         Duration `json:"mark_age_limit"`
+	LogLevel                             string   `json:"log_level"`
+
+	logger *slog.Logger `json:"-"`
 }
 
 // loads config from json in location and used environment variables (e.g KafkaUrl --> KAFKA_URL)
@@ -183,4 +188,21 @@ func (this *Duration) UnmarshalJSON(bytes []byte) (err error) {
 		return err
 	}
 	return this.SetString(str)
+}
+
+func (this *Config) GetLogger() *slog.Logger {
+	if this.logger == nil {
+		this.logger = struct_logger.New(
+			struct_logger.Config{
+				Handler:    struct_logger.JsonHandlerSelector,
+				Level:      this.LogLevel,
+				TimeFormat: time.RFC3339Nano,
+				TimeUtc:    true,
+				AddMeta:    true,
+			},
+			os.Stdout,
+			"",
+			"smart-service-repository").With("project-group", "smart-service")
+	}
+	return this.logger
 }

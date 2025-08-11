@@ -20,11 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
-	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/beevik/etree"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -33,6 +28,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
+	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/beevik/etree"
 )
 
 func (this *Controller) retryMarkedReleases() {
@@ -324,7 +325,12 @@ func (this *Controller) DeleteRelease(token auth.Token, releaseId string) (error
 		return err, code
 	}
 	if len(instances) > 0 {
-		return errors.New("a release may only deleted if it is not referenced by any smart-service instance"), http.StatusBadRequest
+		msg := []string{}
+		for _, instance := range instances {
+			msg = append(msg, fmt.Sprintf("id='%s' user='%s'", instance.Id, instance.UserId))
+		}
+		err = fmt.Errorf("a release may only deleted if it is not referenced by any smart-service instance: %v", msg)
+		return err, http.StatusBadRequest
 	}
 
 	err = this.deleteRelease(releaseId)

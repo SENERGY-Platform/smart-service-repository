@@ -20,14 +20,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"reflect"
+	"runtime/debug"
+
 	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api/util"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/julienschmidt/httprouter"
-	"log"
-	"net/http"
-	"reflect"
-	"runtime/debug"
 )
 
 type EndpointMethod = func(config configuration.Config, router *httprouter.Router, ctrl Controller)
@@ -45,14 +47,15 @@ func Start(ctx context.Context, config configuration.Config, ctrl Controller) (e
 	server := &http.Server{Addr: ":" + config.ServerPort, Handler: router}
 	go func() {
 		log.Println("listening on ", server.Addr)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			debug.PrintStack()
-			log.Fatal("FATAL:", err)
+		config.GetLogger().Info("listening on " + server.Addr)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			config.GetLogger().Error("fatal error", "error", err, "stack", debug.Stack())
+			os.Exit(1)
 		}
 	}()
 	go func() {
 		<-ctx.Done()
-		log.Println("api shutdown", server.Shutdown(context.Background()))
+		config.GetLogger().Info("api shutdown", "error", server.Shutdown(context.Background()))
 	}()
 	return
 }
@@ -69,7 +72,7 @@ func GetRouter(config configuration.Config, command Controller) http.Handler {
 	router := httprouter.New()
 	for _, e := range endpoints {
 		for name, call := range getEndpointMethods(e) {
-			log.Println("add endpoint " + name)
+			config.GetLogger().Debug("add endpoint", "name", name)
 			call(config, router, command)
 		}
 	}

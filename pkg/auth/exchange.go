@@ -19,14 +19,14 @@ package auth
 import (
 	"encoding/json"
 	"errors"
-	"github.com/SENERGY-Platform/service-commons/pkg/cache"
-	"github.com/SENERGY-Platform/service-commons/pkg/cache/localcache"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/SENERGY-Platform/service-commons/pkg/cache"
+	"github.com/SENERGY-Platform/service-commons/pkg/cache/localcache"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 )
 
 func GetCachedTokenProvider(config configuration.Config) (func(userid string) (token Token, err error), error) {
@@ -61,7 +61,7 @@ func ExchangeUserToken(config configuration.Config, userid string) (token Token,
 	}
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		log.Println("ERROR: GetUserToken()", resp.StatusCode, string(body))
+		config.GetLogger().Error("error in GetUserToken()", "error", resp.Status+": "+string(body))
 		err = errors.New("access denied")
 		resp.Body.Close()
 		return

@@ -20,14 +20,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/notification"
-	"github.com/beevik/etree"
-	"log"
 	"net/http"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/notification"
+	"github.com/beevik/etree"
 )
 
 func (this *Camunda) DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool) {
@@ -36,7 +36,7 @@ func (this *Camunda) DeployRelease(owner string, release model.SmartServiceRelea
 	if err != nil {
 		return err, false
 	}
-	releaseXml, err := modifyBpmnWithReleaseIds(release.BpmnXml, id, release.ParsedInfo.MaintenanceProcedures)
+	releaseXml, err := this.modifyBpmnWithReleaseIds(release.BpmnXml, id, release.ParsedInfo.MaintenanceProcedures)
 	if err != nil {
 		return err, true
 	}
@@ -71,8 +71,7 @@ func (this *Camunda) deployProcess(name string, xml string, svg string) (result 
 	resp, err := http.Post(this.config.CamundaUrl+"/engine-rest/deployment/create", "multipart/form-data; boundary="+boundary, b)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		debug.PrintStack()
-		log.Println("ERROR: request to processengine ", err)
+		this.config.GetLogger().Error("error in request to processengine ", "error", err, "stack", debug.Stack())
 		return result, err, 0
 	}
 	defer resp.Body.Close()
@@ -80,10 +79,10 @@ func (this *Camunda) deployProcess(name string, xml string, svg string) (result 
 	return result, err, resp.StatusCode
 }
 
-func modifyBpmnWithReleaseIds(xml string, id string, maintenanceProcedures []model.MaintenanceProcedure) (resultXml string, err error) {
+func (this *Camunda) modifyBpmnWithReleaseIds(xml string, id string, maintenanceProcedures []model.MaintenanceProcedure) (resultXml string, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
-			log.Printf("%s: %s", r, debug.Stack())
+			this.config.GetLogger().Error("error in modifyBpmnWithReleaseIds", "error", r, "stack", debug.Stack())
 			err = errors.New(fmt.Sprint("Recovered Error: ", r))
 		}
 	}()
