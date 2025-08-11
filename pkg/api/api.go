@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"reflect"
@@ -46,10 +45,9 @@ func Start(ctx context.Context, config configuration.Config, ctrl Controller) (e
 
 	server := &http.Server{Addr: ":" + config.ServerPort, Handler: router}
 	go func() {
-		log.Println("listening on ", server.Addr)
 		config.GetLogger().Info("listening on " + server.Addr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			config.GetLogger().Error("fatal error", "error", err, "stack", debug.Stack())
+			config.GetLogger().Error("fatal error", "error", err, "stack", string(debug.Stack()))
 			os.Exit(1)
 		}
 	}()

@@ -23,7 +23,7 @@ import (
 func (this *Camunda) CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool, err error) {
 	instances, err := this.getProcessInstanceListByKey(smartServiceInstanceId)
 	if err != nil {
-		this.config.GetLogger().Error("CheckInstanceReady()", "error", err, "stack", debug.Stack())
+		this.config.GetLogger().Error("CheckInstanceReady()", "error", err, "stack", string(debug.Stack()))
 		return finished, missing, err
 	}
 	if len(instances) == 0 {

@@ -46,20 +46,20 @@ func (this *Camunda) removeDeployment(deplId string) error {
 	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/deployment/"+url.PathEscape(deplId)+"?cascade=true&skipIoMappings=true", nil)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", debug.Stack())
+		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", debug.Stack())
+		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
 		temp, _ := io.ReadAll(resp.Body)
 		err = fmt.Errorf("unable to remove deployment (%v) from camunda: %v", deplId, string(temp))
-		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", debug.Stack())
+		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	_, _ = io.ReadAll(resp.Body)

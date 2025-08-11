@@ -17,10 +17,12 @@
 package tests
 
 import (
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/controller"
 )
 
 func TestValidation(t *testing.T) {
@@ -46,7 +48,7 @@ func runValidationTest(t *testing.T, location string, expectValid bool) {
 		t.Error(err)
 		return
 	}
-	err = controller.ValidateDesign(string(fileContent))
+	err = controller.ValidateDesign(configuration.Config{}, string(fileContent))
 	if expectValid && err != nil {
 		t.Error(err)
 	}

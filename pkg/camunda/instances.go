@@ -43,7 +43,7 @@ func (this *Camunda) getProcessInstanceHistory(processInstanceId string) (result
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in getProcessInstanceHistory", "error", err, "stack", debug.Stack())
+		this.config.GetLogger().Error("error in getProcessInstanceHistory", "error", err, "stack", string(debug.Stack()))
 		return result, err
 	}
 	defer resp.Body.Close()
@@ -63,7 +63,7 @@ func (this *Camunda) GetProcessInstanceList() (result []model.HistoricProcessIns
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in GetProcessInstanceList", "error", err, "stack", debug.Stack())
+		this.config.GetLogger().Error("error in GetProcessInstanceList", "error", err, "stack", string(debug.Stack()))
 		return result, err
 	}
 	defer resp.Body.Close()

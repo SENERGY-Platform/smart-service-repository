@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"runtime/debug"
 	"slices"
@@ -39,20 +38,20 @@ import (
 func (this *Controller) retryMarkedReleases() {
 	toDelete, unfinised, err := this.db.GetMarkedReleases()
 	if err != nil {
-		log.Println("ERROR: retryMarkedReleases()", err)
+		this.config.GetLogger().Error("error in retryMarkedReleases", "error", err)
 		return
 	}
 	for _, release := range toDelete {
 		err = this.deleteRelease(release.Id)
 		if err != nil {
-			log.Println("ERROR: retryMarkedReleases()::deleteRelease()", release.Id, err)
+			this.config.GetLogger().Error("error in retryMarkedReleases()::deleteRelease()", "error", err, "releaseId", release.Id)
 			return
 		}
 	}
 	for _, release := range unfinised {
 		err = this.deleteRelease(release.Id)
 		if err != nil {
-			log.Println("ERROR: retryMarkedReleases()::deleteRelease()", release.Id, err)
+			this.config.GetLogger().Error("error in retryMarkedReleases()::deleteRelease()", "error", err, "releaseId", release.Id)
 			return
 		}
 	}
@@ -82,7 +81,7 @@ func (this *Controller) CreateRelease(token auth.Token, element model.SmartServi
 		element.Id = this.GetNewId()
 	}
 
-	err = ValidateDesign(design.BpmnXml)
+	err = ValidateDesign(this.config, design.BpmnXml)
 	if err != nil {
 		return result, fmt.Errorf("invalid design xml for release: %w", err), http.StatusBadRequest
 	}
@@ -122,7 +121,7 @@ func (this *Controller) saveReleaseCreate(release model.SmartServiceReleaseExten
 	if err != nil {
 		temperr := this.deleteRelease(release.Id)
 		if temperr != nil {
-			log.Println("WARNING: error while rolling back deployRelease(); will be retired", release.Id, temperr)
+			this.config.GetLogger().Warn("error while rolling back deployRelease(); will be retired", "releaseId", release.Id, "error", temperr)
 		}
 		return err
 	}
@@ -147,8 +146,7 @@ func (this *Controller) getInitialReleasePermissions(release model.SmartServiceR
 
 	token, err := this.adminAccess.EnsureAccess(this.config)
 	if err != nil {
-		log.Println("ERROR:", err)
-		debug.PrintStack()
+		this.config.GetLogger().Warn("error in getInitialReleasePermissions", "error", err, "stack", string(debug.Stack()))
 		return permissionAlreadyExists, initialPermissions, err
 	}
 	perm, err, code := this.permissions.GetResource(token, this.config.SmartServiceReleasePermissionsTopic, release.Id)
@@ -174,7 +172,7 @@ func (this *Controller) getInitialReleasePermissions(release model.SmartServiceR
 			return false, perm.ResourcePermissions, nil
 		}
 		if code != http.StatusNotFound && code != http.StatusForbidden {
-			log.Println("WARNING: unable to get permission of old releases, fall back to default initial permissions", err)
+			this.config.GetLogger().Warn("unable to get permission of old releases, fall back to default initial permissions", "error", err)
 			return false, defaultInitialPermissions, nil
 		}
 	}
@@ -325,11 +323,15 @@ func (this *Controller) DeleteRelease(token auth.Token, releaseId string) (error
 		return err, code
 	}
 	if len(instances) > 0 {
-		msg := []string{}
+		list := []map[string]string{}
 		for _, instance := range instances {
-			msg = append(msg, fmt.Sprintf("id='%s' user='%s'", instance.Id, instance.UserId))
+			list = append(list, map[string]string{
+				"id":   instance.Id,
+				"user": instance.UserId,
+			})
 		}
-		err = fmt.Errorf("a release may only deleted if it is not referenced by any smart-service instance: %v", msg)
+		marshaledList, _ := json.Marshal(list)
+		err = fmt.Errorf("a release may only deleted if it is not referenced by any smart-service instance: %s", marshaledList)
 		return err, http.StatusBadRequest
 	}
 
@@ -391,12 +393,12 @@ func (this *Controller) deleteRelease(id string) error {
 	//delete release from db
 	err, _ = this.permissions.RemoveResource(client.InternalAdminToken, this.config.SmartServiceReleasePermissionsTopic, id)
 	if err != nil {
-		log.Println("WARNING: permissions.RemoveResource() failed but will be retried", this.config.SmartServiceReleasePermissionsTopic, id, err)
+		this.config.GetLogger().Warn("permissions.RemoveResource() failed but will be retried", "topic", this.config.SmartServiceReleasePermissionsTopic, "releaseId", id, "error", err)
 		return nil
 	}
 	err, _ = this.db.DeleteRelease(id)
 	if err != nil {
-		log.Println("WARNING: db.DeleteRelease() failed but will be retried", id, err)
+		this.config.GetLogger().Warn("db.DeleteRelease() failed but will be retried", "releaseId", id, "error", err)
 		return nil
 	}
 	return nil
@@ -494,8 +496,7 @@ func getSchemaOrgType(t string) model.Type {
 func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml string, element model.SmartServiceRelease) (result model.SmartServiceReleaseInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
-			log.Printf("%s: %s", r, debug.Stack())
-			err = errors.New(fmt.Sprint("Recovered Error: ", r))
+			this.config.GetLogger().Error("Recovered Error", "error", r, "stack", string(debug.Stack()))
 		}
 	}()
 	doc := etree.NewDocument()

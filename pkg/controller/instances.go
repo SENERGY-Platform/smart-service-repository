@@ -19,16 +19,16 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+	"runtime/debug"
+	"sync"
+	"time"
+
 	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/notification"
 	"github.com/google/uuid"
-	"log"
-	"net/http"
-	"runtime/debug"
-	"sync"
-	"time"
 )
 
 func (this *Controller) CreateInstance(token auth.Token, releaseId string, instanceInfo model.SmartServiceInstanceInit) (result model.SmartServiceInstance, err error, code int) {
@@ -87,20 +87,18 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 	if err != nil {
 		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
 		if err2 != nil {
-			log.Println("ERROR:", err2)
-			debug.PrintStack()
+			this.config.GetLogger().Error("error in CreateInstance", "error", err2, "stack", string(debug.Stack()))
 		}
 		return result, err, http.StatusInternalServerError
 	}
 
-	result.SmartServiceInstanceInit.Parameters = replaceLongParameterWithVariableReference(paramListWithAutoSelect)
+	result.SmartServiceInstanceInit.Parameters = this.replaceLongParameterWithVariableReference(paramListWithAutoSelect)
 
 	err = this.camunda.Start(result)
 	if err != nil {
 		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
 		if err2 != nil {
-			log.Println("ERROR:", err2)
-			debug.PrintStack()
+			this.config.GetLogger().Error("error in CreateInstance", "error", err2, "stack", string(debug.Stack()))
 		}
 		return result, err, http.StatusInternalServerError
 	}
@@ -216,17 +214,16 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 	if err != nil {
 		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
 		if err2 != nil {
-			log.Println("ERROR:", err2)
-			debug.PrintStack()
+			this.config.GetLogger().Error("error in CreateInstance", "error", err2, "stack", string(debug.Stack()))
 		}
 		return result, err, http.StatusInternalServerError
 	}
 
-	result.SmartServiceInstanceInit.Parameters = replaceLongParameterWithVariableReference(paramListWithAutoSelect)
+	result.SmartServiceInstanceInit.Parameters = this.replaceLongParameterWithVariableReference(paramListWithAutoSelect)
 
 	err = this.camunda.Start(result)
 	if err != nil {
-		log.Println("ERROR:", err)
+		this.config.GetLogger().Error("error in RedeployInstance", "error", err)
 		result.Error = err.Error()
 		return result, err, http.StatusInternalServerError
 	}
@@ -308,8 +305,7 @@ func (this *Controller) handleReadyAndErrorField(instance model.SmartServiceInst
 	}
 	finished, missing, err := this.camunda.CheckInstanceReady(instance.Id)
 	if err != nil {
-		log.Println("ERROR:", err)
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in handleReadyAndErrorField", "error", err, "stack", string(debug.Stack()))
 		return instance
 	}
 	if missing {
@@ -317,8 +313,7 @@ func (this *Controller) handleReadyAndErrorField(instance model.SmartServiceInst
 		instance.Error = ErrMissingCamundaProcessInstance
 		err, _ = this.db.SetInstance(instance)
 		if err != nil {
-			log.Println("ERROR:", err)
-			debug.PrintStack()
+			this.config.GetLogger().Error("error in handleReadyAndErrorField", "error", err, "stack", string(debug.Stack()))
 			return instance
 		}
 	}
@@ -329,8 +324,7 @@ func (this *Controller) handleReadyAndErrorField(instance model.SmartServiceInst
 		}
 		err, _ := this.db.SetInstance(instance)
 		if err != nil {
-			log.Println("ERROR:", err)
-			debug.PrintStack()
+			this.config.GetLogger().Error("error in handleReadyAndErrorField", "error", err, "stack", string(debug.Stack()))
 			return instance
 		}
 	}
@@ -346,15 +340,13 @@ func (this *Controller) removeFinishedMaintenanceIds(instance model.SmartService
 	for _, id := range instance.RunningMaintenanceIds {
 		finished, missing, err := this.camunda.CheckInstanceReady(id)
 		if err != nil {
-			log.Println("ERROR:", err)
-			debug.PrintStack()
+			this.config.GetLogger().Error("error in removeFinishedMaintenanceIds", "error", err, "stack", string(debug.Stack()))
 			return instance
 		}
 		if finished && !missing {
 			err = this.camunda.StopInstance(id)
 			if err != nil {
-				log.Println("ERROR:", err)
-				debug.PrintStack()
+				this.config.GetLogger().Error("error in removeFinishedMaintenanceIds", "error", err, "stack", string(debug.Stack()))
 			}
 		}
 		if missing || finished {
@@ -367,8 +359,7 @@ func (this *Controller) removeFinishedMaintenanceIds(instance model.SmartService
 	if len(removedMaintenanceIds) > 0 {
 		err := this.db.RemoveFromRunningMaintenanceIds(instance.Id, removedMaintenanceIds)
 		if err != nil {
-			log.Println("ERROR:", err)
-			debug.PrintStack()
+			this.config.GetLogger().Error("error in removeFinishedMaintenanceIds", "error", err, "stack", string(debug.Stack()))
 			return instance
 		}
 	}
@@ -387,7 +378,7 @@ func (this *Controller) setInstanceError(userId string, instanceId string, errMs
 		UserId:  userId,
 		Title:   "Smart-Service-Instance Error (Instance-ID:" + instanceId + ")",
 		Message: errMsg,
-	})
+	}, this.config.GetLogger())
 	err := this.db.SetInstanceError(instanceId, userId, errMsg)
 	if err != nil {
 		return err, http.StatusInternalServerError
@@ -486,7 +477,7 @@ func (this *Controller) storeInstanceStartVariables(result model.SmartServiceIns
 	return nil
 }
 
-func replaceLongParameterWithVariableReference(params []model.SmartServiceParameter) []model.SmartServiceParameter {
+func (this *Controller) replaceLongParameterWithVariableReference(params []model.SmartServiceParameter) []model.SmartServiceParameter {
 	for i, param := range params {
 		switch v := param.Value.(type) {
 		case string:
@@ -497,8 +488,7 @@ func replaceLongParameterWithVariableReference(params []model.SmartServiceParame
 		default:
 			temp, err := json.Marshal(v)
 			if err != nil {
-				log.Println("ERROR:", err)
-				debug.PrintStack()
+				this.config.GetLogger().Error("error in replaceLongParameterWithVariableReference", "error", err, "stack", string(debug.Stack()))
 				continue
 			}
 			if len(string(temp)) >= 3000 {

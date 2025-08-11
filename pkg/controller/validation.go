@@ -19,15 +19,16 @@ package controller
 import (
 	"errors"
 	"fmt"
-	"github.com/beevik/etree"
-	"log"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"github.com/beevik/etree"
 )
 
-func ValidateDesign(xml string) (err error) {
+func ValidateDesign(config configuration.Config, xml string) (err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
-			log.Printf("%s: %s", r, debug.Stack())
+			config.GetLogger().Error("Recovered Error", "error", r, "stack", string(debug.Stack()))
 			err = errors.New(fmt.Sprint("Recovered Error: ", r))
 		}
 	}()

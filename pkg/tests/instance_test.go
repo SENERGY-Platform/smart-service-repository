@@ -20,9 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 	"io"
 	"net/http"
 	"net/url"
@@ -32,6 +29,10 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 )
 
 func TestInstanceEditApi(t *testing.T) {

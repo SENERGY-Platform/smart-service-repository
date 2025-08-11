@@ -18,12 +18,12 @@ package controller
 
 import (
 	"errors"
+	"net/http"
+	"runtime/debug"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/google/uuid"
-	"log"
-	"net/http"
-	"runtime/debug"
 )
 
 func (this *Controller) AddModules(token auth.Token, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
@@ -69,8 +69,7 @@ func (this *Controller) AddModulesForProcessInstance(processInstanceId string, m
 func (this *Controller) prepareModules(userId string, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
 	instance, err, code := this.db.GetInstance(instanceId, userId)
 	if err != nil {
-		debug.PrintStack()
-		log.Println("ERROR:", userId, instanceId, err)
+		this.config.GetLogger().Error("error in prepareModules", "error", err, "stack", string(debug.Stack()), "userId", userId, "instanceId", instanceId)
 		return result, err, code
 	}
 	for _, module := range modules {

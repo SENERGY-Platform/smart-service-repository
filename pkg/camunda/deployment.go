@@ -56,7 +56,7 @@ func (this *Camunda) DeployRelease(owner string, release model.SmartServiceRelea
 				UserId:  owner,
 				Title:   "Smart-Service-Release Error: ProcessEngineException",
 				Message: msg,
-			})
+			}, this.config.GetLogger())
 			return fmt.Errorf("unable to release: %v", msg), true
 		}
 		return errors.New("unknown release error"), true
@@ -71,7 +71,7 @@ func (this *Camunda) deployProcess(name string, xml string, svg string) (result 
 	resp, err := http.Post(this.config.CamundaUrl+"/engine-rest/deployment/create", "multipart/form-data; boundary="+boundary, b)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in request to processengine ", "error", err, "stack", debug.Stack())
+		this.config.GetLogger().Error("error in request to processengine ", "error", err, "stack", string(debug.Stack()))
 		return result, err, 0
 	}
 	defer resp.Body.Close()
@@ -82,7 +82,7 @@ func (this *Camunda) deployProcess(name string, xml string, svg string) (result 
 func (this *Camunda) modifyBpmnWithReleaseIds(xml string, id string, maintenanceProcedures []model.MaintenanceProcedure) (resultXml string, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
-			this.config.GetLogger().Error("error in modifyBpmnWithReleaseIds", "error", r, "stack", debug.Stack())
+			this.config.GetLogger().Error("error in modifyBpmnWithReleaseIds", "error", r, "stack", string(debug.Stack()))
 			err = errors.New(fmt.Sprint("Recovered Error: ", r))
 		}
 	}()

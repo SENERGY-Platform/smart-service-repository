@@ -20,14 +20,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"runtime/debug"
 	"strings"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
 func (this *Camunda) Start(instance model.SmartServiceInstance) error {
@@ -61,8 +61,7 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		err = errors.New(buf.String())
-		log.Println("ERROR: ", resp.StatusCode, err)
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in camunda.Start", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	_, _ = io.ReadAll(resp.Body)
@@ -100,8 +99,7 @@ func (this *Camunda) StartMaintenance(releaseId string, procedure model.Maintena
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		err = errors.New(buf.String())
-		log.Println("ERROR: ", resp.StatusCode, err)
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in camunda.StartMaintenance", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	_, _ = io.ReadAll(resp.Body)

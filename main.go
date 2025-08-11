@@ -19,13 +19,14 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 )
 
 func main() {
@@ -41,6 +42,7 @@ func main() {
 
 	err = pkg.Start(ctx, config)
 	if err != nil {
+		config.GetLogger().Info("error on pkg.Start()", "error", err)
 		log.Fatal(err)
 	}
 
@@ -48,7 +50,7 @@ func main() {
 		shutdown := make(chan os.Signal, 1)
 		signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 		sig := <-shutdown
-		log.Println("received shutdown signal", sig)
+		config.GetLogger().Info("received shutdown signal", "signal", sig)
 		cancel()
 	}()
 

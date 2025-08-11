@@ -19,12 +19,12 @@ package camunda
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
 func (this *Camunda) StopInstance(smartServiceInstanceId string) error {
@@ -63,8 +63,7 @@ func (this *Camunda) deleteInstance(id string) (err error) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		debug.PrintStack()
-		log.Println("ERROR:", err)
+		this.config.GetLogger().Error("error in deleteInstance", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	defer resp.Body.Close()
@@ -83,8 +82,7 @@ func (this *Camunda) deleteInstanceHistory(id string) (err error) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		debug.PrintStack()
-		log.Println("ERROR:", err)
+		this.config.GetLogger().Error("error in deleteInstanceHistory", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	defer resp.Body.Close()
@@ -103,8 +101,7 @@ func (this *Camunda) getProcessInstanceListByKey(key string) (result []model.His
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		debug.PrintStack()
-		log.Println("ERROR:", err)
+		this.config.GetLogger().Error("error in getProcessInstanceListByKey", "error", err, "stack", string(debug.Stack()))
 		return result, err
 	}
 	defer resp.Body.Close()

@@ -17,13 +17,13 @@
 package controller
 
 import (
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"log"
 	"net/http"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
 func (this *Controller) Cleanup(ignoreModuleDeleteError bool) (result []error) {
-	log.Println("start cleanup")
+	this.config.GetLogger().Info("start cleanup")
 	this.cleanupMux.Lock()
 	defer this.cleanupMux.Unlock()
 	this.retryMarkedReleases()
@@ -50,12 +50,12 @@ func (this *Controller) instanceCleanup() (result []error) {
 	for _, instance := range instances {
 		_, err, code := this.db.GetInstance(instance.BusinessKey, "")
 		if err != nil && code == http.StatusNotFound {
-			log.Println("found orphaned process-instance --> delete from camunda", instance.Id, instance.BusinessKey, instance.EndTime)
+			this.config.GetLogger().Info("found orphaned process-instance --> delete from camunda", "instanceId", instance.Id, "businessKey", instance.BusinessKey, "endTime", instance.EndTime, "error", err)
 			err = this.camunda.DeleteInstance(instance)
 		}
 		if err != nil {
 			result = append(result, err)
-			log.Println("ERROR: unable to remove instance from camunda", err)
+			this.config.GetLogger().Error("unable to remove instance from camunda in cleanup", "instanceId", instance.Id, "businessKey", instance.BusinessKey, "error", err)
 		}
 	}
 	return result
@@ -86,17 +86,17 @@ func (this *Controller) moduleCleanup(ignoreModuleDeleteError bool) (result []er
 				}
 				if err != nil {
 					result = append(result, err)
-					log.Println("ERROR: unable to read instance for cleanup", err)
+					this.config.GetLogger().Error("unable to read instance for cleanup", "error", err)
 				} else {
 					cache[module.InstanceId] = exists
 				}
 			}
 			if !exists {
-				log.Println("found orphaned module --> remove", module.Id, module.InstanceId)
+				this.config.GetLogger().Info("found orphaned module --> remove", "moduleId", module.Id, "instanceId", module.InstanceId)
 				err, _ = this.deleteModule(module, ignoreModuleDeleteError)
 				if err != nil {
 					result = append(result, err)
-					log.Println("ERROR: unable to remove module", err)
+					this.config.GetLogger().Error("unable to remove module", "error", err)
 				}
 			}
 		}
@@ -132,17 +132,17 @@ func (this *Controller) variableCleanup() (result []error) {
 				}
 				if err != nil {
 					result = append(result, err)
-					log.Println("ERROR: unable to read instance for cleanup", err)
+					this.config.GetLogger().Error("unable to read instance for cleanup", "error", err)
 				} else {
 					cache[variable.InstanceId] = exists
 				}
 			}
 			if !exists {
-				log.Println("found orphaned variable --> remove", variable.InstanceId, variable.Name)
+				this.config.GetLogger().Info("found orphaned variable --> remove", "instanceId", variable.InstanceId, "variableName", variable.Name)
 				err, _ = this.db.DeleteVariable(variable.InstanceId, variable.UserId, variable.Name)
 				if err != nil {
 					result = append(result, err)
-					log.Println("ERROR: unable to remove variable", err)
+					this.config.GetLogger().Error("unable to remove variable", "error", err)
 				}
 			}
 		}

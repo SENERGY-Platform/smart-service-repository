@@ -20,13 +20,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"log"
 	"net/http"
 	"net/url"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
 type Selectables struct {
@@ -72,20 +72,16 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 	endpoint := this.config.DeviceSelectionApi + "/v2/query/selectables?" + query.Encode()
 	req, err := http.NewRequest("POST", endpoint, requestBody)
 	if err != nil {
-		log.Println("ERROR: ", err)
 		temp, _ := json.Marshal(criteria)
-		log.Printf("used request=\n%v\n", string(temp))
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in Selectables.Get", "error", err, "stack", string(debug.Stack()), "criteria", string(temp))
 		return result, err, http.StatusInternalServerError
 	}
 	req.Header.Set("Authorization", token.Jwt())
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Println("ERROR: ", err)
 		temp, _ := json.Marshal(criteria)
-		log.Printf("used request=\n%v\n", string(temp))
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in Selectables.Get", "error", err, "stack", string(debug.Stack()), "criteria", string(temp))
 		return result, err, http.StatusInternalServerError
 	}
 	if resp.StatusCode >= 300 {
@@ -93,13 +89,12 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 		buf.ReadFrom(resp.Body)
 		err = fmt.Errorf("unable to load selectables: %v, %v", resp.StatusCode, buf.String())
 		criteriaJson, _ := json.Marshal(criteria)
-		log.Println("ERROR:", err, searchedEntities, string(criteriaJson))
+		this.config.GetLogger().Error("unable to load selectables", "error", err, "stack", string(debug.Stack()), "criteria", criteriaJson, "searchedEntities", searchedEntities)
 		return result, err, http.StatusInternalServerError
 	}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
-		log.Println("ERROR: ", err)
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in Selectables.Get", "error", err, "stack", string(debug.Stack()))
 		return result, err, http.StatusInternalServerError
 	}
 	return result, nil, http.StatusOK

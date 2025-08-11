@@ -19,13 +19,13 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"runtime/debug"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/google/uuid"
-	"io"
-	"log"
-	"net/http"
-	"runtime/debug"
 )
 
 func (this *Controller) AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
@@ -117,8 +117,7 @@ func (this *Controller) ValidateModule(userId string, element model.SmartService
 func (this *Controller) prepareModule(userId string, instanceId string, module model.SmartServiceModuleInit, moduleId string) (result model.SmartServiceModule, err error, code int) {
 	instance, err, code := this.db.GetInstance(instanceId, userId)
 	if err != nil {
-		debug.PrintStack()
-		log.Println("ERROR:", userId, instanceId, err)
+		this.config.GetLogger().Error("error in prepareModule", "error", err, "stack", string(debug.Stack()))
 		return result, err, code
 	}
 	if moduleId == "" {
@@ -158,8 +157,7 @@ func (this *Controller) useModuleDeleteInfo(info model.ModuleDeleteInfo) error {
 	if resp.StatusCode >= 300 && resp.StatusCode != http.StatusNotFound {
 		temp, _ := io.ReadAll(resp.Body)
 		err = fmt.Errorf("unexpected response for %v: %v, %v", info.Url, resp.StatusCode, string(temp))
-		log.Println("ERROR:", err)
-		debug.PrintStack()
+		this.config.GetLogger().Error("error in useModuleDeleteInfo", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	_, _ = io.ReadAll(resp.Body)
