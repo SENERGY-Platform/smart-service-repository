@@ -59,6 +59,7 @@ type ReleaseInterface interface {
 	GetRelease(id string, withMarked bool) (model.SmartServiceReleaseExtended, error, int)
 	ListReleases(options model.ListReleasesOptions) ([]model.SmartServiceReleaseExtended, error)
 	GetReleasesByDesignId(designId string) ([]model.SmartServiceReleaseExtended, error)
+	GetPreviousReleases(releaseId string) (result []model.SmartServiceReleaseExtended, err error)
 
 	MarlReleaseAsDeleted(id string) (error, int)
 	DeleteRelease(id string) (error, int)

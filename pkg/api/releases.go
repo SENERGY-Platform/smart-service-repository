@@ -81,6 +81,7 @@ func (this *Releases) Create(config configuration.Config, router *httprouter.Rou
 // @Accept       json
 // @Produce      json
 // @Param        id path string true "Release ID"
+// @Param		 delete_previous_releases query bool false "Delete all previous releases as well"
 // @Success      200
 // @Failure      500
 // @Failure      400
@@ -101,7 +102,15 @@ func (this *Releases) Delete(config configuration.Config, router *httprouter.Rou
 			return
 		}
 
-		err, code := ctrl.DeleteRelease(token, id)
+		deletePreviousReleases := false
+		if request.URL.Query().Has("delete_previous_releases") {
+			deletePreviousReleases, err = strconv.ParseBool(request.URL.Query().Get("delete_previous_releases"))
+			if err != nil {
+				http.Error(writer, "bad value for query param delete_previous_releases. hint: should be true or false", http.StatusBadRequest)
+			}
+		}
+
+		err, code := ctrl.DeleteRelease(token, id, deletePreviousReleases)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

@@ -258,3 +258,14 @@ func (this *Mongo) GetReleasesByDesignId(designId string) (result []model.SmartS
 	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
 	return result, err
 }
+
+func (this *Mongo) GetPreviousReleases(releaseId string) (result []model.SmartServiceReleaseExtended, err error) {
+	ctx, _ := getTimeoutContext()
+	cursor, err := this.releaseCollection().Find(ctx, bson.M{ReleaseBson.NewReleaseId: releaseId, ReleaseBsonMarkedAsDeleted: bson.M{"$ne": true}})
+	if err != nil {
+		return result, err
+	}
+	defer cursor.Close(context.Background())
+	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
+	return result, err
+}

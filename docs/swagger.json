@@ -20,7 +20,7 @@
                 "summary": "health check",
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -72,10 +72,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -110,10 +110,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -145,10 +145,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -190,13 +190,13 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -217,13 +217,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -293,10 +293,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -328,10 +328,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -345,7 +345,7 @@
                 "summary": "health check",
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -391,10 +391,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -427,10 +427,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -467,13 +467,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -520,13 +520,13 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -568,13 +568,13 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -624,13 +624,13 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -681,13 +681,13 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -715,13 +715,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -774,10 +774,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -816,16 +816,16 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -857,10 +857,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -887,13 +887,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -929,13 +929,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -980,13 +980,13 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "404": {
-                        "description": ""
+                        "description": "Not Found"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1022,10 +1022,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1065,10 +1065,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1112,10 +1112,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1164,13 +1164,13 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": ""
+                        "description": "No Content"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1214,13 +1214,13 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1274,10 +1274,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1331,10 +1331,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1386,10 +1386,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1429,13 +1429,13 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -1472,9 +1472,7 @@
                         "name": "message",
                         "in": "body",
                         "required": true,
-                        "schema": {
-                            "type": "object"
-                        }
+                        "schema": {}
                     }
                 ],
                 "responses": {
@@ -1485,13 +1483,13 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -1523,16 +1521,16 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1567,18 +1565,16 @@
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {
-                            "type": "object"
-                        }
+                        "schema": {}
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1636,10 +1632,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1662,13 +1658,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -1695,13 +1691,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1771,10 +1767,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -1816,10 +1812,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1851,10 +1847,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             },
@@ -1877,23 +1873,29 @@
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Delete all previous releases as well",
+                        "name": "delete_previous_releases",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "403": {
-                        "description": ""
+                        "description": "Forbidden"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1938,10 +1940,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1977,10 +1979,10 @@
                         }
                     },
                     "401": {
-                        "description": ""
+                        "description": "Unauthorized"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -2008,11 +2010,11 @@
                 "sub_characteristics": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Characteristic"
+                        "$ref": "#/definitions/models.Characteristic"
                     }
                 },
                 "type": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.Type"
                 },
                 "value": {}
             }
@@ -2030,9 +2032,37 @@
                     "type": "string"
                 },
                 "interaction": {
-                    "type": "string"
+                    "$ref": "#/definitions/model.Interaction"
                 }
             }
+        },
+        "model.FilterPossibility": {
+            "type": "string",
+            "enum": [
+                "device",
+                "device_service_group",
+                "group",
+                "import"
+            ],
+            "x-enum-varnames": [
+                "DeviceFilter",
+                "DeviceServiceGroupFilter",
+                "GroupFilter",
+                "ImportFilter"
+            ]
+        },
+        "model.Interaction": {
+            "type": "string",
+            "enum": [
+                "event",
+                "request",
+                "event+request"
+            ],
+            "x-enum-varnames": [
+                "EVENT",
+                "REQUEST",
+                "EVENT_AND_REQUEST"
+            ]
         },
         "model.IotDescription": {
             "type": "object",
@@ -2052,7 +2082,7 @@
                 "type_filter": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/model.FilterPossibility"
                     }
                 }
             }
@@ -2237,7 +2267,7 @@
                     "type": "integer"
                 },
                 "type": {
-                    "type": "string"
+                    "$ref": "#/definitions/model.Type"
                 },
                 "value": {},
                 "value_label": {
@@ -2425,14 +2455,13 @@
                     "description": "unix timestamp, set by service on creation",
                     "type": "integer"
                 },
+                "creator": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
                 "design_id": {
-                    "type": "string"
-                },
-                "error": {
-                    "description": "is set if errors occurred while releasing",
                     "type": "string"
                 },
                 "id": {
@@ -2456,14 +2485,13 @@
                     "description": "unix timestamp, set by service on creation",
                     "type": "integer"
                 },
+                "creator": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
                 "design_id": {
-                    "type": "string"
-                },
-                "error": {
-                    "description": "is set if errors occurred while releasing",
                     "type": "string"
                 },
                 "id": {
@@ -2480,7 +2508,11 @@
                 },
                 "permissions_info": {
                     "description": "optional, set if query parameter permissions_info=true",
-                    "$ref": "#/definitions/model.PermissionsInfo"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.PermissionsInfo"
+                        }
+                    ]
                 },
                 "svg_xml": {
                     "type": "string"
@@ -2503,6 +2535,70 @@
                     }
                 }
             }
+        },
+        "model.Type": {
+            "type": "string",
+            "enum": [
+                "https://schema.org/Text",
+                "https://schema.org/Integer",
+                "https://schema.org/Float",
+                "https://schema.org/Boolean"
+            ],
+            "x-enum-varnames": [
+                "String",
+                "Integer",
+                "Float",
+                "Boolean"
+            ]
+        },
+        "models.Characteristic": {
+            "type": "object",
+            "properties": {
+                "allowed_values": {
+                    "type": "array",
+                    "items": {}
+                },
+                "display_unit": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "max_value": {},
+                "min_value": {},
+                "name": {
+                    "type": "string"
+                },
+                "sub_characteristics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Characteristic"
+                    }
+                },
+                "type": {
+                    "$ref": "#/definitions/models.Type"
+                },
+                "value": {}
+            }
+        },
+        "models.Type": {
+            "type": "string",
+            "enum": [
+                "https://schema.org/Text",
+                "https://schema.org/Integer",
+                "https://schema.org/Float",
+                "https://schema.org/Boolean",
+                "https://schema.org/ItemList",
+                "https://schema.org/StructuredValue"
+            ],
+            "x-enum-varnames": [
+                "String",
+                "Integer",
+                "Float",
+                "Boolean",
+                "List",
+                "Structure"
+            ]
         }
     },
     "securityDefinitions": {

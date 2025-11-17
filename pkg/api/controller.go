@@ -55,7 +55,7 @@ type DesignsInterface interface {
 
 type ReleaseInterface interface {
 	CreateRelease(token auth.Token, element model.SmartServiceRelease) (model.SmartServiceRelease, error, int)
-	DeleteRelease(token auth.Token, id string) (error, int)
+	DeleteRelease(token auth.Token, id string, deletePreviousReleases bool) (error, int)
 	GetRelease(token auth.Token, id string) (model.SmartServiceRelease, error, int)
 	GetExtendedRelease(token auth.Token, id string) (model.SmartServiceReleaseExtended, error, int)
 	ListReleases(token auth.Token, query model.ReleaseQueryOptions) ([]model.SmartServiceRelease, error, int)

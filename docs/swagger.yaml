@@ -15,10 +15,10 @@ definitions:
         type: string
       sub_characteristics:
         items:
-          $ref: '#/definitions/model.Characteristic'
+          $ref: '#/definitions/models.Characteristic'
         type: array
       type:
-        type: string
+        $ref: '#/definitions/models.Type'
       value: {}
     type: object
   model.Criteria:
@@ -30,8 +30,30 @@ definitions:
       function_id:
         type: string
       interaction:
-        type: string
+        $ref: '#/definitions/model.Interaction'
     type: object
+  model.FilterPossibility:
+    enum:
+    - device
+    - device_service_group
+    - group
+    - import
+    type: string
+    x-enum-varnames:
+    - DeviceFilter
+    - DeviceServiceGroupFilter
+    - GroupFilter
+    - ImportFilter
+  model.Interaction:
+    enum:
+    - event
+    - request
+    - event+request
+    type: string
+    x-enum-varnames:
+    - EVENT
+    - REQUEST
+    - EVENT_AND_REQUEST
   model.IotDescription:
     properties:
       criteria:
@@ -44,7 +66,7 @@ definitions:
         type: string
       type_filter:
         items:
-          type: string
+          $ref: '#/definitions/model.FilterPossibility'
         type: array
     type: object
   model.MaintenanceProcedure:
@@ -171,7 +193,7 @@ definitions:
       order:
         type: integer
       type:
-        type: string
+        $ref: '#/definitions/model.Type'
       value: {}
       value_label:
         type: string
@@ -297,12 +319,11 @@ definitions:
       created_at:
         description: unix timestamp, set by service on creation
         type: integer
+      creator:
+        type: string
       description:
         type: string
       design_id:
-        type: string
-      error:
-        description: is set if errors occurred while releasing
         type: string
       id:
         type: string
@@ -318,12 +339,11 @@ definitions:
       created_at:
         description: unix timestamp, set by service on creation
         type: integer
+      creator:
+        type: string
       description:
         type: string
       design_id:
-        type: string
-      error:
-        description: is set if errors occurred while releasing
         type: string
       id:
         type: string
@@ -334,7 +354,8 @@ definitions:
       parsed_info:
         $ref: '#/definitions/model.SmartServiceReleaseInfo'
       permissions_info:
-        $ref: '#/definitions/model.PermissionsInfo'
+        allOf:
+        - $ref: '#/definitions/model.PermissionsInfo'
         description: optional, set if query parameter permissions_info=true
       svg_xml:
         type: string
@@ -350,6 +371,55 @@ definitions:
           $ref: '#/definitions/model.ParameterDescription'
         type: array
     type: object
+  model.Type:
+    enum:
+    - https://schema.org/Text
+    - https://schema.org/Integer
+    - https://schema.org/Float
+    - https://schema.org/Boolean
+    type: string
+    x-enum-varnames:
+    - String
+    - Integer
+    - Float
+    - Boolean
+  models.Characteristic:
+    properties:
+      allowed_values:
+        items: {}
+        type: array
+      display_unit:
+        type: string
+      id:
+        type: string
+      max_value: {}
+      min_value: {}
+      name:
+        type: string
+      sub_characteristics:
+        items:
+          $ref: '#/definitions/models.Characteristic'
+        type: array
+      type:
+        $ref: '#/definitions/models.Type'
+      value: {}
+    type: object
+  models.Type:
+    enum:
+    - https://schema.org/Text
+    - https://schema.org/Integer
+    - https://schema.org/Float
+    - https://schema.org/Boolean
+    - https://schema.org/ItemList
+    - https://schema.org/StructuredValue
+    type: string
+    x-enum-varnames:
+    - String
+    - Integer
+    - Float
+    - Boolean
+    - List
+    - Structure
 info:
   contact: {}
   license:
@@ -363,7 +433,7 @@ paths:
       description: checks health and reachability of the service
       responses:
         "200":
-          description: ""
+          description: OK
       summary: health check
       tags:
       - health
@@ -397,9 +467,9 @@ paths:
               $ref: '#/definitions/model.SmartServiceDesign'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a list of smart-service designs
       tags:
       - designs
@@ -422,9 +492,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceDesign'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: creates a smart-service designs
       tags:
       - designs
@@ -439,11 +509,11 @@ paths:
         type: string
       responses:
         "200":
-          description: ""
+          description: OK
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: removes a smart-service designs
       tags:
       - designs
@@ -463,9 +533,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceDesign'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a smart-service designs
       tags:
       - designs
@@ -493,11 +563,11 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceDesign'
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: updates a smart-service designs
       tags:
       - designs
@@ -545,9 +615,9 @@ paths:
               $ref: '#/definitions/model.SmartServiceReleaseExtended'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a list of smart-service releases
       tags:
       - releases
@@ -568,9 +638,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceReleaseExtended'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a smart-service release
       tags:
       - releases
@@ -579,7 +649,7 @@ paths:
       description: checks health and reachability of the service
       responses:
         "200":
-          description: ""
+          description: OK
       summary: health check
       tags:
       - health
@@ -609,9 +679,9 @@ paths:
               $ref: '#/definitions/model.SmartServiceInstance'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a list of smart-service instances
       tags:
       - instances
@@ -632,9 +702,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceInstance'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: get smart-service instance by process-instance-id
       tags:
       - instances
@@ -658,11 +728,11 @@ paths:
           type: string
       responses:
         "200":
-          description: ""
+          description: OK
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: sets smart-service instance error
       tags:
       - instances
@@ -695,11 +765,11 @@ paths:
               $ref: '#/definitions/model.SmartServiceModule'
             type: array
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: list smart-service modules of process-instance
       tags:
       - modules
@@ -727,11 +797,11 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceModule'
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: create a smart-service module
       tags:
       - modules
@@ -766,11 +836,11 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceModule'
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: set a smart-service module
       tags:
       - modules
@@ -804,11 +874,11 @@ paths:
               $ref: '#/definitions/model.SmartServiceModule'
             type: array
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: create smart-service modules
       tags:
       - modules
@@ -825,11 +895,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: ""
+          description: OK
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: get smart-service instance user-id
       tags:
       - instances
@@ -865,9 +935,9 @@ paths:
             additionalProperties: true
             type: object
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns smart-service instance variables as map
       tags:
       - instances
@@ -896,13 +966,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: ""
+          description: OK
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: sets multiple smart-service instance variable values with a map
       tags:
       - instances
@@ -923,11 +993,11 @@ paths:
         type: boolean
       responses:
         "200":
-          description: ""
+          description: OK
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: removes a smart-service instance with all modules
       tags:
       - instances
@@ -947,9 +1017,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceInstance'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a smart-service instance
       tags:
       - instances
@@ -972,11 +1042,11 @@ paths:
           type: string
       responses:
         "200":
-          description: ""
+          description: OK
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: sets smart-service instance error
       tags:
       - instances
@@ -1006,11 +1076,11 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceInstance'
         "401":
-          description: ""
+          description: Unauthorized
         "404":
-          description: ""
+          description: Not Found
         "500":
-          description: ""
+          description: Internal Server Error
       summary: updates smart-service instance parameter
       tags:
       - instances
@@ -1034,9 +1104,9 @@ paths:
               $ref: '#/definitions/model.MaintenanceProcedure'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: lists smart-service maintenance procedure information
       tags:
       - instances
@@ -1063,9 +1133,9 @@ paths:
           schema:
             $ref: '#/definitions/model.MaintenanceProcedure'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: get smart-service maintenance procedure information
       tags:
       - instances
@@ -1094,9 +1164,9 @@ paths:
               $ref: '#/definitions/model.SmartServiceExtendedParameter'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns parameters of a smart-service maintenance procedure
       tags:
       - instances
@@ -1130,11 +1200,11 @@ paths:
       - application/json
       responses:
         "204":
-          description: ""
+          description: No Content
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: start a smart-service instance maintenance procedure
       tags:
       - instances
@@ -1164,11 +1234,11 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceModule'
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: create a smart-service module
       tags:
       - modules
@@ -1203,9 +1273,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceInstance'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: updates smart-service instance parameter
       tags:
       - instances
@@ -1241,9 +1311,9 @@ paths:
               $ref: '#/definitions/model.SmartServiceInstanceVariable'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a list of smart-service instance variables
       tags:
       - instances
@@ -1278,9 +1348,9 @@ paths:
             additionalProperties: true
             type: object
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns smart-service instance variables as a map
       tags:
       - instances
@@ -1303,13 +1373,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: ""
+          description: OK
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: removes a smart-service instance variable value
       tags:
       - instances
@@ -1335,11 +1405,11 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceInstanceVariable'
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: gets a smart-service instance variable
       tags:
       - instances
@@ -1363,8 +1433,7 @@ paths:
         in: body
         name: message
         required: true
-        schema:
-          type: object
+        schema: {}
       produces:
       - application/json
       responses:
@@ -1373,11 +1442,11 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceInstanceVariable'
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: sets a smart-service instance variable value
       tags:
       - instances
@@ -1401,14 +1470,13 @@ paths:
       responses:
         "200":
           description: OK
-          schema:
-            type: object
+          schema: {}
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: gets a smart-service instance variable value
       tags:
       - instances
@@ -1447,9 +1515,9 @@ paths:
               $ref: '#/definitions/model.SmartServiceModule'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a list of smart-service models
       tags:
       - modules
@@ -1468,11 +1536,11 @@ paths:
         type: boolean
       responses:
         "200":
-          description: ""
+          description: OK
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: removes a smart-service module
       tags:
       - modules
@@ -1486,11 +1554,11 @@ paths:
         type: string
       responses:
         "200":
-          description: ""
+          description: OK
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: read a smart-service module
       tags:
       - modules
@@ -1538,9 +1606,9 @@ paths:
               $ref: '#/definitions/model.SmartServiceRelease'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a list of smart-service releases
       tags:
       - releases
@@ -1568,9 +1636,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceRelease'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: create a smart-service release
       tags:
       - releases
@@ -1585,19 +1653,23 @@ paths:
         name: id
         required: true
         type: string
+      - description: Delete all previous releases as well
+        in: query
+        name: delete_previous_releases
+        type: boolean
       produces:
       - application/json
       responses:
         "200":
-          description: ""
+          description: OK
         "400":
-          description: ""
+          description: Bad Request
         "401":
-          description: ""
+          description: Unauthorized
         "403":
-          description: ""
+          description: Forbidden
         "500":
-          description: ""
+          description: Internal Server Error
       summary: removes a smart-service release
       tags:
       - releases
@@ -1617,9 +1689,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceRelease'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns a smart-service release
       tags:
       - releases
@@ -1648,9 +1720,9 @@ paths:
           schema:
             $ref: '#/definitions/model.SmartServiceInstance'
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: creates a smart-service instance from the release
       tags:
       - releases
@@ -1674,9 +1746,9 @@ paths:
               $ref: '#/definitions/model.SmartServiceExtendedParameter'
             type: array
         "401":
-          description: ""
+          description: Unauthorized
         "500":
-          description: ""
+          description: Internal Server Error
       summary: returns parameters of a release
       tags:
       - releases

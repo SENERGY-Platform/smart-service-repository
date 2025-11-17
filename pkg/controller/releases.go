@@ -309,35 +309,55 @@ func computedPermissionsToMap(perm permmodel.ComputedPermissions) map[string]boo
 	}
 }
 
-func (this *Controller) DeleteRelease(token auth.Token, releaseId string) (error, int) {
-	access, err, _ := this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, releaseId, client.Administrate)
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	if !access {
-		return errors.New("access denied"), http.StatusForbidden
-	}
+func (this *Controller) DeleteRelease(token auth.Token, releaseId string, deletePreviousReleases bool) (error, int) {
+	ids := []string{}
 
-	instances, err, code := this.db.ListInstancesOfRelease("", releaseId)
-	if err != nil {
-		return err, code
-	}
-	if len(instances) > 0 {
-		list := []map[string]string{}
-		for _, instance := range instances {
-			list = append(list, map[string]string{
-				"id":   instance.Id,
-				"user": instance.UserId,
-			})
+	if deletePreviousReleases {
+		previous, err := this.db.GetPreviousReleases(releaseId)
+		if err != nil {
+			return err, http.StatusInternalServerError
 		}
-		marshaledList, _ := json.Marshal(list)
-		err = fmt.Errorf("a release may only deleted if it is not referenced by any smart-service instance: %s", marshaledList)
-		return err, http.StatusBadRequest
-	}
 
-	err = this.deleteRelease(releaseId)
+		for _, p := range previous {
+			ids = append(ids, p.Id)
+		}
+	}
+	ids = append(ids, releaseId) // ensure delete this release last for best performance: no replacement of NewReleaseId required
+
+	accessMap, err, _ := this.permissions.CheckMultiplePermissions(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, ids, client.Administrate)
 	if err != nil {
 		return err, http.StatusInternalServerError
+	}
+	for _, access := range accessMap {
+		if !access {
+			return errors.New("access denied"), http.StatusForbidden
+		}
+	}
+
+	for _, id := range ids {
+		instances, err, code := this.db.ListInstancesOfRelease("", id)
+		if err != nil {
+			return err, code
+		}
+		if len(instances) > 0 {
+			list := []map[string]string{}
+			for _, instance := range instances {
+				list = append(list, map[string]string{
+					"id":   instance.Id,
+					"user": instance.UserId,
+				})
+			}
+			marshaledList, _ := json.Marshal(list)
+			err = fmt.Errorf("a release may only deleted if it is not referenced by any smart-service instance: %s", marshaledList)
+			return err, http.StatusBadRequest
+		}
+	}
+
+	for _, id := range ids {
+		err = this.deleteRelease(id)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
 	}
 
 	return nil, http.StatusOK
@@ -361,7 +381,7 @@ func (this *Controller) deleteRelease(id string) error {
 		return err
 	}
 	if err == nil && currentRelease.NewReleaseId == "" {
-		oldReleases, err := this.db.GetReleasesByDesignId(currentRelease.DesignId)
+		oldReleases, err := this.db.GetPreviousReleases(currentRelease.Id)
 		if err != nil {
 			return err
 		}
