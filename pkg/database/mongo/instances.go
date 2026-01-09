@@ -127,6 +127,9 @@ func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions
 	opt := createFindOptions(query)
 	ctx, _ := getTimeoutContext()
 	filter := bson.M{InstanceBson.UserId: userId}
+	if query.ReleaseId != "" {
+		filter[InstanceBson.ReleaseId] = query.ReleaseId
+	}
 	cursor, err := this.instanceCollection().Find(ctx, filter, opt)
 	if err != nil {
 		return result, total, err, http.StatusInternalServerError

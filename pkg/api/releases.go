@@ -18,13 +18,15 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
-	"net/http"
-	"strconv"
-	"sync"
 )
 
 func init() {
@@ -289,6 +291,7 @@ func (this *Releases) GetExtended(config configuration.Config, router *httproute
 // @Param		 search query string false "optional text search (permission-search/elastic-search behavior)"
 // @Param        latest query bool false "returns only newest release of the same design"
 // @Param        add-usable-flag query bool false "add 'usable' flag to result, describing if the user hase options for all iot parameters"
+// @Param        ids query string false "limit response to ids (comma-separated)"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceReleaseExtended
 // @Header       200 {integer}  X-Total-Count  "count of all matching elements; used for pagination"
@@ -349,6 +352,11 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 				http.Error(writer, err.Error(), http.StatusBadRequest)
 				return
 			}
+		}
+
+		ids := request.URL.Query().Get("ids")
+		if ids != "" {
+			query.Ids = strings.Split(ids, ",")
 		}
 
 		result, total, err, code := ctrl.ListExtendedReleases(token, query)

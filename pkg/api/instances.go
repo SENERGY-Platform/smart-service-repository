@@ -39,6 +39,7 @@ type Instances struct{}
 // @Param        limit query integer false "limits size of result; 0 means unlimited"
 // @Param        offset query integer false "offset to be used in combination with limit"
 // @Param        sort query string false "describes the sorting in the form of name.asc"
+// @Param        release-id query string false "only return instances from this release id"
 // @Produce      json
 // @Success      200 {array}  model.SmartServiceInstance
 // @Header       200 {integer}  X-Total-Count  "count of all matching elements; used for pagination"
@@ -69,6 +70,7 @@ func (this *Instances) List(config configuration.Config, router *httprouter.Rout
 				return
 			}
 		}
+		query.ReleaseId = request.URL.Query().Get("release-id")
 		query.Sort = request.URL.Query().Get("sort")
 		if query.Sort == "" {
 			query.Sort = "name.asc"

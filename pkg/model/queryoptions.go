@@ -92,6 +92,7 @@ type ReleaseQueryOptions struct {
 	Search string
 	Latest bool
 	Rights string
+	Ids    []string
 }
 
 func (this ReleaseQueryOptions) GetLimit() int64 {
@@ -145,9 +146,10 @@ func (this ListReleasesOptions) GetSort() string {
 }
 
 type InstanceQueryOptions struct {
-	Limit  int
-	Offset int
-	Sort   string
+	Limit     int
+	Offset    int
+	Sort      string
+	ReleaseId string
 }
 
 func (this InstanceQueryOptions) GetLimit() int64 {

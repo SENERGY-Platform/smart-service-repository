@@ -265,7 +265,11 @@ func (this *Controller) ListExtendedReleases(token auth.Token, query model.Relea
 	if err != nil {
 		return result, 0, err, http.StatusBadRequest
 	}
-	ids, err, _ := this.permissions.ListAccessibleResourceIds(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, client.ListOptions{}, checkedRigths...)
+	listOptions := client.ListOptions{}
+	if query.Ids != nil && len(query.Ids) == 0 {
+		listOptions.Ids = query.Ids
+	}
+	ids, err, _ := this.permissions.ListAccessibleResourceIds(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, listOptions, checkedRigths...)
 	if err != nil {
 		return result, 0, err, http.StatusInternalServerError
 	}

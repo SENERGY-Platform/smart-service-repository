@@ -288,6 +288,12 @@ const docTemplate = `{
                         "description": "add 'usable' flag to result, describing if the user hase options for all iot parameters",
                         "name": "add-usable-flag",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "limit response to ids (comma-separated)",
+                        "name": "ids",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -391,6 +397,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "describes the sorting in the form of name.asc",
                         "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "only return instances from this release id",
+                        "name": "release-id",
                         "in": "query"
                     }
                 ],

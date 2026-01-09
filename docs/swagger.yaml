@@ -605,6 +605,10 @@ paths:
         in: query
         name: add-usable-flag
         type: boolean
+      - description: limit response to ids (comma-separated)
+        in: query
+        name: ids
+        type: string
       produces:
       - application/json
       responses:
@@ -672,6 +676,10 @@ paths:
       - description: describes the sorting in the form of name.asc
         in: query
         name: sort
+        type: string
+      - description: only return instances from this release id
+        in: query
+        name: release-id
         type: string
       produces:
       - application/json
