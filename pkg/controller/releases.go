@@ -238,15 +238,15 @@ func (this *Controller) GetRelease(token auth.Token, id string) (result model.Sm
 	return extended.SmartServiceRelease, err, code
 }
 
-func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceRelease, err error, code int) {
-	temp, err, code := this.ListExtendedReleases(token, query)
+func (this *Controller) ListReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceRelease, total int64, err error, code int) {
+	temp, total, err, code := this.ListExtendedReleases(token, query)
 	if err != nil {
-		return nil, err, code
+		return nil, 0, err, code
 	}
 	for _, release := range temp {
 		result = append(result, release.SmartServiceRelease)
 	}
-	return result, nil, http.StatusOK
+	return result, total, nil, http.StatusOK
 }
 
 func (this *Controller) GetExtendedRelease(token auth.Token, id string) (result model.SmartServiceReleaseExtended, err error, code int) {
@@ -260,16 +260,16 @@ func (this *Controller) GetExtendedRelease(token auth.Token, id string) (result 
 	return this.db.GetRelease(id, false)
 }
 
-func (this *Controller) ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, err error, code int) {
+func (this *Controller) ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, total int64, err error, code int) {
 	checkedRigths, err := permmodel.PermissionListFromString(query.Rights)
 	if err != nil {
-		return result, err, http.StatusBadRequest
+		return result, 0, err, http.StatusBadRequest
 	}
 	ids, err, _ := this.permissions.ListAccessibleResourceIds(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, client.ListOptions{}, checkedRigths...)
 	if err != nil {
-		return result, err, http.StatusInternalServerError
+		return result, 0, err, http.StatusInternalServerError
 	}
-	temp, err := this.db.ListReleases(model.ListReleasesOptions{
+	temp, total, err := this.db.ListReleases(model.ListReleasesOptions{
 		InIds:  ids,
 		Latest: query.Latest,
 		Limit:  query.Limit,
@@ -278,7 +278,7 @@ func (this *Controller) ListExtendedReleases(token auth.Token, query model.Relea
 		Search: query.Search,
 	})
 	if err != nil {
-		return result, err, http.StatusInternalServerError
+		return result, 0, err, http.StatusInternalServerError
 	}
 	filteredIds := []string{}
 	for _, release := range temp {
@@ -297,7 +297,7 @@ func (this *Controller) ListExtendedReleases(token auth.Token, query model.Relea
 		}
 		result = append(result, release)
 	}
-	return result, nil, http.StatusOK
+	return result, total, nil, http.StatusOK
 }
 
 func computedPermissionsToMap(perm permmodel.ComputedPermissions) map[string]bool {

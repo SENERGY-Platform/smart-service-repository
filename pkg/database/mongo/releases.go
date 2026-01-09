@@ -211,7 +211,7 @@ func addAndFilter(filter bson.M, add bson.M) bson.M {
 	return filter
 }
 
-func (this *Mongo) ListReleases(options model.ListReleasesOptions) (result []model.SmartServiceReleaseExtended, err error) {
+func (this *Mongo) ListReleases(options model.ListReleasesOptions) (result []model.SmartServiceReleaseExtended, total int64, err error) {
 	ctx, _ := getTimeoutContext()
 	opt := createFindOptions(options)
 	filter := bson.M{
@@ -241,11 +241,18 @@ func (this *Mongo) ListReleases(options model.ListReleasesOptions) (result []mod
 	}
 	cursor, err := this.releaseCollection().Find(ctx, filter, opt)
 	if err != nil {
-		return result, err
+		return result, total, err
 	}
 	defer cursor.Close(context.Background())
 	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
-	return result, err
+	if err != nil {
+		return result, total, err
+	}
+	total, err = this.releaseCollection().CountDocuments(ctx, filter)
+	if err != nil {
+		return result, total, err
+	}
+	return result, total, err
 }
 
 func (this *Mongo) GetReleasesByDesignId(designId string) (result []model.SmartServiceReleaseExtended, err error) {

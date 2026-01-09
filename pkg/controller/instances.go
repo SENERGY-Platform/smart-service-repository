@@ -231,8 +231,8 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 	return result, nil, http.StatusOK
 }
 
-func (this *Controller) ListInstances(token auth.Token, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, err error, code int) {
-	result, err, code = this.db.ListInstances(token.GetUserId(), query)
+func (this *Controller) ListInstances(token auth.Token, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int) {
+	result, total, err, code = this.db.ListInstances(token.GetUserId(), query)
 	if err != nil {
 		return
 	}

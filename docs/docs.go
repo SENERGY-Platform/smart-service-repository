@@ -298,6 +298,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/model.SmartServiceReleaseExtended"
                             }
+                        },
+                        "headers": {
+                            "X-Total-Count": {
+                                "type": "integer",
+                                "description": "count of all matching elements; used for pagination"
+                            }
                         }
                     },
                     "401": {
@@ -395,6 +401,12 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/model.SmartServiceInstance"
+                            }
+                        },
+                        "headers": {
+                            "X-Total-Count": {
+                                "type": "integer",
+                                "description": "count of all matching elements; used for pagination"
                             }
                         }
                     },
@@ -1771,6 +1783,12 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/model.SmartServiceRelease"
+                            }
+                        },
+                        "headers": {
+                            "X-Total-Count": {
+                                "type": "integer",
+                                "description": "count of all matching elements; used for pagination"
                             }
                         }
                     },

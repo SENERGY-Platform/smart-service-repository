@@ -123,15 +123,25 @@ func (this *Mongo) DeleteInstance(id string, userId string) (err error, code int
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, err error, code int) {
+func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int) {
 	opt := createFindOptions(query)
 	ctx, _ := getTimeoutContext()
-	cursor, err := this.instanceCollection().Find(ctx, bson.M{InstanceBson.UserId: userId}, opt)
+	filter := bson.M{InstanceBson.UserId: userId}
+	cursor, err := this.instanceCollection().Find(ctx, filter, opt)
 	if err != nil {
-		return result, err, http.StatusInternalServerError
+		return result, total, err, http.StatusInternalServerError
 	}
 	defer cursor.Close(context.Background())
-	return readCursorResult[model.SmartServiceInstance](ctx, cursor)
+	result, err, code = readCursorResult[model.SmartServiceInstance](ctx, cursor)
+	if err != nil {
+		return result, total, err, code
+	}
+
+	total, err = this.instanceCollection().CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err, http.StatusInternalServerError
+	}
+	return result, total, err, code
 }
 
 func (this *Mongo) SetInstanceError(id string, userId string, errMsg string) error {

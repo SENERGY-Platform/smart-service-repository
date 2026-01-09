@@ -610,6 +610,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            X-Total-Count:
+              description: count of all matching elements; used for pagination
+              type: integer
           schema:
             items:
               $ref: '#/definitions/model.SmartServiceReleaseExtended'
@@ -674,6 +678,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            X-Total-Count:
+              description: count of all matching elements; used for pagination
+              type: integer
           schema:
             items:
               $ref: '#/definitions/model.SmartServiceInstance'
@@ -1601,6 +1609,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            X-Total-Count:
+              description: count of all matching elements; used for pagination
+              type: integer
           schema:
             items:
               $ref: '#/definitions/model.SmartServiceRelease'

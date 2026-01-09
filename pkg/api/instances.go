@@ -41,6 +41,7 @@ type Instances struct{}
 // @Param        sort query string false "describes the sorting in the form of name.asc"
 // @Produce      json
 // @Success      200 {array}  model.SmartServiceInstance
+// @Header       200 {integer}  X-Total-Count  "count of all matching elements; used for pagination"
 // @Failure      500
 // @Failure      401
 // @Router       /instances [get]
@@ -72,12 +73,13 @@ func (this *Instances) List(config configuration.Config, router *httprouter.Rout
 		if query.Sort == "" {
 			query.Sort = "name.asc"
 		}
-		result, err, code := ctrl.ListInstances(token, query)
+		result, total, err, code := ctrl.ListInstances(token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
 		}
 		writer.Header().Set("Content-Type", "application/json")
+		writer.Header().Set("X-Total-Count", strconv.FormatInt(total, 10))
 		json.NewEncoder(writer).Encode(result)
 	})
 }

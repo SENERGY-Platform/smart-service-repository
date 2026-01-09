@@ -164,6 +164,7 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 // @Param        add-usable-flag query bool false "add 'usable' flag to result, describing if the user hase options for all iot parameters"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceRelease
+// @Header       200 {integer}  X-Total-Count  "count of all matching elements; used for pagination"
 // @Failure      500
 // @Failure      401
 // @Router       /releases [get]
@@ -223,11 +224,12 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 			}
 		}
 
-		result, err, code := ctrl.ListReleases(token, query)
+		result, total, err, code := ctrl.ListReleases(token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
 		}
+		writer.Header().Set("X-Total-Count", strconv.FormatInt(total, 10))
 
 		if addUsableFlag {
 			withUsableFlat, err := addUsableFlagToReleases(ctrl, token, result)
@@ -289,6 +291,7 @@ func (this *Releases) GetExtended(config configuration.Config, router *httproute
 // @Param        add-usable-flag query bool false "add 'usable' flag to result, describing if the user hase options for all iot parameters"
 // @Produce      json
 // @Success      200 {array} model.SmartServiceReleaseExtended
+// @Header       200 {integer}  X-Total-Count  "count of all matching elements; used for pagination"
 // @Failure      500
 // @Failure      401
 // @Router       /extended-releases [get]
@@ -348,11 +351,13 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 			}
 		}
 
-		result, err, code := ctrl.ListExtendedReleases(token, query)
+		result, total, err, code := ctrl.ListExtendedReleases(token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
 		}
+
+		writer.Header().Set("X-Total-Count", strconv.FormatInt(total, 10))
 
 		if addUsableFlag {
 			withUsableFlat, err := addUsableFlagToExtendedReleases(ctrl, token, result)

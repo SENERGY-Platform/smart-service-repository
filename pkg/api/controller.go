@@ -58,15 +58,15 @@ type ReleaseInterface interface {
 	DeleteRelease(token auth.Token, id string, deletePreviousReleases bool) (error, int)
 	GetRelease(token auth.Token, id string) (model.SmartServiceRelease, error, int)
 	GetExtendedRelease(token auth.Token, id string) (model.SmartServiceReleaseExtended, error, int)
-	ListReleases(token auth.Token, query model.ReleaseQueryOptions) ([]model.SmartServiceRelease, error, int)
-	ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, err error, code int)
+	ListReleases(token auth.Token, query model.ReleaseQueryOptions) ([]model.SmartServiceRelease, int64, error, int)
+	ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, total int64, err error, code int)
 	GetReleaseParameter(token auth.Token, id string) ([]model.SmartServiceExtendedParameter, error, int)
 	GetReleaseParameterWithoutAuthCheck(token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int)
 }
 
 type InstancesInterface interface {
 	CreateInstance(token auth.Token, releaseId string, instance model.SmartServiceInstanceInit) (model.SmartServiceInstance, error, int)
-	ListInstances(token auth.Token, query model.InstanceQueryOptions) ([]model.SmartServiceInstance, error, int)
+	ListInstances(token auth.Token, query model.InstanceQueryOptions) ([]model.SmartServiceInstance, int64, error, int)
 	GetInstance(token auth.Token, id string) (model.SmartServiceInstance, error, int)
 	DeleteInstance(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)
 	SetInstanceError(token auth.Token, instanceId string, errMsg string) (error, int)
