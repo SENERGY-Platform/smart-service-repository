@@ -10,6 +10,7 @@
     "notification_url": "",
 
     "smart_service_release_permissions_topic": "smart_service_releases",
+    "smart_service_instance_permissions_topic": "smart_service_instances",
 
     "mongo_url": "",
     "mongo_with_transactions": true,
