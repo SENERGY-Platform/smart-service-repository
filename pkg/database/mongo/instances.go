@@ -113,10 +113,13 @@ func (this *Mongo) DeleteInstance(id string, userId string) (err error, code int
 		return err, code
 	}
 	ctx, _ := getTimeoutContext()
-	_, err = this.instanceCollection().DeleteMany(ctx, bson.M{
-		InstanceBson.Id:     id,
-		InstanceBson.UserId: userId,
-	})
+	filter := bson.M{
+		InstanceBson.Id: id,
+	}
+	if userId != "" {
+		filter[InstanceBson.UserId] = userId
+	}
+	_, err = this.instanceCollection().DeleteMany(ctx, filter)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -126,9 +129,15 @@ func (this *Mongo) DeleteInstance(id string, userId string) (err error, code int
 func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int) {
 	opt := createFindOptions(query)
 	ctx, _ := getTimeoutContext()
-	filter := bson.M{InstanceBson.UserId: userId}
+	filter := bson.M{}
+	if userId != "" {
+		filter[InstanceBson.UserId] = userId
+	}
 	if query.ReleaseId != "" {
 		filter[InstanceBson.ReleaseId] = query.ReleaseId
+	}
+	if len(query.IDs) > 0 {
+		filter[InstanceBson.Id] = bson.M{"$in": query.IDs}
 	}
 	cursor, err := this.instanceCollection().Find(ctx, filter, opt)
 	if err != nil {

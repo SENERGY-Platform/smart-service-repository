@@ -150,6 +150,7 @@ type InstanceQueryOptions struct {
 	Offset    int
 	Sort      string
 	ReleaseId string
+	IDs       []string
 }
 
 func (this InstanceQueryOptions) GetLimit() int64 {

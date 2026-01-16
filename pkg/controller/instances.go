@@ -75,6 +75,20 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 	this.cleanupMux.Lock()
 	defer this.cleanupMux.Unlock()
 
+	_, err, code = this.permissions.SetPermission(client.InternalAdminToken, this.config.SmartServiceInstancePermissionsTopic, result.Id, client.ResourcePermissions{
+		UserPermissions: map[string]client.PermissionsMap{
+			result.UserId: {
+				Read:         true,
+				Write:        true,
+				Execute:      true,
+				Administrate: true,
+			},
+		},
+	})
+	if err != nil {
+		return result, err, code
+	}
+
 	err, code = this.db.SetInstance(result)
 	if err != nil {
 		return result, err, code
@@ -85,7 +99,7 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 
 	err = this.storeInstanceStartVariables(result)
 	if err != nil {
-		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
+		err2, _ := this.db.DeleteInstance(result.Id, "")
 		if err2 != nil {
 			this.config.GetLogger().Error("error in CreateInstance", "error", err2, "stack", string(debug.Stack()))
 		}
@@ -96,7 +110,7 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 
 	err = this.camunda.Start(result)
 	if err != nil {
-		err2, _ := this.db.DeleteInstance(result.Id, result.UserId)
+		err2, _ := this.db.DeleteInstance(result.Id, "")
 		if err2 != nil {
 			this.config.GetLogger().Error("error in CreateInstance", "error", err2, "stack", string(debug.Stack()))
 		}
@@ -135,10 +149,17 @@ func (this *Controller) appendAutoSelectParams(token auth.Token, parameters []mo
 }
 
 func (this *Controller) UpdateInstanceInfo(token auth.Token, id string, element model.SmartServiceInstanceInfo) (result model.SmartServiceInstance, err error, code int) {
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, result.Id, client.Write)
+	if err != nil {
+		return result, err, code
+	}
+	if !access {
+		return result, errors.New("missing instance write access"), http.StatusForbidden
+	}
 	if element.Name == "" {
 		return result, errors.New("missing name"), http.StatusBadRequest
 	}
-	result, err, code = this.db.GetInstance(id, token.GetUserId())
+	result, err, code = this.db.GetInstance(id, "")
 	if err != nil {
 		return result, err, code
 	}
@@ -149,11 +170,19 @@ func (this *Controller) UpdateInstanceInfo(token auth.Token, id string, element 
 }
 
 func (this *Controller) RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameter, releaseId string) (result model.SmartServiceInstance, err error, code int) {
-	result, err, code = this.db.GetInstance(id, token.GetUserId())
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, result.Id, client.Administrate)
 	if err != nil {
 		return result, err, code
 	}
-	access, err, _ := this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, result.ReleaseId, client.Execute)
+	if !access {
+		return result, errors.New("missing instance administrate access"), http.StatusForbidden
+	}
+
+	result, err, code = this.db.GetInstance(id, "")
+	if err != nil {
+		return result, err, code
+	}
+	access, err, _ = this.permissions.CheckPermission(token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, result.ReleaseId, client.Execute)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
@@ -202,6 +231,20 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 	this.cleanupMux.Lock()
 	defer this.cleanupMux.Unlock()
 
+	_, err, code = this.permissions.SetPermission(client.InternalAdminToken, this.config.SmartServiceInstancePermissionsTopic, result.Id, client.ResourcePermissions{
+		UserPermissions: map[string]client.PermissionsMap{
+			result.UserId: {
+				Read:         true,
+				Write:        true,
+				Execute:      true,
+				Administrate: true,
+			},
+		},
+	})
+	if err != nil {
+		return result, err, code
+	}
+
 	err, code = this.db.SetInstance(result)
 	if err != nil {
 		return result, err, code
@@ -232,7 +275,16 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 }
 
 func (this *Controller) ListInstances(token auth.Token, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int) {
-	result, total, err, code = this.db.ListInstances(token.GetUserId(), query)
+	listOptions := client.ListOptions{}
+	if len(query.IDs) > 0 {
+		listOptions.Ids = query.IDs
+	}
+	accessibleIds, err, code := this.permissions.ListAccessibleResourceIds(token.Token, this.config.SmartServiceInstancePermissionsTopic, listOptions, client.Read)
+	if err != nil {
+		return result, total, err, code
+	}
+	query.IDs = accessibleIds
+	result, total, err, code = this.db.ListInstances("", query)
 	if err != nil {
 		return
 	}
@@ -241,7 +293,14 @@ func (this *Controller) ListInstances(token auth.Token, query model.InstanceQuer
 }
 
 func (this *Controller) GetInstance(token auth.Token, id string) (result model.SmartServiceInstance, err error, code int) {
-	result, err, code = this.db.GetInstance(id, token.GetUserId())
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, id, client.Read)
+	if err != nil {
+		return result, err, code
+	}
+	if !access {
+		return result, errors.New("missing instance read access"), http.StatusForbidden
+	}
+	result, err, code = this.db.GetInstance(id, "")
 	if err != nil {
 		return result, err, code
 	}
@@ -251,7 +310,15 @@ func (this *Controller) GetInstance(token auth.Token, id string) (result model.S
 }
 
 func (this *Controller) DeleteInstance(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int) {
-	current, err, code := this.db.GetInstance(id, token.GetUserId())
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, id, client.Administrate, client.Write)
+	if err != nil {
+		return err, code
+	}
+	if !access {
+		return errors.New("missing instance administrate and/or write access (requires both)"), http.StatusForbidden
+	}
+
+	current, err, code := this.db.GetInstance(id, "")
 	if err != nil {
 		if code == http.StatusNotFound {
 			return nil, http.StatusOK //instance is already none-existent
@@ -275,14 +342,14 @@ func (this *Controller) DeleteInstance(token auth.Token, id string, ignoreModule
 	}
 
 	//handle module delete infos
-	err, code = this.handleModuleDeleteReferencesOfInstance(token, id, ignoreModuleDeleteError)
+	err, code = this.handleModuleDeleteReferencesOfInstance(id, ignoreModuleDeleteError)
 	if err != nil {
 		this.SetInstanceError(token, id, err.Error())
 		return err, code
 	}
 
 	//delete instance and modules from database
-	err, code = this.db.DeleteInstance(id, token.GetUserId())
+	err, code = this.db.DeleteInstance(id, "")
 	if err != nil {
 		this.SetInstanceError(token, id, err.Error())
 		return err, code
@@ -367,19 +434,32 @@ func (this *Controller) removeFinishedMaintenanceIds(instance model.SmartService
 }
 
 func (this *Controller) SetInstanceError(token auth.Token, instanceId string, errMsg string) (error, int) {
-	return this.setInstanceError(token.GetUserId(), instanceId, errMsg)
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Write)
+	if err != nil {
+		return err, code
+	}
+	if !access {
+		return errors.New("missing instance write access"), http.StatusForbidden
+	}
+	return this.setInstanceError(instanceId, errMsg)
 }
 
-func (this *Controller) setInstanceError(userId string, instanceId string, errMsg string) (error, int) {
+func (this *Controller) setInstanceError(instanceId string, errMsg string) (error, int) {
 	if instanceId == "" {
 		return errors.New("missing instance id"), http.StatusBadRequest
 	}
+
+	userId, err, code := this.getInstanceUserId(instanceId)
+	if err != nil {
+		return err, code
+	}
+
 	_ = notification.Send(this.config.NotificationUrl, notification.Message{
 		UserId:  userId,
 		Title:   "Smart-Service-Instance Error (Instance-ID:" + instanceId + ")",
 		Message: errMsg,
 	}, this.config.GetLogger())
-	err := this.db.SetInstanceError(instanceId, userId, errMsg)
+	err = this.db.SetInstanceError(instanceId, userId, errMsg)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -394,11 +474,7 @@ func (this *Controller) SetInstanceErrorByProcessInstanceId(processInstanceId st
 	if err != nil {
 		return err, code
 	}
-	userId, err, code := this.getInstanceUserId(businessKey)
-	if err != nil {
-		return err, code
-	}
-	return this.setInstanceError(userId, businessKey, errMsg)
+	return this.setInstanceError(businessKey, errMsg)
 }
 
 func (this *Controller) GetInstanceByProcessInstanceId(processInstanceId string) (result model.SmartServiceInstance, err error, code int) {
@@ -428,8 +504,8 @@ func (this *Controller) getInstanceUserId(instanceId string) (userId string, err
 	return instance.UserId, err, code
 }
 
-func (this *Controller) handleModuleDeleteReferencesOfInstance(token auth.Token, instanceId string, ignoreModuleDeleteErrors bool) (error, int) {
-	modules, err, code := this.db.ListModules(token.GetUserId(), model.ModuleQueryOptions{
+func (this *Controller) handleModuleDeleteReferencesOfInstance(instanceId string, ignoreModuleDeleteErrors bool) (error, int) {
+	modules, err, code := this.db.ListModules("", model.ModuleQueryOptions{
 		InstanceIdFilter: &instanceId,
 	})
 	if err != nil {

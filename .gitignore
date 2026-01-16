@@ -1,3 +1,4 @@
 smart-service-repository
 .idea/
 *.iml
+.vscode

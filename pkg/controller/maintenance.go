@@ -19,10 +19,12 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/google/uuid"
-	"net/http"
 )
 
 func (this *Controller) GetMaintenanceProceduresOfInstance(token auth.Token, instanceId string) (maintenanceProcedure []model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int) {
@@ -60,6 +62,13 @@ func (this *Controller) GetMaintenanceProcedureParametersOfInstance(token auth.T
 }
 
 func (this *Controller) StartMaintenanceProcedure(token auth.Token, instanceId string, publicEventId string, parameters model.SmartServiceParameters) (error, int) {
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Administrate)
+	if err != nil {
+		return err, code
+	}
+	if !access {
+		return errors.New("missing instance administrate access"), http.StatusForbidden
+	}
 	procedure, instance, release, err, code := this.GetMaintenanceProcedureOfInstance(token, instanceId, publicEventId)
 	if err != nil {
 		return err, code

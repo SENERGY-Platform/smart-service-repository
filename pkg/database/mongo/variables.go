@@ -55,7 +55,11 @@ func (this *Mongo) variableCollection() *mongo.Collection {
 
 func (this *Mongo) GetVariable(instanceId string, userId string, variableName string) (result model.SmartServiceInstanceVariable, err error, code int) {
 	ctx, _ := getTimeoutContext()
-	temp := this.variableCollection().FindOne(ctx, bson.M{VariableBson.InstanceId: instanceId, VariableBson.UserId: userId, VariableBson.Name: variableName})
+	filter := bson.M{VariableBson.InstanceId: instanceId, VariableBson.Name: variableName}
+	if userId != "" {
+		filter[VariableBson.UserId] = userId
+	}
+	temp := this.variableCollection().FindOne(ctx, filter)
 	err = temp.Err()
 	if err == mongo.ErrNoDocuments {
 		return result, ErrVariableNotFound, http.StatusNotFound
@@ -94,11 +98,14 @@ func (this *Mongo) SetVariable(element model.SmartServiceInstanceVariable) (mode
 
 func (this *Mongo) DeleteVariable(instanceId string, userId string, variableName string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.variableCollection().DeleteMany(ctx, bson.M{
+	filter := bson.M{
 		VariableBson.InstanceId: instanceId,
-		VariableBson.UserId:     userId,
 		VariableBson.Name:       variableName,
-	})
+	}
+	if userId != "" {
+		filter[VariableBson.UserId] = userId
+	}
+	_, err := this.variableCollection().DeleteMany(ctx, filter)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -108,7 +115,10 @@ func (this *Mongo) DeleteVariable(instanceId string, userId string, variableName
 func (this *Mongo) ListVariables(instanceId string, userId string, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int) {
 	opt := createFindOptions(query)
 	ctx, _ := getTimeoutContext()
-	filter := bson.M{VariableBson.InstanceId: instanceId, VariableBson.UserId: userId}
+	filter := bson.M{VariableBson.InstanceId: instanceId}
+	if userId != "" {
+		filter[VariableBson.UserId] = userId
+	}
 	cursor, err := this.variableCollection().Find(ctx, filter, opt)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
@@ -131,10 +141,13 @@ func (this *Mongo) ListAllVariables(query model.VariableQueryOptions) (result []
 
 func (this *Mongo) RemoveVariablesOfInstance(instanceId string, userId string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.variableCollection().DeleteMany(ctx, bson.M{
+	filter := bson.M{
 		VariableBson.InstanceId: instanceId,
-		VariableBson.UserId:     userId,
-	})
+	}
+	if userId != "" {
+		filter[VariableBson.UserId] = userId
+	}
+	_, err := this.variableCollection().DeleteMany(ctx, filter)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

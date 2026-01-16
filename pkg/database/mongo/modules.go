@@ -70,7 +70,11 @@ func (this *Mongo) moduleCollection() *mongo.Collection {
 
 func (this *Mongo) GetModule(id string, userId string) (result model.SmartServiceModule, err error, code int) {
 	ctx, _ := getTimeoutContext()
-	temp := this.moduleCollection().FindOne(ctx, bson.M{ModuleBson.Id: id, ModuleBson.UserId: userId})
+	filter := bson.M{ModuleBson.Id: id}
+	if userId != "" {
+		filter[ModuleBson.UserId] = userId
+	}
+	temp := this.moduleCollection().FindOne(ctx, filter)
 	err = temp.Err()
 	if err == mongo.ErrNoDocuments {
 		return result, ErrModuleNotFound, http.StatusNotFound
@@ -103,10 +107,13 @@ func (this *Mongo) SetModule(element model.SmartServiceModule) (error, int) {
 
 func (this *Mongo) DeleteModule(id string, userId string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.moduleCollection().DeleteMany(ctx, bson.M{
-		ModuleBson.Id:     id,
-		ModuleBson.UserId: userId,
-	})
+	filter := bson.M{
+		ModuleBson.Id: id,
+	}
+	if userId != "" {
+		filter[ModuleBson.UserId] = userId
+	}
+	_, err := this.moduleCollection().DeleteMany(ctx, filter)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -116,7 +123,10 @@ func (this *Mongo) DeleteModule(id string, userId string) (error, int) {
 func (this *Mongo) ListModules(userId string, query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int) {
 	opt := createFindOptions(query)
 	ctx, _ := getTimeoutContext()
-	filter := bson.M{ModuleBson.UserId: userId}
+	filter := bson.M{}
+	if userId != "" {
+		filter[ModuleBson.UserId] = userId
+	}
 	if query.InstanceIdFilter != nil {
 		filter[ModuleBson.InstanceId] = *query.InstanceIdFilter
 	}
@@ -148,10 +158,13 @@ func (this *Mongo) ListAllModules(query model.ModuleQueryOptions) (result []mode
 
 func (this *Mongo) RemoveModulesOfInstance(instanceId string, userId string) (error, int) {
 	ctx, _ := getTimeoutContext()
-	_, err := this.moduleCollection().DeleteMany(ctx, bson.M{
+	filter := bson.M{
 		ModuleBson.InstanceId: instanceId,
-		ModuleBson.UserId:     userId,
-	})
+	}
+	if userId != "" {
+		filter[ModuleBson.UserId] = userId
+	}
+	_, err := this.moduleCollection().DeleteMany(ctx, filter)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

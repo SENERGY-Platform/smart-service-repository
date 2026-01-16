@@ -19,17 +19,24 @@ package controller
 import (
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"runtime/debug"
-
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/google/uuid"
+	"io"
+	"net/http"
+	"runtime/debug"
 )
 
 func (this *Controller) AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
-	return this.addModule(token.GetUserId(), instanceId, module, uuid.NewString())
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, result.Id, client.Write)
+	if err != nil {
+		return result, err, code
+	}
+	if !access {
+		return result, errors.New("missing instance write access"), http.StatusForbidden
+	}
+	return this.addModule(instanceId, module, uuid.NewString())
 }
 
 func (this *Controller) AddModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
@@ -47,16 +54,16 @@ func (this *Controller) SetModuleForProcessInstance(processInstanceId string, mo
 	if err != nil {
 		return result, err, code
 	}
-	userId, err, code := this.getInstanceUserId(businessKey)
-	if err != nil {
-		return result, err, code
-	}
-	return this.addModule(userId, businessKey, module, moduleId)
+	return this.addModule(businessKey, module, moduleId)
 }
 
-func (this *Controller) addModule(userId string, instanceId string, module model.SmartServiceModuleInit, moduleId string) (result model.SmartServiceModule, err error, code int) {
+func (this *Controller) addModule(instanceId string, module model.SmartServiceModuleInit, moduleId string) (result model.SmartServiceModule, err error, code int) {
 	if instanceId == "" {
 		return result, errors.New("missing instance id"), http.StatusBadRequest
+	}
+	userId, err, code := this.getInstanceUserId(instanceId)
+	if err != nil {
+		return result, err, code
 	}
 	element, err, code := this.prepareModule(userId, instanceId, module, moduleId)
 	if err != nil {
@@ -74,7 +81,18 @@ func (this *Controller) addModule(userId string, instanceId string, module model
 }
 
 func (this *Controller) ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int) {
-	return this.db.ListModules(token.GetUserId(), query)
+	userId := token.GetUserId()
+	if query.InstanceIdFilter != nil {
+		access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, *query.InstanceIdFilter, client.Read)
+		if err != nil {
+			return nil, err, code
+		}
+		if !access {
+			return nil, errors.New("missing instance read access"), http.StatusForbidden
+		}
+		userId = "" //instance read access already checked
+	}
+	return this.db.ListModules(userId, query)
 }
 
 func (this *Controller) ListModulesOfProcessInstance(processInstanceId string, query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int) {
@@ -165,13 +183,21 @@ func (this *Controller) useModuleDeleteInfo(info model.ModuleDeleteInfo) error {
 }
 
 func (this *Controller) DeleteModule(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int) {
-	module, err, code := this.db.GetModule(id, token.GetUserId())
+	module, err, code := this.db.GetModule(id, "")
 	if err != nil {
 		if code == http.StatusNotFound {
 			return nil, http.StatusOK //module is already none-existent
 		}
 		return err, code
 	}
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, module.InstanceId, client.Administrate)
+	if err != nil {
+		return err, code
+	}
+	if !access {
+		return errors.New("missing instance administrate access"), http.StatusForbidden
+	}
+
 	return this.deleteModule(module, ignoreModuleDeleteError)
 }
 
@@ -186,5 +212,16 @@ func (this *Controller) deleteModule(module model.SmartServiceModule, ignoreModu
 }
 
 func (this *Controller) GetModule(token auth.Token, id string) (model.SmartServiceModule, error, int) {
-	return this.db.GetModule(id, token.GetUserId())
+	module, err, code := this.db.GetModule(id, "")
+	if err != nil {
+		return model.SmartServiceModule{}, err, code
+	}
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, module.InstanceId, client.Read)
+	if err != nil {
+		return model.SmartServiceModule{}, err, code
+	}
+	if !access {
+		return model.SmartServiceModule{}, errors.New("missing instance read access"), http.StatusForbidden
+	}
+	return this.db.GetModule(id, "")
 }

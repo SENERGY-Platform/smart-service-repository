@@ -18,17 +18,31 @@ package controller
 
 import (
 	"errors"
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"net/http"
 )
 
 func (this *Controller) SetVariable(token auth.Token, variable model.SmartServiceInstanceVariable) (result model.SmartServiceInstanceVariable, err error, code int) {
-	if variable.UserId == "" {
-		variable.UserId = token.GetUserId()
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, variable.InstanceId, client.Write)
+	if err != nil {
+		return result, err, code
 	}
-	if variable.UserId != token.GetUserId() {
-		return variable, errors.New("user may only set its own variable"), http.StatusForbidden
+	if !access {
+		return result, errors.New("missing instance write access"), http.StatusForbidden
+	}
+
+	userId, err, code := this.getInstanceUserId(variable.InstanceId)
+	if err != nil {
+		return result, err, code
+	}
+
+	if variable.UserId == "" {
+		variable.UserId = userId
+	}
+	if variable.UserId != userId {
+		return variable, errors.New("userid of variable and instance do not match"), http.StatusForbidden
 	}
 	err, code = this.ValidateVariable(variable)
 	if err != nil {
@@ -93,7 +107,14 @@ func (this *Controller) GetVariablesMap(token auth.Token, instanceId string, que
 }
 
 func (this *Controller) ListVariables(token auth.Token, instanceId string, query model.VariableQueryOptions) ([]model.SmartServiceInstanceVariable, error, int) {
-	return this.db.ListVariables(instanceId, token.GetUserId(), query)
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Read)
+	if err != nil {
+		return nil, err, code
+	}
+	if !access {
+		return nil, errors.New("missing instance read access"), http.StatusForbidden
+	}
+	return this.db.ListVariables(instanceId, "", query)
 }
 
 func (this *Controller) GetVariablesMapOfProcessInstance(processInstanceId string) (map[string]interface{}, error, int) {
@@ -138,9 +159,23 @@ func (this *Controller) ValidateVariable(element model.SmartServiceInstanceVaria
 }
 
 func (this *Controller) DeleteVariable(token auth.Token, instanceId string, name string) (error, int) {
-	return this.db.DeleteVariable(instanceId, token.GetUserId(), name)
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Administrate)
+	if err != nil {
+		return err, code
+	}
+	if !access {
+		return errors.New("missing instance administrate access"), http.StatusForbidden
+	}
+	return this.db.DeleteVariable(instanceId, "", name)
 }
 
 func (this *Controller) GetVariable(token auth.Token, instanceId string, name string) (model.SmartServiceInstanceVariable, error, int) {
-	return this.db.GetVariable(instanceId, token.GetUserId(), name)
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Read)
+	if err != nil {
+		return model.SmartServiceInstanceVariable{}, err, code
+	}
+	if !access {
+		return model.SmartServiceInstanceVariable{}, errors.New("missing instance read access"), http.StatusForbidden
+	}
+	return this.db.GetVariable(instanceId, "", name)
 }

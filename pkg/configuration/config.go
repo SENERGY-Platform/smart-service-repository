@@ -38,6 +38,7 @@ type Config struct {
 	PermissionsV2Url                     string   `json:"permissions_v2_url"`
 	DeviceRepositoryUrl                  string   `json:"device_repository_url"`
 	SmartServiceReleasePermissionsTopic  string   `json:"smart_service_release_permissions_topic"`
+	SmartServiceInstancePermissionsTopic string   `json:"smart_service_instance_permissions_topic"`
 	NotificationUrl                      string   `json:"notification_url"`
 	MongoUrl                             string   `json:"mongo_url"`
 	MongoWithTransactions                bool     `json:"mongo_with_transactions"`

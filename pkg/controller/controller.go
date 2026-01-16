@@ -18,13 +18,16 @@ package controller
 
 import (
 	"context"
+	"maps"
+	"slices"
+	"sync"
+
 	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
 	permclient "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/google/uuid"
-	"sync"
 )
 
 type Controller struct {
@@ -72,10 +75,67 @@ func New(ctx context.Context, config configuration.Config, db Database, permissi
 		adminAccess:       &auth.OpenidToken{},
 		devicerepo:        devicerepo,
 	}
-	_, err, _ = permissions.SetTopic(permclient.InternalAdminToken, configuration.GetTopicDesc(config))
+	topicDesc := configuration.GetTopicDesc(config)
+	_, err, _ = permissions.SetTopic(permclient.InternalAdminToken, topicDesc)
 	if err != nil {
 		return nil, err
 	}
+
+	topicDesc.Id = config.SmartServiceInstancePermissionsTopic
+	_, err, _ = permissions.SetTopic(permclient.InternalAdminToken, topicDesc)
+	if err != nil {
+		return nil, err
+	}
+
+	instances, _, err, _ := db.ListInstances("", model.InstanceQueryOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	permResources, err, _ := permissions.ListResourcesWithAdminPermission(permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, permclient.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	permResouceMap := map[string]permclient.Resource{}
+	for _, permResource := range permResources {
+		permResouceMap[permResource.Id] = permResource
+	}
+
+	dbIds := []string{}
+	for _, instance := range instances {
+		dbIds = append(dbIds, instance.Id)
+
+		_, ok := permResouceMap[instance.Id]
+		if !ok {
+			// missing in permissions v2
+			perm := permclient.ResourcePermissions{
+				UserPermissions: map[string]permclient.PermissionsMap{
+					instance.UserId: permclient.PermissionsMap{
+						Administrate: true,
+						Write:        true,
+						Read:         true,
+						Execute:      true,
+					},
+				},
+			}
+			_, err, _ = permissions.SetPermission(permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, instance.Id, perm)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	permResouceIds := maps.Keys(permResouceMap)
+
+	for permResouceId := range permResouceIds {
+		if !slices.Contains(dbIds, permResouceId) {
+			err, _ = permissions.RemoveResource(permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, permResouceId)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return ctrl, nil
 }
 
