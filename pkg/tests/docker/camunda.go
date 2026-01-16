@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-func Camunda(ctx context.Context, wg *sync.WaitGroup, pgIp string, pgPort string) (camundaUrl string, err error) {
+func Camunda(ctx context.Context, wg *sync.WaitGroup, pgPort string) (camundaUrl string, err error) {
 	log.Println("start camunda")
 	dbName := "camunda"
 	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -22,10 +22,10 @@ func Camunda(ctx context.Context, wg *sync.WaitGroup, pgIp string, pgPort string
 			),
 			Env: map[string]string{
 				"DB_PASSWORD": "pw",
-				"DB_URL":      "jdbc:postgresql://" + pgIp + ":" + pgPort + "/" + dbName,
+				"DB_URL":      "jdbc:postgresql://host.docker.internal:" + pgPort + "/" + dbName,
 				"DB_PORT":     pgPort,
 				"DB_NAME":     dbName,
-				"DB_HOST":     pgIp,
+				"DB_HOST":     "host.docker.internal",
 				"DB_DRIVER":   "org.postgresql.Driver",
 				"DB_USERNAME": "usr",
 				"DATABASE":    "postgres",
@@ -44,12 +44,13 @@ func Camunda(ctx context.Context, wg *sync.WaitGroup, pgIp string, pgPort string
 		log.Println("DEBUG: remove container camunda", c.Terminate(context.Background()))
 	}()
 
-	containerip, err := c.ContainerIP(ctx)
+	temp, err := c.MappedPort(ctx, "8080/tcp")
 	if err != nil {
 		return "", err
 	}
+	hostport := temp.Port()
 
-	camundaUrl = fmt.Sprintf("http://%s:%s", containerip, "8080")
+	camundaUrl = fmt.Sprintf("http://%s:%s", "127.0.0.1", hostport)
 
 	return camundaUrl, err
 }

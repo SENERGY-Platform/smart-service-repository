@@ -44,7 +44,7 @@ func TestMapMarshalling(t *testing.T) {
 		return
 	}
 
-	port, _, err := docker.MongoDB(ctx, wg)
+	port, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		t.Error(err)
 		return

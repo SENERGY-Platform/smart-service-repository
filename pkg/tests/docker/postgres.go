@@ -3,14 +3,15 @@ package docker
 import (
 	"context"
 	"fmt"
+	"log"
+	"sync"
+
 	_ "github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"log"
-	"sync"
 )
 
-func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr string, ip string, port string, err error) {
+func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr string, port string, err error) {
 	log.Println("start postgres")
 	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
@@ -29,7 +30,7 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 		Started: true,
 	})
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 
 	wg.Add(1)
@@ -39,16 +40,12 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 		log.Println("DEBUG: remove container postgres", c.Terminate(context.Background()))
 	}()
 
-	ip, err = c.ContainerIP(ctx)
-	if err != nil {
-		return "", "", "", err
-	}
 	temp, err := c.MappedPort(ctx, "5432/tcp")
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 	port = temp.Port()
-	conStr = fmt.Sprintf("postgres://usr:pw@%s:%s/%s?sslmode=disable", ip, "5432", dbname)
+	conStr = fmt.Sprintf("postgres://usr:pw@%s:%s/%s?sslmode=disable", "host.docker.internal", "5432", dbname)
 
-	return conStr, ip, port, err
+	return conStr, port, err
 }

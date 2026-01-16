@@ -72,7 +72,7 @@ func apiTestEnvWithPermClient(ctx context.Context, wg *sync.WaitGroup, camundaAn
 	}()
 	config.NotificationUrl = notificationMock.URL
 
-	port, _, err := docker.MongoDB(ctx, wg)
+	port, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		debug.PrintStack()
 		return "", config, devicerepoTestDb, perm, err
@@ -95,12 +95,12 @@ func apiTestEnvWithPermClient(ctx context.Context, wg *sync.WaitGroup, camundaAn
 	}
 
 	if camundaAndCqrsDependencies {
-		_, camundaPgIp, _, err := docker.Postgres(ctx, wg, "camunda")
+		_, port, err := docker.Postgres(ctx, wg, "camunda")
 		if err != nil {
 			return "", config, devicerepoTestDb, perm, err
 		}
 
-		config.CamundaUrl, err = docker.Camunda(ctx, wg, camundaPgIp, "5432")
+		config.CamundaUrl, err = docker.Camunda(ctx, wg, port)
 		if err != nil {
 			return "", config, devicerepoTestDb, perm, err
 		}

@@ -2,3 +2,4 @@ smart-service-repository
 .idea/
 *.iml
 .vscode
+__debug*
