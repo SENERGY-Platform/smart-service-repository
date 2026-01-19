@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-func Camunda(ctx context.Context, wg *sync.WaitGroup, pgPort string) (camundaUrl string, err error) {
+func Camunda(ctx context.Context, wg *sync.WaitGroup, pgPort string, conStr string) (camundaUrl string, err error) {
 	log.Println("start camunda")
 	dbName := "camunda"
 	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{

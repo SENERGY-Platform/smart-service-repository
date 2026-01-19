@@ -44,12 +44,12 @@ func TestMapMarshalling(t *testing.T) {
 		return
 	}
 
-	port, err := docker.MongoDB(ctx, wg)
+	host, port, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	config.MongoUrl = "mongodb://localhost:" + port
+	config.MongoUrl = "mongodb://" + host + ":" + port
 	config.MongoWithTransactions = false
 
 	m, err := mongo.New(config)

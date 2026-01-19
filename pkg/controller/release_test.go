@@ -19,6 +19,11 @@ package controller
 import (
 	"context"
 	"errors"
+	"net/http"
+	"sync"
+	"testing"
+	"time"
+
 	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
 	permclient "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
@@ -29,10 +34,6 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/docker"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
-	"net/http"
-	"sync"
-	"testing"
-	"time"
 )
 
 func TestReleaseDeleteRetry(t *testing.T) {
@@ -52,19 +53,19 @@ func TestReleaseDeleteRetry(t *testing.T) {
 
 	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
 
-	_, mongoIp, err := docker.MongoDB(ctx, wg)
+	host, port, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	config.MongoUrl = "mongodb://" + mongoIp + ":27017"
+	config.MongoUrl = "mongodb://" + host + ":" + port
 
-	_, permV2Ip, err := docker.PermissionsV2(ctx, wg, config.MongoUrl)
+	port, permV2Ip, err := docker.PermissionsV2(ctx, wg, config.MongoUrl)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	config.PermissionsV2Url = "http://" + permV2Ip + ":8080"
+	config.PermissionsV2Url = "http://" + permV2Ip + ":" + port
 
 	tokenprovider, err := auth.GetCachedTokenProvider(config)
 	if err != nil {
@@ -204,19 +205,19 @@ func TestUnfinishedReleaseRollback(t *testing.T) {
 
 	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
 
-	_, mongoIp, err := docker.MongoDB(ctx, wg)
+	host, port, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	config.MongoUrl = "mongodb://" + mongoIp + ":27017"
+	config.MongoUrl = "mongodb://" + host + ":" + port
 
-	_, permV2Ip, err := docker.PermissionsV2(ctx, wg, config.MongoUrl)
+	port, permV2Ip, err := docker.PermissionsV2(ctx, wg, config.MongoUrl)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	config.PermissionsV2Url = "http://" + permV2Ip + ":8080"
+	config.PermissionsV2Url = "http://" + permV2Ip + ":" + port
 
 	tokenprovider, err := auth.GetCachedTokenProvider(config)
 	if err != nil {
@@ -359,19 +360,19 @@ func TestReleaseDeploymentRollback(t *testing.T) {
 
 	config.AuthEndpoint = mocks.Keycloak(ctx, wg)
 
-	_, mongoIp, err := docker.MongoDB(ctx, wg)
+	host, port, err := docker.MongoDB(ctx, wg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	config.MongoUrl = "mongodb://" + mongoIp + ":27017"
+	config.MongoUrl = "mongodb://" + host + ":" + port
 
-	_, permV2Ip, err := docker.PermissionsV2(ctx, wg, config.MongoUrl)
+	port, permV2Ip, err := docker.PermissionsV2(ctx, wg, config.MongoUrl)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	config.PermissionsV2Url = "http://" + permV2Ip + ":8080"
+	config.PermissionsV2Url = "http://" + permV2Ip + ":" + port
 
 	tokenprovider, err := auth.GetCachedTokenProvider(config)
 	if err != nil {

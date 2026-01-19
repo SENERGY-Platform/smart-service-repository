@@ -18,13 +18,14 @@ package docker
 
 import (
 	"context"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"log"
 	"sync"
+
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func PermissionsV2(ctx context.Context, wg *sync.WaitGroup, mongoUrl string) (hostPort string, ipAddress string, err error) {
+func PermissionsV2(ctx context.Context, wg *sync.WaitGroup, mongoUrl string) (port string, host string, err error) {
 	log.Println("start permissions-v2")
 	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
@@ -49,15 +50,20 @@ func PermissionsV2(ctx context.Context, wg *sync.WaitGroup, mongoUrl string) (ho
 		log.Println("DEBUG: remove container permissions-v2", c.Terminate(context.Background()))
 	}()
 
-	ipAddress, err = c.ContainerIP(ctx)
-	if err != nil {
-		return "", "", err
-	}
-	temp, err := c.MappedPort(ctx, "8080/tcp")
-	if err != nil {
-		return "", "", err
-	}
-	hostPort = temp.Port()
+	host = "host.docker.internal"
+	port = "8080"
 
-	return hostPort, ipAddress, err
+	if inCIEnv() {
+		host, err = c.ContainerIP(ctx)
+		if err != nil {
+			return "", "", err
+		}
+	} else {
+		temp, err := c.MappedPort(ctx, "8080/tcp")
+		if err != nil {
+			return "", "", err
+		}
+		port = temp.Port()
+	}
+	return
 }

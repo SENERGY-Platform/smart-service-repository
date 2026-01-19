@@ -28,6 +28,8 @@ jobs:
       - name: Test
         timeout-minutes: 240
         uses: nick-fields/retry@v2
+        env:
+          CI: "true"
         with:
           max_attempts: 3
           retry_on: error

@@ -40,12 +40,22 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 		log.Println("DEBUG: remove container postgres", c.Terminate(context.Background()))
 	}()
 
-	temp, err := c.MappedPort(ctx, "5432/tcp")
-	if err != nil {
-		return "", "", err
+	host := "host.docker.internal"
+	port = "5432"
+
+	if inCIEnv() {
+		host, err = c.ContainerIP(ctx)
+		if err != nil {
+			return "", "", err
+		}
+	} else {
+		temp, err := c.MappedPort(ctx, "5432/tcp")
+		if err != nil {
+			return "", "", err
+		}
+		port = temp.Port()
 	}
-	port = temp.Port()
-	conStr = fmt.Sprintf("postgres://usr:pw@%s:%s/%s?sslmode=disable", "host.docker.internal", "5432", dbname)
+	conStr = fmt.Sprintf("postgres://usr:pw@%s:%s/%s?sslmode=disable", host, port, dbname)
 
 	return conStr, port, err
 }
