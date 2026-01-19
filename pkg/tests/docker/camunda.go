@@ -2,16 +2,34 @@ package docker
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"log"
 	"sync"
+
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 func Camunda(ctx context.Context, wg *sync.WaitGroup, pgPort string, conStr string) (camundaUrl string, err error) {
 	log.Println("start camunda")
 	dbName := "camunda"
+	env := map[string]string{
+		"DB_PASSWORD": "pw",
+		"DB_URL":      "jdbc:postgresql://host.docker.internal:" + pgPort + "/" + dbName,
+		"DB_PORT":     pgPort,
+		"DB_NAME":     dbName,
+		"DB_HOST":     "host.docker.internal",
+		"DB_DRIVER":   "org.postgresql.Driver",
+		"DB_USERNAME": "usr",
+		"DATABASE":    "postgres",
+	}
+	b, err := json.MarshalIndent(env, "", "  ")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	log.Printf("Env:\n%s\n", string(b))
+
 	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image:        "ghcr.io/senergy-platform/process-engine:v1.0.2", // dev | v1.0.2 | v1.0.4
@@ -20,16 +38,7 @@ func Camunda(ctx context.Context, wg *sync.WaitGroup, pgPort string, conStr stri
 				wait.ForListeningPort("8080/tcp"),
 				wait.ForLog("Server startup in"),
 			),
-			Env: map[string]string{
-				"DB_PASSWORD": "pw",
-				"DB_URL":      "jdbc:postgresql://host.docker.internal:" + pgPort + "/" + dbName,
-				"DB_PORT":     pgPort,
-				"DB_NAME":     dbName,
-				"DB_HOST":     "host.docker.internal",
-				"DB_DRIVER":   "org.postgresql.Driver",
-				"DB_USERNAME": "usr",
-				"DATABASE":    "postgres",
-			},
+			Env: env,
 		},
 		Started: true,
 	})
