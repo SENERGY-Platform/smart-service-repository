@@ -5,6 +5,6 @@ import (
 )
 
 func inCIEnv() bool {
-	os.Setenv("CI", "false")
+	os.Getenv("CI")
 	return os.Getenv("CI") == "true"
 }
