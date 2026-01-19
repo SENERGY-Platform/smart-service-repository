@@ -30,7 +30,7 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 		Started: true,
 	})
 	if err != nil {
-		return "", "", err
+		return
 	}
 
 	wg.Add(1)
@@ -46,12 +46,12 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 	if inCIEnv() {
 		host, err = c.ContainerIP(ctx)
 		if err != nil {
-			return "", "", err
+			return
 		}
 	} else {
 		temp, err := c.MappedPort(ctx, "5432/tcp")
 		if err != nil {
-			return "", "", err
+			return "", "", "", err
 		}
 		port = temp.Port()
 	}
