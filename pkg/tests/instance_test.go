@@ -965,13 +965,13 @@ func TestInstanceApi(t *testing.T) {
 		})
 	})
 
-	t.Run("read instance 404", func(t *testing.T) {
+	t.Run("read instance 403", func(t *testing.T) {
 		resp, err := get(userToken, apiUrl+"/instances/foo")
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if resp.StatusCode != http.StatusNotFound {
+		if resp.StatusCode != http.StatusForbidden {
 			temp, _ := io.ReadAll(resp.Body)
 			t.Error(resp.StatusCode, string(temp))
 			return

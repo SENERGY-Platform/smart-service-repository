@@ -149,7 +149,7 @@ func (this *Controller) appendAutoSelectParams(token auth.Token, parameters []mo
 }
 
 func (this *Controller) UpdateInstanceInfo(token auth.Token, id string, element model.SmartServiceInstanceInfo) (result model.SmartServiceInstance, err error, code int) {
-	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, result.Id, client.Write)
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, id, client.Write)
 	if err != nil {
 		return result, err, code
 	}
@@ -170,7 +170,7 @@ func (this *Controller) UpdateInstanceInfo(token auth.Token, id string, element 
 }
 
 func (this *Controller) RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameter, releaseId string) (result model.SmartServiceInstance, err error, code int) {
-	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, result.Id, client.Administrate)
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, id, client.Administrate)
 	if err != nil {
 		return result, err, code
 	}
