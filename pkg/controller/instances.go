@@ -21,10 +21,13 @@ import (
 	"errors"
 	"net/http"
 	"runtime/debug"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
+	perm_model "github.com/SENERGY-Platform/permissions-v2/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/notification"
@@ -119,6 +122,15 @@ func (this *Controller) CreateInstance(token auth.Token, releaseId string, insta
 
 	//return result without auto_select_all parameters
 	result.SmartServiceInstanceInit.Parameters = paramListWithoutAutoSelect
+	result.PermissionsInfo = model.PermissionsInfo{
+		Shared: false,
+		Permissions: map[string]bool{
+			"read":         true,
+			"write":        true,
+			"execute":      true,
+			"administrate": true,
+		},
+	}
 	return result, nil, http.StatusOK
 }
 
@@ -166,6 +178,17 @@ func (this *Controller) UpdateInstanceInfo(token auth.Token, id string, element 
 	result.SmartServiceInstanceInfo = element
 	result.UpdatedAt = time.Now().Unix()
 	err, code = this.db.SetInstance(result)
+	if err != nil {
+		return result, err, code
+	}
+	arr := []model.SmartServiceInstance{result}
+	err, code = this.fillPermissions(token, arr)
+	if err != nil {
+		return result, err, code
+	}
+	if len(arr) == 1 { // sanity check
+		result = arr[0]
+	}
 	return result, err, code
 }
 
@@ -271,6 +294,14 @@ func (this *Controller) RedeployInstance(token auth.Token, id string, parameters
 		return result, err, http.StatusInternalServerError
 	}
 
+	arr := []model.SmartServiceInstance{result}
+	err, code = this.fillPermissions(token, arr)
+	if err != nil {
+		return result, err, code
+	}
+	if len(arr) == 1 { // sanity check
+		result = arr[0]
+	}
 	return result, nil, http.StatusOK
 }
 
@@ -289,6 +320,10 @@ func (this *Controller) ListInstances(token auth.Token, query model.InstanceQuer
 		return
 	}
 	result = this.handleReadyAndErrorFields(result)
+	err, code = this.fillPermissions(token, result)
+	if err != nil {
+		return result, total, err, code
+	}
 	return
 }
 
@@ -306,6 +341,14 @@ func (this *Controller) GetInstance(token auth.Token, id string) (result model.S
 	}
 	result = this.handleReadyAndErrorField(result)
 	result = this.removeFinishedMaintenanceIds(result)
+	arr := []model.SmartServiceInstance{result}
+	err, code = this.fillPermissions(token, arr)
+	if err != nil {
+		return result, err, code
+	}
+	if len(arr) == 1 { // sanity check
+		result = arr[0]
+	}
 	return result, err, code
 }
 
@@ -574,6 +617,42 @@ func (this *Controller) replaceLongParameterWithVariableReference(params []model
 		}
 	}
 	return params
+}
+
+func (this *Controller) fillPermissions(token auth.Token, instances []model.SmartServiceInstance) (err error, code int) {
+	ids := []string{}
+	for _, instance := range instances {
+		ids = append(ids, instance.Id)
+	}
+
+	perms, err, code := this.permissions.ListComputedPermissions(token.Token, this.config.SmartServiceInstancePermissionsTopic, ids)
+	if err != nil {
+		return err, code
+	}
+
+	slices.SortFunc(perms, func(a, b perm_model.ComputedPermissions) int {
+		return strings.Compare(a.Id, b.Id)
+	})
+
+	for _, instance := range instances {
+		i, ok := slices.BinarySearchFunc(perms, instance.Id, func(a perm_model.ComputedPermissions, b string) int {
+			return strings.Compare(a.Id, b)
+		})
+		if !ok {
+			continue
+		}
+		perm := perms[i]
+		instance.PermissionsInfo = model.PermissionsInfo{
+			Shared:      instance.UserId != token.GetUserId(),
+			Permissions: map[string]bool{
+				"read":         perm.Read,
+				"write":        perm.Write,
+				"execute":      perm.Execute,
+				"administrate": perm.Administrate,
+			},
+		}
+	}
+	return nil, http.StatusOK
 }
 
 func createRef(id string) string {
