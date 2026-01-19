@@ -95,12 +95,12 @@ func apiTestEnvWithPermClient(ctx context.Context, wg *sync.WaitGroup, camundaAn
 	}
 
 	if camundaAndCqrsDependencies {
-		conStr, port, err := docker.Postgres(ctx, wg, "camunda")
+		conStr, host, port, err := docker.Postgres(ctx, wg, "camunda")
 		if err != nil {
 			return "", config, devicerepoTestDb, perm, err
 		}
 
-		config.CamundaUrl, err = docker.Camunda(ctx, wg, port, conStr)
+		config.CamundaUrl, err = docker.Camunda(ctx, wg, host, port, conStr)
 		if err != nil {
 			return "", config, devicerepoTestDb, perm, err
 		}

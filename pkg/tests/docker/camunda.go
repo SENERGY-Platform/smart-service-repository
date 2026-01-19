@@ -11,15 +11,15 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func Camunda(ctx context.Context, wg *sync.WaitGroup, pgPort string, conStr string) (camundaUrl string, err error) {
+func Camunda(ctx context.Context, wg *sync.WaitGroup, pgHost, pgPort string, conStr string) (camundaUrl string, err error) {
 	log.Println("start camunda")
 	dbName := "camunda"
 	env := map[string]string{
 		"DB_PASSWORD": "pw",
-		"DB_URL":      "jdbc:postgresql://host.docker.internal:" + pgPort + "/" + dbName,
+		"DB_URL":      "jdbc:postgresql://" + pgHost + ":" + pgPort + "/" + dbName,
 		"DB_PORT":     pgPort,
 		"DB_NAME":     dbName,
-		"DB_HOST":     "host.docker.internal",
+		"DB_HOST":     pgHost,
 		"DB_DRIVER":   "org.postgresql.Driver",
 		"DB_USERNAME": "usr",
 		"DATABASE":    "postgres",

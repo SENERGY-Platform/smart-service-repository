@@ -11,7 +11,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr string, port string, err error) {
+func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr string, host, port string, err error) {
 	log.Println("start postgres")
 	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
@@ -40,7 +40,7 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 		log.Println("DEBUG: remove container postgres", c.Terminate(context.Background()))
 	}()
 
-	host := "host.docker.internal"
+	host = "host.docker.internal"
 	port = "5432"
 
 	if inCIEnv() {
@@ -57,5 +57,5 @@ func Postgres(ctx context.Context, wg *sync.WaitGroup, dbname string) (conStr st
 	}
 	conStr = fmt.Sprintf("postgres://usr:pw@%s:%s/%s?sslmode=disable", host, port, dbname)
 
-	return conStr, port, err
+	return
 }
