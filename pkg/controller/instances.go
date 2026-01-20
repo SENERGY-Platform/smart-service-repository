@@ -635,13 +635,13 @@ func (this *Controller) fillPermissions(token auth.Token, instances []model.Smar
 	})
 
 	for i := range instances {
-		i, ok := slices.BinarySearchFunc(perms, instances[i].Id, func(a perm_model.ComputedPermissions, b string) int {
+		j, ok := slices.BinarySearchFunc(perms, instances[i].Id, func(a perm_model.ComputedPermissions, b string) int {
 			return strings.Compare(a.Id, b)
 		})
 		if !ok {
 			continue
 		}
-		perm := perms[i]
+		perm := perms[j]
 		instances[i].PermissionsInfo = model.PermissionsInfo{
 			Shared: instances[i].UserId != token.GetUserId(),
 			Permissions: map[string]bool{
