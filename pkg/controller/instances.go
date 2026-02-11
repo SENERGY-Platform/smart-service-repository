@@ -314,6 +314,9 @@ func (this *Controller) ListInstances(token auth.Token, query model.InstanceQuer
 	if err != nil {
 		return result, total, err, code
 	}
+	if len(accessibleIds) == 0 {
+		return result, 0, nil, http.StatusOK
+	}
 	query.IDs = accessibleIds
 	result, total, err, code = this.db.ListInstances("", query)
 	if err != nil {
