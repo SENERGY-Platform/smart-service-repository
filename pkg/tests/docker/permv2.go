@@ -37,6 +37,7 @@ func PermissionsV2(ctx context.Context, wg *sync.WaitGroup, mongoUrl string) (po
 			ExposedPorts:    []string{"8080/tcp"},
 			WaitingFor:      wait.ForListeningPort("8080/tcp"),
 			AlwaysPullImage: true,
+			//LogConsumerCfg: &testcontainers.LogConsumerConfig{Consumers: []testcontainers.LogConsumer{LogConsumer{Prefix: "permissions-v2-log:"}}},
 		},
 		Started: true,
 	})

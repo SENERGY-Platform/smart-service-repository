@@ -18,11 +18,13 @@ package mongo
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/http"
 )
 
 func (this *Mongo) SetModules(elements []model.SmartServiceModule) (error, int) {
@@ -36,6 +38,7 @@ func (this *Mongo) SetModules(elements []model.SmartServiceModule) (error, int) 
 
 	f := func(ctx context.Context) (result interface{}, err error) {
 		for _, element := range elements {
+			element.LastUpdate = time.Now().Unix()
 			result, err = this.moduleCollection().ReplaceOne(
 				ctx,
 				bson.M{

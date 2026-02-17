@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
+
+	"github.com/testcontainers/testcontainers-go"
 )
 
 func inCIEnv() bool {
-	ci := os.Getenv("CI") == "true"
+	ci := os.Getenv("CI") == "true" || runtime.GOOS == "linux"
 	if !ci {
 		log.Println("Not in CI")
 		b, err := json.MarshalIndent(os.Environ(), "", "  ")
@@ -18,4 +21,12 @@ func inCIEnv() bool {
 		log.Printf("Env:\n%s\n", string(b))
 	}
 	return ci
+}
+
+type LogConsumer struct {
+	Prefix string
+}
+
+func (this LogConsumer) Accept(l testcontainers.Log) {
+	fmt.Print(this.Prefix + string(l.Content))
 }

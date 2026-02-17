@@ -104,6 +104,7 @@ type SmartServiceModuleBase struct {
 	InstanceId string `json:"instance_id" bson:"instance_id"`
 	DesignId   string `json:"design_id" bson:"design_id"`
 	ReleaseId  string `json:"release_id" bson:"release_id"`
+	LastUpdate int64  `json:"last_update" bson:"last_update"`
 }
 
 type SmartServiceModule struct {

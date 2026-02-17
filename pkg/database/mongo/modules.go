@@ -19,12 +19,14 @@ package mongo
 import (
 	"context"
 	"errors"
+	"net/http"
+	"runtime/debug"
+	"time"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/http"
-	"runtime/debug"
 )
 
 var ModuleBson = getBsonFieldObject[model.SmartServiceModule]()
@@ -91,6 +93,7 @@ func (this *Mongo) GetModule(id string, userId string) (result model.SmartServic
 
 func (this *Mongo) SetModule(element model.SmartServiceModule) (error, int) {
 	ctx, _ := getTimeoutContext()
+	element.LastUpdate = time.Now().Unix()
 	_, err := this.moduleCollection().ReplaceOne(
 		ctx,
 		bson.M{
