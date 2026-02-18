@@ -1734,6 +1734,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/modules/{id}/error": {
+            "put": {
+                "description": "sets smart-service module error",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "modules",
+                    "error"
+                ],
+                "summary": "sets smart-service module error",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Module ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "error message (json encoded)",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/releases": {
             "get": {
                 "description": "returns a list of smart-service releases",
@@ -2330,7 +2372,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "error": {
-                    "description": "is set if module-worker notifies the repository about a error",
+                    "description": "is set if module-worker notifies the repository about an error, may be set by module.error",
                     "type": "string"
                 },
                 "id": {
@@ -2347,6 +2389,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.SmartServiceParameter"
                     }
+                },
+                "permissions_info": {
+                    "$ref": "#/definitions/model.PermissionsInfo"
                 },
                 "ready": {
                     "type": "boolean"
@@ -2421,6 +2466,9 @@ const docTemplate = `{
                 "design_id": {
                     "type": "string"
                 },
+                "error": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -2432,6 +2480,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "last_update": {
+                    "type": "integer"
                 },
                 "module_data": {
                     "type": "object",

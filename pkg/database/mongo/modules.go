@@ -78,15 +78,18 @@ func (this *Mongo) GetModule(id string, userId string) (result model.SmartServic
 	}
 	temp := this.moduleCollection().FindOne(ctx, filter)
 	err = temp.Err()
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return result, ErrModuleNotFound, http.StatusNotFound
 	}
 	if err != nil {
 		return
 	}
 	err = temp.Decode(&result)
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return result, ErrModuleNotFound, http.StatusNotFound
+	}
+	if err != nil {
+		return result, err, http.StatusInternalServerError
 	}
 	return result, nil, http.StatusOK
 }
@@ -172,4 +175,18 @@ func (this *Mongo) RemoveModulesOfInstance(instanceId string, userId string) (er
 		return err, http.StatusInternalServerError
 	}
 	return nil, http.StatusOK
+}
+
+func (this *Mongo) SetModuleError(id string, userId string, errMsg string) error {
+	ctx, _ := getTimeoutContext()
+	filter := bson.M{
+		ModuleBson.Id: id,
+	}
+	if userId != "" {
+		filter[ModuleBson.UserId] = userId
+	}
+	_, err := this.moduleCollection().UpdateOne(ctx, filter, bson.M{
+		"$set": bson.M{ModuleBson.Error: errMsg},
+	})
+	return err
 }

@@ -19,13 +19,15 @@ package controller
 import (
 	"errors"
 	"fmt"
-	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/notification"
+	"github.com/google/uuid"
 )
 
 func (this *Controller) AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (result model.SmartServiceModule, err error, code int) {
@@ -224,4 +226,38 @@ func (this *Controller) GetModule(token auth.Token, id string) (model.SmartServi
 		return model.SmartServiceModule{}, errors.New("missing instance read access"), http.StatusForbidden
 	}
 	return this.db.GetModule(id, "")
+}
+
+func (this *Controller) SetModuleError(token auth.Token, moduleId string, errMsg string) (error, int) {
+	module, err, code := this.db.GetModule(moduleId, "")
+	if err != nil {
+		return err, code
+	}
+	instanceId := module.InstanceId
+	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Write)
+	if err != nil {
+		return err, code
+	}
+	if !access {
+		return errors.New("missing instance write access"), http.StatusForbidden
+	}
+	if moduleId == "" {
+		return errors.New("missing module id"), http.StatusBadRequest
+	}
+
+	userId, err, code := this.getInstanceUserId(instanceId)
+	if err != nil {
+		return err, code
+	}
+
+	_ = notification.Send(this.config.NotificationUrl, notification.Message{
+		UserId:  userId,
+		Title:   fmt.Sprintf("Smart-Service-Instance Error (Instance-ID:%s, Module-ID:%s)", instanceId, moduleId),
+		Message: errMsg,
+	}, this.config.GetLogger())
+	err = this.db.SetModuleError(moduleId, userId, errMsg)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	return nil, http.StatusOK
 }

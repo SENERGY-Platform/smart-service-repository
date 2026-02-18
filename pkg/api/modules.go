@@ -18,12 +18,13 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/julienschmidt/httprouter"
-	"net/http"
-	"strconv"
 )
 
 func init() {
@@ -326,5 +327,38 @@ func (this *Modules) Get(config configuration.Config, router *httprouter.Router,
 		}
 		writer.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(module)
+	})
+}
+
+// SetModuleError godoc
+// @Summary      sets smart-service module error
+// @Description  sets smart-service module error
+// @Tags         modules, error
+// @Accept       json
+// @Param        id path string true "Module ID"
+// @Param        message body string true "error message (json encoded)"
+// @Success      200
+// @Failure      500
+// @Failure      401
+// @Router       /modules/{id}/error [put]
+func (this *Modules) SetModuleError(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.PUT("/modules/:id/error", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		errMsg := ""
+		err = json.NewDecoder(request.Body).Decode(&errMsg)
+		if err != nil {
+			http.Error(writer, "expect json encoded string in body", http.StatusBadRequest)
+			return
+		}
+		err, code := ctrl.SetModuleError(token, params.ByName("id"), errMsg)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
 	})
 }

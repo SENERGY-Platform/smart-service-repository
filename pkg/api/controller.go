@@ -40,6 +40,7 @@ type ModulesInterface interface {
 	ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
 	DeleteModule(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)
 	GetModule(token auth.Token, id string) (model.SmartServiceModule, error, int)
+	SetModuleError(token auth.Token, moduleId string, errMsg string) (error, int)
 }
 
 type BulkModulesInterface interface {

@@ -42,6 +42,7 @@ type ModuleInterface interface {
 	ListModules(userId string, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
 	ListAllModules(query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int)
 	SetInstanceError(id string, userId string, errMsg string) error
+	SetModuleError(id string, userId string, errMsg string) error
 }
 
 type InstanceInterface interface {

@@ -19,12 +19,14 @@ package mongo
 import (
 	"context"
 	"errors"
+	"net/http"
+	"runtime/debug"
+	"slices"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/http"
-	"runtime/debug"
 )
 
 var InstanceBson = getBsonFieldObject[model.SmartServiceInstance]()
@@ -74,15 +76,22 @@ func (this *Mongo) GetInstance(id string, userId string) (result model.SmartServ
 	}
 	temp := this.instanceCollection().FindOne(ctx, filter)
 	err = temp.Err()
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return result, ErrInstanceNotFound, http.StatusNotFound
 	}
 	if err != nil {
 		return
 	}
 	err = temp.Decode(&result)
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return result, ErrInstanceNotFound, http.StatusNotFound
+	}
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	result, err = this.AddModuleErrorToInstance(userId, result)
+	if err != nil {
+		return result, err, http.StatusInternalServerError
 	}
 	return result, nil, http.StatusOK
 }
@@ -148,7 +157,10 @@ func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions
 	if err != nil {
 		return result, total, err, code
 	}
-
+	result, err = this.AddModuleErrorToInstances(userId, result)
+	if err != nil {
+		return result, total, err, http.StatusInternalServerError
+	}
 	total, err = this.instanceCollection().CountDocuments(ctx, filter)
 	if err != nil {
 		return nil, 0, err, http.StatusInternalServerError
@@ -182,5 +194,53 @@ func (this *Mongo) ListInstancesOfRelease(userId string, releaseId string) (resu
 		return result, err, http.StatusInternalServerError
 	}
 	defer cursor.Close(context.Background())
-	return readCursorResult[model.SmartServiceInstance](ctx, cursor)
+	result, err, code = readCursorResult[model.SmartServiceInstance](ctx, cursor)
+	if err != nil {
+		return result, err, code
+	}
+	result, err = this.AddModuleErrorToInstances(userId, result)
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	return result, nil, http.StatusOK
+}
+
+func (this *Mongo) AddModuleErrorToInstance(userId string, instance model.SmartServiceInstance) (model.SmartServiceInstance, error) {
+	list, err := this.AddModuleErrorToInstances(userId, []model.SmartServiceInstance{instance})
+	if err != nil {
+		return instance, err
+	}
+	if len(list) == 0 {
+		return instance, errors.New("AddModuleErrorToInstance: unexpected number of instances returned")
+	}
+	return list[0], nil
+}
+
+func (this *Mongo) AddModuleErrorToInstances(userId string, instances []model.SmartServiceInstance) ([]model.SmartServiceInstance, error) {
+	ids := []string{}
+	for _, instance := range instances {
+		if instance.Error != "" && !slices.Contains(ids, instance.Id) {
+			ids = append(ids, instance.Id)
+		}
+	}
+	if len(ids) == 0 {
+		return instances, nil
+	}
+	modules, err, _ := this.ListModules(userId, model.ModuleQueryOptions{InstanceIds: ids})
+	if err != nil {
+		return instances, err
+	}
+	for _, module := range modules {
+		if module.Error == "" {
+			continue
+		}
+		for i, instance := range instances {
+			if instance.Id == module.InstanceId {
+				instance.Error = module.Error
+				instances[i] = instance
+				break
+			}
+		}
+	}
+	return instances, nil
 }

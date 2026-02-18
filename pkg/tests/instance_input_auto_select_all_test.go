@@ -19,10 +19,6 @@ package tests
 import (
 	"context"
 	"encoding/json"
-	"github.com/SENERGY-Platform/models/go/models"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 	"io"
 	"net/http"
 	"net/url"
@@ -31,6 +27,11 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/SENERGY-Platform/models/go/models"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 )
 
 func TestInstanceAutoSelectAllInput(t *testing.T) {
@@ -55,6 +56,8 @@ func TestInstanceAutoSelectAllInput(t *testing.T) {
 	err = testDeviceRepoDb.SetCharacteristic(ctx, models.Characteristic{
 		Id:   "urn:infai:ses:characteristic:0b041ea3-8efd-4ce4-8130-d8af320326a4",
 		Name: "location",
+	}, func(characteristic models.Characteristic) error {
+		return nil
 	})
 	if err != nil {
 		t.Error(err)

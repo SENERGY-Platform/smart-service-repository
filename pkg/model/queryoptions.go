@@ -22,6 +22,7 @@ type ModuleQueryOptions struct {
 	KeyFilter        *string
 	TypeFilter       *string
 	InstanceIdFilter *string
+	InstanceIds      []string
 	Limit            int
 	Offset           int
 	Sort             string

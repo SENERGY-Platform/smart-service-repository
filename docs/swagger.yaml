@@ -210,7 +210,8 @@ definitions:
       design_id:
         type: string
       error:
-        description: is set if module-worker notifies the repository about a error
+        description: is set if module-worker notifies the repository about an error,
+          may be set by module.error
         type: string
       id:
         type: string
@@ -222,6 +223,8 @@ definitions:
         items:
           $ref: '#/definitions/model.SmartServiceParameter'
         type: array
+      permissions_info:
+        $ref: '#/definitions/model.PermissionsInfo'
       ready:
         type: boolean
       release_id:
@@ -270,6 +273,8 @@ definitions:
         $ref: '#/definitions/model.ModuleDeleteInfo'
       design_id:
         type: string
+      error:
+        type: string
       id:
         type: string
       instance_id:
@@ -278,6 +283,8 @@ definitions:
         items:
           type: string
         type: array
+      last_update:
+        type: integer
       module_data:
         additionalProperties: true
         type: object
@@ -1578,6 +1585,34 @@ paths:
       summary: read a smart-service module
       tags:
       - modules
+  /modules/{id}/error:
+    put:
+      consumes:
+      - application/json
+      description: sets smart-service module error
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: error message (json encoded)
+        in: body
+        name: message
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      summary: sets smart-service module error
+      tags:
+      - modules
+      - error
   /releases:
     get:
       description: returns a list of smart-service releases
