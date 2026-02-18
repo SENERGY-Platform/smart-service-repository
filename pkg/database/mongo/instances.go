@@ -19,6 +19,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"runtime/debug"
 	"slices"
@@ -236,7 +237,7 @@ func (this *Mongo) AddModuleErrorToInstances(userId string, instances []model.Sm
 		}
 		for i, instance := range instances {
 			if instance.Id == module.InstanceId {
-				instance.Error = module.Error
+				instance.Error = fmt.Sprintf("module error: module.id = %s; module.type= %s; error = %s", module.Id, module.ModuleType, module.Error)
 				instances[i] = instance
 				break
 			}
