@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
@@ -68,6 +69,14 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 		if instanceIdFilter != "" {
 			query.InstanceIdFilter = &instanceIdFilter
 		}
+		instanceIdsFilter := request.URL.Query().Get("instance_ids")
+		if instanceIdsFilter != "" {
+			query.InstanceIds = strings.Split(instanceIdsFilter, ",")
+			for i, id := range query.InstanceIds {
+				query.InstanceIds[i] = strings.TrimSpace(id)
+			}
+		}
+
 		limit := request.URL.Query().Get("limit")
 		if limit != "" {
 			query.Limit, err = strconv.Atoi(limit)

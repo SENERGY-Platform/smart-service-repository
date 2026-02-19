@@ -136,6 +136,9 @@ func (this *Mongo) ListModules(userId string, query model.ModuleQueryOptions) (r
 	if query.InstanceIdFilter != nil {
 		filter[ModuleBson.InstanceId] = *query.InstanceIdFilter
 	}
+	if query.InstanceIds != nil {
+		filter[ModuleBson.InstanceId] = bson.M{"$in": query.InstanceIds}
+	}
 	if query.TypeFilter != nil {
 		filter[ModuleBson.ModuleType] = *query.TypeFilter
 	}

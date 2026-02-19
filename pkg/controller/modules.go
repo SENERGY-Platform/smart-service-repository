@@ -84,13 +84,28 @@ func (this *Controller) addModule(instanceId string, module model.SmartServiceMo
 
 func (this *Controller) ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int) {
 	userId := token.GetUserId()
-	if query.InstanceIdFilter != nil {
+	if token.IsAdmin() {
+		userId = ""
+	}
+	if !token.IsAdmin() && query.InstanceIdFilter != nil {
 		access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, *query.InstanceIdFilter, client.Read)
 		if err != nil {
 			return nil, err, code
 		}
 		if !access {
 			return nil, errors.New("missing instance read access"), http.StatusForbidden
+		}
+		userId = "" //instance read access already checked
+	}
+	if !token.IsAdmin() && query.InstanceIds != nil {
+		permResult, err, code := this.permissions.CheckMultiplePermissions(token.Token, this.config.SmartServiceInstancePermissionsTopic, query.InstanceIds, client.Read)
+		if err != nil {
+			return nil, err, code
+		}
+		for _, access := range permResult {
+			if !access {
+				return nil, errors.New("missing instance read access"), http.StatusForbidden
+			}
 		}
 		userId = "" //instance read access already checked
 	}
