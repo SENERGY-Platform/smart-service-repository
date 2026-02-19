@@ -264,12 +264,14 @@ func (this *Controller) SetModuleError(token auth.Token, moduleId string, errMsg
 	if err != nil {
 		return err, code
 	}
+	if errMsg != "" {
+		_ = notification.Send(this.config.NotificationUrl, notification.Message{
+			UserId:  userId,
+			Title:   fmt.Sprintf("Smart-Service-Instance Error (Instance-ID:%s, Module-ID:%s)", instanceId, moduleId),
+			Message: errMsg,
+		}, this.config.GetLogger())
+	}
 
-	_ = notification.Send(this.config.NotificationUrl, notification.Message{
-		UserId:  userId,
-		Title:   fmt.Sprintf("Smart-Service-Instance Error (Instance-ID:%s, Module-ID:%s)", instanceId, moduleId),
-		Message: errMsg,
-	}, this.config.GetLogger())
 	err = this.db.SetModuleError(moduleId, userId, errMsg)
 	if err != nil {
 		return err, http.StatusInternalServerError
