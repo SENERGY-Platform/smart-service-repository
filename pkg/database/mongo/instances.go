@@ -220,7 +220,7 @@ func (this *Mongo) AddModuleErrorToInstance(userId string, instance model.SmartS
 func (this *Mongo) AddModuleErrorToInstances(userId string, instances []model.SmartServiceInstance) ([]model.SmartServiceInstance, error) {
 	ids := []string{}
 	for _, instance := range instances {
-		if instance.Error != "" && !slices.Contains(ids, instance.Id) {
+		if instance.Error == "" && !slices.Contains(ids, instance.Id) {
 			ids = append(ids, instance.Id)
 		}
 	}

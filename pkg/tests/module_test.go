@@ -20,9 +20,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -33,6 +30,10 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/mocks"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 )
 
 func TestModuleApi(t *testing.T) {
@@ -289,6 +290,149 @@ func TestModuleApi(t *testing.T) {
 
 	t.Run("list mock-type modules", func(t *testing.T) {
 		testModuleList(t, apiUrl, "?module_type="+url.QueryEscape(mocks.CAMUNDA_MODULE_WORKER_TOPIC), 2, []string{instanceA.Id, instanceB.Id}, []string{mocks.CAMUNDA_MODULE_WORKER_TOPIC})
+	})
+
+	t.Run("module error", func(t *testing.T) {
+		testModule := model.SmartServiceModule{}
+		t.Run("get modules", func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/modules?module_type=test-module")
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			modules := []model.SmartServiceModule{}
+			err = json.NewDecoder(resp.Body).Decode(&modules)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if len(modules) != 1 || modules[0].InstanceId != instanceA.Id {
+				t.Error(modules)
+			}
+			testModule = modules[0]
+		})
+		if testModule.Id == "" {
+			t.Error(testModule)
+			return
+		}
+		t.Run("set module error", func(t *testing.T) {
+			resp, err := put(userToken, apiUrl+"/modules/"+url.PathEscape(testModule.Id)+"/error", "test error message")
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+			}
+		})
+
+		t.Run("check module errors in list", func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/modules?module_type=test-module")
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			modules := []model.SmartServiceModule{}
+			err = json.NewDecoder(resp.Body).Decode(&modules)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if len(modules) != 1 || modules[0].InstanceId != instanceA.Id || modules[0].Error != "test error message" {
+				t.Error(modules)
+			}
+		})
+
+		t.Run("check module errors", func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/modules/"+url.PathEscape(testModule.Id))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			module := model.SmartServiceModule{}
+			err = json.NewDecoder(resp.Body).Decode(&module)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if module.InstanceId != instanceA.Id || module.Error != "test error message" {
+				t.Error(module)
+			}
+		})
+
+		t.Run("check module errors in instance", func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/instances/"+url.PathEscape(testModule.InstanceId))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			instance := model.SmartServiceInstance{}
+			err = json.NewDecoder(resp.Body).Decode(&instance)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if instance.Error == "" {
+				t.Error(instance.Id, instance.Name, instance.Error)
+			}
+		})
+
+		t.Run("check module errors in instance list", func(t *testing.T) {
+			resp, err := get(userToken, apiUrl+"/instances")
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				temp, _ := io.ReadAll(resp.Body)
+				t.Error(resp.StatusCode, string(temp))
+				return
+			}
+			checkContentType(t, resp)
+			instances := []model.SmartServiceInstance{}
+			err = json.NewDecoder(resp.Body).Decode(&instances)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			found := false
+			for _, instance := range instances {
+				if instance.Id == testModule.InstanceId {
+					found = true
+				}
+				if instance.Id == testModule.InstanceId && instance.Error == "" {
+					t.Error(instance.Id, instance.Name, instance.Error)
+				}
+			}
+			if !found {
+				t.Error("missing test instance")
+			}
+		})
 	})
 
 	t.Run("delete instance", func(t *testing.T) {
