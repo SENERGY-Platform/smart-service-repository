@@ -41,6 +41,7 @@ type Modules struct{}
 // @Tags         modules
 // @Param        module_type query string false "filter by module type"
 // @Param        instance_id query string false "filter by instance id"
+// @Param        instance_ids query string false "filter by a list of instance ids"
 // @Param        key query string false "filter by key"
 // @Param        limit query integer false "limits size of result; 0 means unlimited"
 // @Param        offset query integer false "offset to be used in combination with limit"

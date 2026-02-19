@@ -1636,6 +1636,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "filter by a list of instance ids",
+                        "name": "instance_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "filter by key",
                         "name": "key",
                         "in": "query"

@@ -1516,6 +1516,10 @@ paths:
         in: query
         name: instance_id
         type: string
+      - description: filter by a list of instance ids
+        in: query
+        name: instance_ids
+        type: string
       - description: filter by key
         in: query
         name: key
