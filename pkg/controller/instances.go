@@ -19,6 +19,7 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"runtime/debug"
 	"slices"
@@ -495,17 +496,17 @@ func (this *Controller) setInstanceError(instanceId string, errMsg string) (erro
 		return errors.New("missing instance id"), http.StatusBadRequest
 	}
 
-	userId, err, code := this.getInstanceUserId(instanceId)
+	instance, err, code := this.db.GetInstance(instanceId, "")
 	if err != nil {
 		return err, code
 	}
 
 	_ = notification.Send(this.config.NotificationUrl, notification.Message{
-		UserId:  userId,
-		Title:   "Smart-Service-Instance Error (Instance-ID:" + instanceId + ")",
-		Message: errMsg,
+		UserId:  instance.UserId,
+		Title:   "Smart-Service-Instance Error",
+		Message: fmt.Sprintf("Smart-Service-Instance Error \nInstance-Name: %s \nInstance-ID: %s \nError: %s", instance.Name, instanceId, errMsg),
 	}, this.config.GetLogger())
-	err = this.db.SetInstanceError(instanceId, userId, errMsg)
+	err = this.db.SetInstanceError(instanceId, instance.UserId, errMsg)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

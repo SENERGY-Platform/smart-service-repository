@@ -260,19 +260,19 @@ func (this *Controller) SetModuleError(token auth.Token, moduleId string, errMsg
 		return errors.New("missing module id"), http.StatusBadRequest
 	}
 
-	userId, err, code := this.getInstanceUserId(instanceId)
+	instance, err, code := this.db.GetInstance(instanceId, "")
 	if err != nil {
 		return err, code
 	}
-	if errMsg != "" {
+	if errMsg != "" && instance.Error == "" {
 		_ = notification.Send(this.config.NotificationUrl, notification.Message{
-			UserId:  userId,
-			Title:   fmt.Sprintf("Smart-Service-Instance Error (Instance-ID:%s, Module-ID:%s)", instanceId, moduleId),
-			Message: errMsg,
+			UserId:  instance.UserId,
+			Title:   "Smart-Service-Module Error",
+			Message: fmt.Sprintf("Smart-Service-Module Error \nInstance-Name: %s \nInstance-ID: %s \nModule-ID: %s \nModule-Type: %s \nError: %s", instance.Name, instanceId, moduleId, module.ModuleType, errMsg),
 		}, this.config.GetLogger())
 	}
 
-	err = this.db.SetModuleError(moduleId, userId, errMsg)
+	err = this.db.SetModuleError(moduleId, instance.UserId, errMsg)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
