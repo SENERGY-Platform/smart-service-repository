@@ -2067,6 +2067,20 @@
         }
     },
     "definitions": {
+        "model.AnalyticsReleaseModuleInfo": {
+            "type": "object",
+            "properties": {
+                "desc": {
+                    "type": "string"
+                },
+                "flow_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Characteristic": {
             "type": "object",
             "properties": {
@@ -2275,6 +2289,17 @@
                 },
                 "shared": {
                     "type": "boolean"
+                }
+            }
+        },
+        "model.ReleaseModuleInfo": {
+            "type": "object",
+            "properties": {
+                "analytics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AnalyticsReleaseModuleInfo"
+                    }
                 }
             }
         },
@@ -2614,6 +2639,9 @@
                     "items": {
                         "$ref": "#/definitions/model.MaintenanceProcedure"
                     }
+                },
+                "module_info": {
+                    "$ref": "#/definitions/model.ReleaseModuleInfo"
                 },
                 "parameter_descriptions": {
                     "type": "array",

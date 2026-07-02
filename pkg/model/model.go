@@ -63,6 +63,7 @@ type PermissionsInfo struct {
 type SmartServiceReleaseInfo struct {
 	ParameterDescriptions []ParameterDescription `json:"parameter_descriptions" bson:"parameter_descriptions"`
 	MaintenanceProcedures []MaintenanceProcedure `json:"maintenance_procedures" bson:"maintenance_procedures"`
+	ModuleInfo            ReleaseModuleInfo      `json:"module_info" bson:"module_info"`
 }
 
 type SmartServiceInstance struct {
@@ -125,4 +126,14 @@ type SmartServiceModuleInit struct {
 type ModuleDeleteInfo struct {
 	Url    string `json:"url" bson:"url"` //url receives a DELETE request and responds with a status code < 300 || code == 404 if ok
 	UserId string `json:"user_id" bson:"user_id"`
+}
+
+type ReleaseModuleInfo struct {
+	Analytics []AnalyticsReleaseModuleInfo `json:"analytics" bson:"analytics"`
+}
+
+type AnalyticsReleaseModuleInfo struct {
+	FlowId string `json:"flow_id" bson:"flow_id"`
+	Name   string `json:"name" bson:"name"`
+	Desc   string `json:"desc" bson:"desc"`
 }

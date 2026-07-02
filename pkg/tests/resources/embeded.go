@@ -19,10 +19,17 @@ package resources
 import (
 	_ "embed"
 	"encoding/json"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"log"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
+
+//go:embed v2_smart_service_analytics_process_example.bpmn
+var AnalyticsExampleSmartService1 string
+
+//go:embed v2_smart_service_analytics_export_example.bpmn
+var AnalyticsExampleSmartService2 string
 
 //go:embed nameanddesc.bpmn
 var NamedDescBpmn string

@@ -19,15 +19,16 @@ package mongo
 import (
 	"context"
 	"errors"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"regexp"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var ReleaseBson = getBsonFieldObject[model.SmartServiceReleaseExtended]()
@@ -163,14 +164,14 @@ func (this *Mongo) GetRelease(id string, withMarked bool) (result model.SmartSer
 	}
 	temp := this.releaseCollection().FindOne(ctx, filter)
 	err = temp.Err()
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return result, ErrReleaseNotFound, http.StatusNotFound
 	}
 	if err != nil {
 		return
 	}
 	err = temp.Decode(&result)
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return result, ErrReleaseNotFound, http.StatusNotFound
 	}
 	return result, nil, http.StatusOK

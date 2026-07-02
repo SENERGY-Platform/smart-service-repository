@@ -19,10 +19,6 @@ package tests
 import (
 	"context"
 	"encoding/json"
-	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
-	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 	"io"
 	"net/http"
 	"net/url"
@@ -31,7 +27,212 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
+	permmodel "github.com/SENERGY-Platform/permissions-v2/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 )
+
+func TestReleaseModuleInfoParsing(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+		debug.PrintStack()
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	design1 := model.SmartServiceDesign{}
+	t.Run("create design 1", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml: resources.AnalyticsExampleSmartService1,
+			SvgXml:  resources.NamedDescSvg,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design1)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if design1.SvgXml != resources.NamedDescSvg {
+			t.Error(design1.SvgXml)
+			return
+		}
+		if design1.Id == "" {
+			t.Error(design1.Id)
+			return
+		}
+	})
+
+	design2 := model.SmartServiceDesign{}
+	t.Run("create design 2", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml: resources.AnalyticsExampleSmartService2,
+			SvgXml:  resources.NamedDescSvg,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design2)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if design2.SvgXml != resources.NamedDescSvg {
+			t.Error(design2.SvgXml)
+			return
+		}
+		if design2.Id == "" {
+			t.Error(design2.Id)
+			return
+		}
+	})
+
+	release1 := model.SmartServiceRelease{}
+	t.Run("create release 1", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design1.Id,
+			Name:        "release name",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release1)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	release2 := model.SmartServiceRelease{}
+	t.Run("create release 2", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			DesignId:    design2.Id,
+			Name:        "release name",
+			Description: "test description",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&release2)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	t.Run("read release 1", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/extended-releases/"+url.PathEscape(release1.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		r := model.SmartServiceReleaseExtended{}
+		err = json.NewDecoder(resp.Body).Decode(&r)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if len(r.ParsedInfo.ModuleInfo.Analytics) != 1 {
+			t.Error(r.ParsedInfo.ModuleInfo.Analytics)
+			return
+		}
+		if r.ParsedInfo.ModuleInfo.Analytics[0].FlowId != "62bd43205e353260a94ad6cd" {
+			t.Error(r.ParsedInfo.ModuleInfo.Analytics[0].FlowId)
+		}
+		if r.ParsedInfo.ModuleInfo.Analytics[0].Name != "smart-service cycle analytics" {
+			t.Error(r.ParsedInfo.ModuleInfo.Analytics[0].Name)
+		}
+		if r.ParsedInfo.ModuleInfo.Analytics[0].Desc != "cycle analytics" {
+			t.Error(r.ParsedInfo.ModuleInfo.Analytics[0].Desc)
+		}
+
+	})
+
+	t.Run("read release 2", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/extended-releases/"+url.PathEscape(release2.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		r := model.SmartServiceReleaseExtended{}
+		err = json.NewDecoder(resp.Body).Decode(&r)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if len(r.ParsedInfo.ModuleInfo.Analytics) != 1 {
+			t.Error(r.ParsedInfo.ModuleInfo.Analytics)
+			return
+		}
+		if r.ParsedInfo.ModuleInfo.Analytics[0].FlowId != "62bd43205e353260a94ad6cd" {
+			t.Error(r.ParsedInfo.ModuleInfo.Analytics[0].FlowId)
+		}
+		if r.ParsedInfo.ModuleInfo.Analytics[0].Name != "smart-service cycle analytics" {
+			t.Error(r.ParsedInfo.ModuleInfo.Analytics[0].Name)
+		}
+		if r.ParsedInfo.ModuleInfo.Analytics[0].Desc != "cycle analytics" {
+			t.Error(r.ParsedInfo.ModuleInfo.Analytics[0].Desc)
+		}
+	})
+
+}
 
 func TestReleaseSearch(t *testing.T) {
 	if CI {

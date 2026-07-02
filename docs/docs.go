@@ -2075,6 +2075,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.AnalyticsReleaseModuleInfo": {
+            "type": "object",
+            "properties": {
+                "desc": {
+                    "type": "string"
+                },
+                "flow_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Characteristic": {
             "type": "object",
             "properties": {
@@ -2283,6 +2297,17 @@ const docTemplate = `{
                 },
                 "shared": {
                     "type": "boolean"
+                }
+            }
+        },
+        "model.ReleaseModuleInfo": {
+            "type": "object",
+            "properties": {
+                "analytics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AnalyticsReleaseModuleInfo"
+                    }
                 }
             }
         },
@@ -2622,6 +2647,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.MaintenanceProcedure"
                     }
+                },
+                "module_info": {
+                    "$ref": "#/definitions/model.ReleaseModuleInfo"
                 },
                 "parameter_descriptions": {
                     "type": "array",

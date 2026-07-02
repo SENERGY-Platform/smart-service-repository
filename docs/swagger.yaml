@@ -1,5 +1,14 @@
 basePath: /
 definitions:
+  model.AnalyticsReleaseModuleInfo:
+    properties:
+      desc:
+        type: string
+      flow_id:
+        type: string
+      name:
+        type: string
+    type: object
   model.Characteristic:
     properties:
       allowed_values:
@@ -146,6 +155,13 @@ definitions:
         type: object
       shared:
         type: boolean
+    type: object
+  model.ReleaseModuleInfo:
+    properties:
+      analytics:
+        items:
+          $ref: '#/definitions/model.AnalyticsReleaseModuleInfo'
+        type: array
     type: object
   model.SmartServiceDesign:
     properties:
@@ -373,6 +389,8 @@ definitions:
         items:
           $ref: '#/definitions/model.MaintenanceProcedure'
         type: array
+      module_info:
+        $ref: '#/definitions/model.ReleaseModuleInfo'
       parameter_descriptions:
         items:
           $ref: '#/definitions/model.ParameterDescription'
