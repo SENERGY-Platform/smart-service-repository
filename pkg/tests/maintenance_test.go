@@ -175,6 +175,7 @@ func TestMaintenanceProcedure(t *testing.T) {
 			return
 		}
 		expectedInfo := model.SmartServiceReleaseInfo{
+			ModuleInfo: model.ReleaseModuleInfo{Analytics: []model.AnalyticsReleaseModuleInfo{}},
 			ParameterDescriptions: []model.ParameterDescription{
 				{
 					Id:           "value_input",

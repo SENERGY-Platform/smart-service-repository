@@ -255,7 +255,15 @@ func (this *Controller) GetExtendedRelease(token auth.Token, id string) (result 
 	if !access {
 		return result, errors.New("access denied"), http.StatusForbidden
 	}
-	return this.db.GetRelease(id, false)
+	result, err, code = this.db.GetRelease(id, false)
+	if err != nil {
+		return result, err, code
+	}
+	result, err = this.ensureValidReleaseModuleInfo(result)
+	if err != nil {
+		return result, err, http.StatusInternalServerError
+	}
+	return result, nil, http.StatusOK
 }
 
 func (this *Controller) ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, total int64, err error, code int) {
@@ -305,6 +313,10 @@ func (this *Controller) ListExtendedReleases(token auth.Token, query model.Relea
 		release.PermissionsInfo = model.PermissionsInfo{
 			Shared:      token.GetUserId() != release.Creator,
 			Permissions: permissionsIndex[release.Id],
+		}
+		release, err = this.ensureValidReleaseModuleInfo(release)
+		if err != nil {
+			return result, total, err, http.StatusInternalServerError
 		}
 		result = append(result, release)
 	}

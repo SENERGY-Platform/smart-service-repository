@@ -277,6 +277,7 @@ func (this *Controller) parseReleaseModuleInfo(doc *etree.Document) (result mode
 			this.config.GetLogger().Error("Recovered Error", "error", r, "stack", string(debug.Stack()))
 		}
 	}()
+	result.Analytics = []model.AnalyticsReleaseModuleInfo{}
 	for _, element := range doc.FindElements("//bpmn:serviceTask[@camunda:topic='" + AnalyticsTopic + "']") {
 		analyticsInfo, err := this.parseAnalyticsReleaseModuleInfo(element)
 		if err != nil {
@@ -307,6 +308,23 @@ func (this *Controller) parseAnalyticsReleaseModuleInfo(element *etree.Element) 
 		case AnalyticsParamPrefix + "desc":
 			result.Desc = paramValue
 		}
+	}
+	return result, nil
+}
+
+func (this *Controller) ensureValidReleaseModuleInfo(element model.SmartServiceReleaseExtended) (result model.SmartServiceReleaseExtended, err error) {
+	if element.ParsedInfo.ModuleInfo.Analytics != nil {
+		return element, nil
+	}
+	result = element
+	doc := etree.NewDocument()
+	err = doc.ReadFromString(element.BpmnXml)
+	if err != nil {
+		return result, fmt.Errorf("unable to parse bpmn xml for ensureValidReleaseModuleInfo: %w", err)
+	}
+	result.ParsedInfo.ModuleInfo, err = this.parseReleaseModuleInfo(doc)
+	if err != nil {
+		return result, fmt.Errorf("unable to parse release module info for ensureValidReleaseModuleInfo: %w", err)
 	}
 	return result, nil
 }
