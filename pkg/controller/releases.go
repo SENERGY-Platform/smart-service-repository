@@ -213,10 +213,21 @@ func (this *Controller) deployRelease(release model.SmartServiceReleaseExtended)
 
 	for _, old := range oldReleases {
 		if old.CreatedAt < release.CreatedAt && old.Id != release.Id { //"if" to prevent race from  HandleReleaseDelete() to recreate deleted release
-			old.NewReleaseId = release.Id
-			err, _ = this.db.SetRelease(old, false)
+			instances, err, _ := this.db.ListInstancesOfRelease("", old.Id)
 			if err != nil {
 				return err
+			}
+			if len(instances) == 0 && this.config.DeleteUnusedOldVersionReleases {
+				err = this.deleteRelease(old.Id)
+				if err != nil {
+					return err
+				}
+			} else {
+				old.NewReleaseId = release.Id
+				err, _ = this.db.SetRelease(old, false)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

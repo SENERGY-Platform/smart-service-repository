@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"reflect"
 	"runtime/debug"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -33,6 +34,288 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/tests/resources"
 )
+
+func TestReleaseDeleteOfOldVersions(t *testing.T) {
+	if CI {
+		t.Skip("not in ci")
+	}
+	t.Setenv("DELETE_UNUSED_OLD_VERSION_RELEASES", "true")
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	apiUrl, _, _, err := apiTestEnv(ctx, wg, true, nil, func(err error) {
+		debug.PrintStack()
+		t.Error(err)
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	design := model.SmartServiceDesign{}
+	t.Run("create design", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/designs", model.SmartServiceDesign{
+			BpmnXml:     resources.ComplexSelectionBpmn,
+			SvgXml:      resources.ComplexSelectionSvg,
+			Description: "test description",
+			Name:        "test name",
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&design)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
+	releaseV1 := model.SmartServiceRelease{}
+	t.Run("create releases v1", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			Name:        "v1",
+			Description: "bar",
+			DesignId:    design.Id,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		err = json.NewDecoder(resp.Body).Decode(&releaseV1)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		time.Sleep(1 * time.Second)
+	})
+	instance := model.SmartServiceInstance{}
+	t.Run("create instance", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases/"+url.PathEscape(releaseV1.Id)+"/instances", model.SmartServiceInstanceInit{
+			SmartServiceInstanceInfo: model.SmartServiceInstanceInfo{
+				Name:        "instance name",
+				Description: "instance description",
+			},
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		err = json.NewDecoder(resp.Body).Decode(&instance)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+	releaseV2 := model.SmartServiceRelease{}
+	t.Run("create releases v2", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			Name:        "v2",
+			Description: "bar",
+			DesignId:    design.Id,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		err = json.NewDecoder(resp.Body).Decode(&releaseV2)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		time.Sleep(1 * time.Second)
+	})
+	t.Run("list releases after v2 create", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/releases")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		releases := []model.SmartServiceRelease{}
+		err = json.NewDecoder(resp.Body).Decode(&releases)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if len(releases) != 2 {
+			t.Error(len(releases))
+		}
+		if !slices.ContainsFunc(releases, func(release model.SmartServiceRelease) bool {
+			return release.Name == "v2"
+		}) {
+			t.Error("v2 not found")
+		}
+		if !slices.ContainsFunc(releases, func(release model.SmartServiceRelease) bool {
+			return release.Name == "v1"
+		}) {
+			t.Error("v1 not found")
+		}
+		if !slices.ContainsFunc(releases, func(release model.SmartServiceRelease) bool {
+			return release.Name == "v1" && release.NewReleaseId == releaseV2.Id
+		}) {
+			t.Error("v1 NewReleaseId not set")
+			t.Error(releaseV2.Id)
+			t.Errorf("%#v", releases)
+		}
+	})
+	releaseV3 := model.SmartServiceRelease{}
+	t.Run("create releases v3", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			Name:        "v3",
+			Description: "bar",
+			DesignId:    design.Id,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		err = json.NewDecoder(resp.Body).Decode(&releaseV3)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		time.Sleep(1 * time.Second)
+	})
+	t.Run("list releases after v3 create", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/extended-releases")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		releases := []model.SmartServiceReleaseExtended{}
+		err = json.NewDecoder(resp.Body).Decode(&releases)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if len(releases) != 2 {
+			t.Error(len(releases))
+		}
+		if !slices.ContainsFunc(releases, func(release model.SmartServiceReleaseExtended) bool {
+			return release.Name == "v3"
+		}) {
+			t.Error("v3 not found")
+		}
+		if !slices.ContainsFunc(releases, func(release model.SmartServiceReleaseExtended) bool {
+			return release.Name == "v1"
+		}) {
+			t.Error("v1 not found")
+		}
+		if !slices.ContainsFunc(releases, func(release model.SmartServiceReleaseExtended) bool {
+			return release.Name == "v1" && release.NewReleaseId == releaseV3.Id
+		}) {
+			t.Error("v1 NewReleaseId not set")
+		}
+	})
+	t.Run("delete instance", func(t *testing.T) {
+		resp, err := delete(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		time.Sleep(1 * time.Second)
+	})
+	releaseV4 := model.SmartServiceRelease{}
+	t.Run("create releases v4", func(t *testing.T) {
+		resp, err := post(userToken, apiUrl+"/releases", model.SmartServiceRelease{
+			Name:        "v4",
+			Description: "bar",
+			DesignId:    design.Id,
+		})
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		err = json.NewDecoder(resp.Body).Decode(&releaseV4)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		time.Sleep(1 * time.Second)
+	})
+	t.Run("list releases after v3 create", func(t *testing.T) {
+		resp, err := get(userToken, apiUrl+"/extended-releases")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		checkContentType(t, resp)
+		releases := []model.SmartServiceReleaseExtended{}
+		err = json.NewDecoder(resp.Body).Decode(&releases)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if len(releases) != 1 {
+			t.Error(len(releases))
+		}
+		if !slices.ContainsFunc(releases, func(release model.SmartServiceReleaseExtended) bool {
+			return release.Name == "v4"
+		}) {
+			t.Error("v4 not found")
+		}
+	})
+}
 
 func TestReleaseModuleInfoParsing(t *testing.T) {
 	if CI {
@@ -238,6 +521,7 @@ func TestReleaseSearch(t *testing.T) {
 	if CI {
 		t.Skip("not in ci")
 	}
+	t.Setenv("DELETE_UNUSED_OLD_VERSION_RELEASES", "false")
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -733,6 +1017,7 @@ func TestReleaseApi(t *testing.T) {
 	if CI {
 		t.Skip("not in ci")
 	}
+	t.Setenv("DELETE_UNUSED_OLD_VERSION_RELEASES", "false")
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -894,6 +1179,8 @@ func TestReleaseApi(t *testing.T) {
 }
 
 func TestReleaseUpdate(t *testing.T) {
+	t.Setenv("DELETE_UNUSED_OLD_VERSION_RELEASES", "false")
+
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 

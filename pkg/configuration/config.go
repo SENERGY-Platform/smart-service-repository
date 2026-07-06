@@ -57,6 +57,8 @@ type Config struct {
 	MarkAgeLimit                         Duration `json:"mark_age_limit"`
 	LogLevel                             string   `json:"log_level"`
 
+	DeleteUnusedOldVersionReleases bool `json:"delete_unused_old_version_releases"`
+
 	logger *slog.Logger `json:"-"`
 }
 

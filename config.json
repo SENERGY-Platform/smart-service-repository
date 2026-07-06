@@ -28,6 +28,8 @@
     "auth_expiration_time_buffer": 2,
     "token_cache_default_expiration_in_seconds": 60,
 
+    "delete_unused_old_version_releases": true,
+
     "cleanup_cycle": "1h",
     "mark_age_limit": "5m"
 }
