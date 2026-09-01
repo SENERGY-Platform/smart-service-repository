@@ -17,6 +17,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -66,7 +67,7 @@ func (this *Releases) Create(config configuration.Config, router *httprouter.Rou
 			element.Id = ctrl.GetNewId()
 		}
 
-		result, err, code := ctrl.CreateRelease(token, element)
+		result, err, code := ctrl.CreateRelease(request.Context(), token, element)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -112,7 +113,7 @@ func (this *Releases) Delete(config configuration.Config, router *httprouter.Rou
 			}
 		}
 
-		err, code := ctrl.DeleteRelease(token, id, deletePreviousReleases)
+		err, code := ctrl.DeleteRelease(request.Context(), token, id, deletePreviousReleases)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -143,7 +144,7 @@ func (this *Releases) Get(config configuration.Config, router *httprouter.Router
 			http.Error(writer, "missing id", http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.GetRelease(token, id)
+		result, err, code := ctrl.GetRelease(request.Context(), token, id)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -226,7 +227,7 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 			}
 		}
 
-		result, total, err, code := ctrl.ListReleases(token, query)
+		result, total, err, code := ctrl.ListReleases(request.Context(), token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -234,7 +235,7 @@ func (this *Releases) List(config configuration.Config, router *httprouter.Route
 		writer.Header().Set("X-Total-Count", strconv.FormatInt(total, 10))
 
 		if addUsableFlag {
-			withUsableFlat, err := addUsableFlagToReleases(ctrl, token, result)
+			withUsableFlat, err := addUsableFlagToReleases(request.Context(), ctrl, token, result)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
 				return
@@ -270,7 +271,7 @@ func (this *Releases) GetExtended(config configuration.Config, router *httproute
 			http.Error(writer, "missing id", http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.GetExtendedRelease(token, id)
+		result, err, code := ctrl.GetExtendedRelease(request.Context(), token, id)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -359,7 +360,7 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 			query.Ids = strings.Split(ids, ",")
 		}
 
-		result, total, err, code := ctrl.ListExtendedReleases(token, query)
+		result, total, err, code := ctrl.ListExtendedReleases(request.Context(), token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -368,7 +369,7 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 		writer.Header().Set("X-Total-Count", strconv.FormatInt(total, 10))
 
 		if addUsableFlag {
-			withUsableFlat, err := addUsableFlagToExtendedReleases(ctrl, token, result)
+			withUsableFlat, err := addUsableFlagToExtendedReleases(request.Context(), ctrl, token, result)
 			if err != nil {
 				http.Error(writer, err.Error(), code)
 				return
@@ -382,14 +383,14 @@ func (this *Releases) ListExtended(config configuration.Config, router *httprout
 	})
 }
 
-func addUsableFlagToExtendedReleases(ctrl Controller, token auth.Token, releases []model.SmartServiceReleaseExtended) (result []model.SmartServiceReleaseExtendedWithUsableFlag, err error) {
+func addUsableFlagToExtendedReleases(ctx context.Context, ctrl Controller, token auth.Token, releases []model.SmartServiceReleaseExtended) (result []model.SmartServiceReleaseExtendedWithUsableFlag, err error) {
 	wg := sync.WaitGroup{}
 	mux := sync.Mutex{}
 	for _, release := range releases {
 		wg.Add(1)
 		go func(release model.SmartServiceReleaseExtended) {
 			defer wg.Done()
-			parameter, temperr, _ := ctrl.GetReleaseParameterWithoutAuthCheck(token, release.Id)
+			parameter, temperr, _ := ctrl.GetReleaseParameterWithoutAuthCheck(ctx, token, release.Id)
 			if temperr != nil {
 				err = temperr
 				return
@@ -412,7 +413,7 @@ func addUsableFlagToExtendedReleases(ctrl Controller, token auth.Token, releases
 	return result, err
 }
 
-func addUsableFlagToReleases(ctrl Controller, token auth.Token, releases []model.SmartServiceRelease) (result []model.SmartServiceReleaseWithUsableFlag, err error) {
+func addUsableFlagToReleases(ctx context.Context, ctrl Controller, token auth.Token, releases []model.SmartServiceRelease) (result []model.SmartServiceReleaseWithUsableFlag, err error) {
 	mux := sync.Mutex{}
 	wg := sync.WaitGroup{}
 	result = make([]model.SmartServiceReleaseWithUsableFlag, len(releases))
@@ -420,7 +421,7 @@ func addUsableFlagToReleases(ctrl Controller, token auth.Token, releases []model
 		wg.Add(1)
 		go func(index int, release model.SmartServiceRelease) {
 			defer wg.Done()
-			parameter, temperr, _ := ctrl.GetReleaseParameterWithoutAuthCheck(token, release.Id)
+			parameter, temperr, _ := ctrl.GetReleaseParameterWithoutAuthCheck(ctx, token, release.Id)
 			if err != nil {
 				err = temperr
 				return
@@ -466,7 +467,7 @@ func (this *Releases) Parameters(config configuration.Config, router *httprouter
 			http.Error(writer, "missing id", http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.GetReleaseParameter(token, id)
+		result, err, code := ctrl.GetReleaseParameter(request.Context(), token, id)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -506,7 +507,7 @@ func (this *Releases) Start(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.CreateInstance(token, id, instance)
+		result, err, code := ctrl.CreateInstance(request.Context(), token, id, instance)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

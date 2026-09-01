@@ -18,13 +18,16 @@ package mongo
 
 import (
 	"context"
+	"reflect"
+	"time"
+
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"reflect"
-	"time"
+	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 )
 
 type Mongo struct {
@@ -36,8 +39,14 @@ var CreateCollections = []func(db *Mongo) error{}
 
 func New(conf configuration.Config) (*Mongo, error) {
 	ctx, _ := getTimeoutContext()
+	//otelmongo needs an initialized open-telemetry; mongo.New() may run before the api is started.
+	//the returned handler is unused, the call is done for the initialisation, which happens only once per process.
+	_, err := otelx.GinOpenTelemetry(context.Background(), configuration.ServiceName, conf.OtelEndpoint)
+	if err != nil {
+		conf.GetLogger().Error("unable to init open-telemetry -> continue without tracing", "error", err)
+	}
 	reg := bson.NewRegistryBuilder().RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{})).Build() //ensure map marshalling to interface
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoUrl), options.Client().SetRegistry(reg))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoUrl), options.Client().SetRegistry(reg), options.Client().SetMonitor(otelmongo.NewMonitor()))
 	if err != nil {
 		return nil, err
 	}
@@ -52,6 +61,13 @@ func New(conf configuration.Config) (*Mongo, error) {
 	return db, nil
 }
 
-func getTimeoutContext() (context.Context, context.CancelFunc) {
+// getTimeoutContext derives a context with the mongo timeout from the given parent.
+// context.WithoutCancel keeps the trace-context and the baggage of the parent, which is
+// what the otelmongo monitor and the logging need, but not its cancellation: a client that
+// aborts its request must not cancel a write that is already running.
+func getTimeoutContext(parent ...context.Context) (context.Context, context.CancelFunc) {
+	if len(parent) > 0 && parent[0] != nil {
+		return context.WithTimeout(context.WithoutCancel(parent[0]), 10*time.Second)
+	}
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }

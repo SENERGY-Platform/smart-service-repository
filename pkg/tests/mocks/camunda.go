@@ -17,6 +17,7 @@
 package mocks
 
 import (
+	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
@@ -24,44 +25,44 @@ type CamundaErrMock struct {
 	Err error
 }
 
-func (this *CamundaErrMock) DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool) {
+func (this *CamundaErrMock) DeployRelease(_ context.Context, owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool) {
 	return this.Err, false
 }
 
-func (this *CamundaErrMock) RemoveRelease(id string) error {
+func (this *CamundaErrMock) RemoveRelease(_ context.Context, id string) error {
 	return this.Err
 }
 
-func (this *CamundaErrMock) Start(result model.SmartServiceInstance) error {
+func (this *CamundaErrMock) Start(_ context.Context, result model.SmartServiceInstance) error {
 	return this.Err
 }
 
-func (this *CamundaErrMock) CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool, err error) {
+func (this *CamundaErrMock) CheckInstanceReady(_ context.Context, smartServiceInstanceId string) (finished bool, missing bool, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (this *CamundaErrMock) StopInstance(smartServiceInstanceId string) error {
+func (this *CamundaErrMock) StopInstance(_ context.Context, smartServiceInstanceId string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (this *CamundaErrMock) DeleteInstance(instance model.HistoricProcessInstance) (err error) {
+func (this *CamundaErrMock) DeleteInstance(_ context.Context, instance model.HistoricProcessInstance) (err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (this *CamundaErrMock) GetProcessInstanceBusinessKey(processInstanceId string) (string, error, int) {
+func (this *CamundaErrMock) GetProcessInstanceBusinessKey(_ context.Context, processInstanceId string) (string, error, int) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (this *CamundaErrMock) GetProcessInstanceList() (result []model.HistoricProcessInstance, err error) {
+func (this *CamundaErrMock) GetProcessInstanceList(_ context.Context) (result []model.HistoricProcessInstance, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (this *CamundaErrMock) StartMaintenance(releaseId string, procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error {
+func (this *CamundaErrMock) StartMaintenance(_ context.Context, releaseId string, procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error {
 	//TODO implement me
 	panic("implement me")
 }

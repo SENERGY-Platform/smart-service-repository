@@ -17,6 +17,7 @@
 package camunda
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,20 +25,26 @@ import (
 	"net/http"
 	"net/url"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 )
 
-func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, exists bool, err error) {
+func (this *Camunda) getProcessDefinition(ctx context.Context, id string) (result ProcessDefinition, exists bool, err error) {
 	key := idToCNName(id)
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(key), nil)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in getProcessDefinition", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in getProcessDefinition", "error", err, "stack", string(debug.Stack()))
+		return result, false, err
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
+	if err != nil {
 		return result, false, err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in getProcessDefinition", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in getProcessDefinition", "error", err, "stack", string(debug.Stack()))
 		return result, false, err
 	}
 	defer resp.Body.Close()
@@ -48,7 +55,7 @@ func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, 
 		temp, _ := io.ReadAll(resp.Body)
 		err = errors.New(string(temp))
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in getProcessDefinition", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in getProcessDefinition", "error", err, "stack", string(debug.Stack()))
 		return result, false, err
 	}
 	exists = true
@@ -56,8 +63,12 @@ func (this *Camunda) getProcessDefinition(id string) (result ProcessDefinition, 
 	return
 }
 
-func (this *Camunda) getProcessDefinitionList() (result []ProcessDefinition, err error) {
+func (this *Camunda) getProcessDefinitionList(ctx context.Context) (result []ProcessDefinition, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition", nil)
+	if err != nil {
+		return result, this.filterUrlFromErr(err)
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
 	if err != nil {
 		return result, this.filterUrlFromErr(err)
 	}
@@ -76,15 +87,19 @@ func (this *Camunda) getProcessDefinitionList() (result []ProcessDefinition, err
 	return
 }
 
-func (this *Camunda) getProcessDefinitionListByKey(key string) (result []ProcessDefinition, err error) {
+func (this *Camunda) getProcessDefinitionListByKey(ctx context.Context, key string) (result []ProcessDefinition, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition?key="+url.QueryEscape(key), nil)
+	if err != nil {
+		return result, this.filterUrlFromErr(err)
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
 	if err != nil {
 		return result, this.filterUrlFromErr(err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in getProcessDefinitionListByKey", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in getProcessDefinitionListByKey", "error", err, "stack", string(debug.Stack()))
 		return result, err
 	}
 	defer resp.Body.Close()

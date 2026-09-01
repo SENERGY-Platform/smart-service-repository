@@ -45,19 +45,19 @@ type Controller struct {
 type Permissions = permclient.Client
 
 type Camunda interface {
-	DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool)
-	RemoveRelease(id string) error
-	Start(result model.SmartServiceInstance) error
-	CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool, err error)
-	StopInstance(smartServiceInstanceId string) error
-	DeleteInstance(instance model.HistoricProcessInstance) (err error)
-	GetProcessInstanceBusinessKey(processInstanceId string) (string, error, int)
-	GetProcessInstanceList() (result []model.HistoricProcessInstance, err error)
-	StartMaintenance(releaseId string, procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error
+	DeployRelease(ctx context.Context, owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool)
+	RemoveRelease(ctx context.Context, id string) error
+	Start(ctx context.Context, result model.SmartServiceInstance) error
+	CheckInstanceReady(ctx context.Context, smartServiceInstanceId string) (finished bool, missing bool, err error)
+	StopInstance(ctx context.Context, smartServiceInstanceId string) error
+	DeleteInstance(ctx context.Context, instance model.HistoricProcessInstance) (err error)
+	GetProcessInstanceBusinessKey(ctx context.Context, processInstanceId string) (string, error, int)
+	GetProcessInstanceList(ctx context.Context) (result []model.HistoricProcessInstance, err error)
+	StartMaintenance(ctx context.Context, releaseId string, procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error
 }
 
 type Selectables interface {
-	Get(token auth.Token, searchedEntities []string, criteria []model.Criteria) (result []model.Selectable, err error, code int)
+	Get(ctx context.Context, token auth.Token, searchedEntities []string, criteria []model.Criteria) (result []model.Selectable, err error, code int)
 }
 
 type UserTokenProvider = func(userid string) (token auth.Token, err error)
@@ -76,23 +76,23 @@ func New(ctx context.Context, config configuration.Config, db Database, permissi
 		devicerepo:        devicerepo,
 	}
 	topicDesc := configuration.GetTopicDesc(config)
-	_, err, _ = permissions.SetTopic(permclient.InternalAdminToken, topicDesc)
+	_, err, _ = permissions.SetTopicContext(ctx, permclient.InternalAdminToken, topicDesc)
 	if err != nil {
 		return nil, err
 	}
 
 	topicDesc.Id = config.SmartServiceInstancePermissionsTopic
-	_, err, _ = permissions.SetTopic(permclient.InternalAdminToken, topicDesc)
+	_, err, _ = permissions.SetTopicContext(ctx, permclient.InternalAdminToken, topicDesc)
 	if err != nil {
 		return nil, err
 	}
 
-	instances, _, err, _ := db.ListInstances("", model.InstanceQueryOptions{})
+	instances, _, err, _ := db.ListInstances(ctx, "", model.InstanceQueryOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	permResources, err, _ := permissions.ListResourcesWithAdminPermission(permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, permclient.ListOptions{})
+	permResources, err, _ := permissions.ListResourcesWithAdminPermissionContext(ctx, permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, permclient.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func New(ctx context.Context, config configuration.Config, db Database, permissi
 					},
 				},
 			}
-			_, err, _ = permissions.SetPermission(permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, instance.Id, perm)
+			_, err, _ = permissions.SetPermissionContext(ctx, permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, instance.Id, perm)
 			if err != nil {
 				return nil, err
 			}
@@ -129,7 +129,7 @@ func New(ctx context.Context, config configuration.Config, db Database, permissi
 
 	for permResouceId := range permResouceIds {
 		if !slices.Contains(dbIds, permResouceId) {
-			err, _ = permissions.RemoveResource(permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, permResouceId)
+			err, _ = permissions.RemoveResourceContext(ctx, permclient.InternalAdminToken, config.SmartServiceInstancePermissionsTopic, permResouceId)
 			if err != nil {
 				return nil, err
 			}

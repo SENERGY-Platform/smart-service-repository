@@ -17,13 +17,15 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
+	"net/http"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"net/http"
 )
 
-func (this *Controller) getParamOptions(token auth.Token, desc model.ParameterDescription) (result []model.Option, err error, code int) {
+func (this *Controller) getParamOptions(ctx context.Context, token auth.Token, desc model.ParameterDescription) (result []model.Option, err error, code int) {
 	if desc.Options != nil {
 		result = []model.Option{}
 		for label, value := range desc.Options {
@@ -35,20 +37,20 @@ func (this *Controller) getParamOptions(token auth.Token, desc model.ParameterDe
 		return result, nil, http.StatusOK
 	}
 	if desc.IotDescription != nil {
-		return this.getIotOptions(token, desc.IotDescription)
+		return this.getIotOptions(ctx, token, desc.IotDescription)
 	}
 	return nil, nil, http.StatusOK
 }
 
-func (this *Controller) getIotOptions(token auth.Token, description *model.IotDescription) ([]model.Option, error, int) {
-	selectables, err, code := this.selectables.Get(token, description.TypeFilter, description.Criteria)
+func (this *Controller) getIotOptions(ctx context.Context, token auth.Token, description *model.IotDescription) ([]model.Option, error, int) {
+	selectables, err, code := this.selectables.Get(ctx, token, description.TypeFilter, description.Criteria)
 	if err != nil {
 		return nil, err, code
 	}
-	return this.selectablesToOptions(selectables, description.EntityOnly, description.NeedsSameEntityIdInParameter)
+	return this.selectablesToOptions(ctx, selectables, description.EntityOnly, description.NeedsSameEntityIdInParameter)
 }
 
-func (this *Controller) selectablesToOptions(selectables []model.Selectable, entityOnly bool, sameEntityInParameter string) (result []model.Option, err error, code int) {
+func (this *Controller) selectablesToOptions(ctx context.Context, selectables []model.Selectable, entityOnly bool, sameEntityInParameter string) (result []model.Option, err error, code int) {
 	result = []model.Option{} //SNRGY-2756: iot options may not be nil. they have to be at least an empty list.
 	for _, selectable := range selectables {
 		if selectable.Device != nil {

@@ -70,8 +70,8 @@ func (this *Mongo) moduleCollection() *mongo.Collection {
 	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionModule)
 }
 
-func (this *Mongo) GetModule(id string, userId string) (result model.SmartServiceModule, err error, code int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) GetModule(ctx context.Context, id string, userId string) (result model.SmartServiceModule, err error, code int) {
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{ModuleBson.Id: id}
 	if userId != "" {
 		filter[ModuleBson.UserId] = userId
@@ -94,8 +94,8 @@ func (this *Mongo) GetModule(id string, userId string) (result model.SmartServic
 	return result, nil, http.StatusOK
 }
 
-func (this *Mongo) SetModule(element model.SmartServiceModule) (error, int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) SetModule(ctx context.Context, element model.SmartServiceModule) (error, int) {
+	ctx, _ = getTimeoutContext(ctx)
 	element.LastUpdate = time.Now().Unix()
 	_, err := this.moduleCollection().ReplaceOne(
 		ctx,
@@ -111,8 +111,8 @@ func (this *Mongo) SetModule(element model.SmartServiceModule) (error, int) {
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) DeleteModule(id string, userId string) (error, int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) DeleteModule(ctx context.Context, id string, userId string) (error, int) {
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{
 		ModuleBson.Id: id,
 	}
@@ -126,9 +126,9 @@ func (this *Mongo) DeleteModule(id string, userId string) (error, int) {
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) ListModules(userId string, query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int) {
+func (this *Mongo) ListModules(ctx context.Context, userId string, query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int) {
 	opt := createFindOptions(query)
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{}
 	if userId != "" {
 		filter[ModuleBson.UserId] = userId
@@ -153,9 +153,9 @@ func (this *Mongo) ListModules(userId string, query model.ModuleQueryOptions) (r
 	return readCursorResult[model.SmartServiceModule](ctx, cursor)
 }
 
-func (this *Mongo) ListAllModules(query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int) {
+func (this *Mongo) ListAllModules(ctx context.Context, query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int) {
 	opt := createFindOptions(query)
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{}
 	cursor, err := this.moduleCollection().Find(ctx, filter, opt)
 	if err != nil {
@@ -165,8 +165,8 @@ func (this *Mongo) ListAllModules(query model.ModuleQueryOptions) (result []mode
 	return readCursorResult[model.SmartServiceModule](ctx, cursor)
 }
 
-func (this *Mongo) RemoveModulesOfInstance(instanceId string, userId string) (error, int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) RemoveModulesOfInstance(ctx context.Context, instanceId string, userId string) (error, int) {
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{
 		ModuleBson.InstanceId: instanceId,
 	}
@@ -180,8 +180,8 @@ func (this *Mongo) RemoveModulesOfInstance(instanceId string, userId string) (er
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) SetModuleError(id string, userId string, errMsg string) error {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) SetModuleError(ctx context.Context, id string, userId string, errMsg string) error {
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{
 		ModuleBson.Id: id,
 	}

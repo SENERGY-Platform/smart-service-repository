@@ -55,11 +55,11 @@ func Start(ctx context.Context, config configuration.Config) error {
 	if err != nil {
 		return err
 	}
-	cleanupResult := cmd.Cleanup(false)
-	config.GetLogger().Info("cleanup", "result", cleanupResult)
+	cleanupResult := cmd.Cleanup(ctx, false)
+	config.GetLogger().InfoContext(ctx, "cleanup", "result", cleanupResult)
 	duration, err := time.ParseDuration(config.CleanupCycle)
 	if err != nil {
-		config.GetLogger().Error("unable to parse cleanup cycle", "error", err)
+		config.GetLogger().ErrorContext(ctx, "unable to parse cleanup cycle", "error", err)
 	} else {
 		ticker := time.NewTicker(duration)
 		go func() {
@@ -69,8 +69,8 @@ func Start(ctx context.Context, config configuration.Config) error {
 					ticker.Stop()
 					return
 				case <-ticker.C:
-					cleanupResult = cmd.Cleanup(false)
-					config.GetLogger().Info("cleanup", "result", cleanupResult)
+					cleanupResult = cmd.Cleanup(ctx, false)
+					config.GetLogger().InfoContext(ctx, "cleanup", "result", cleanupResult)
 				}
 			}
 		}()

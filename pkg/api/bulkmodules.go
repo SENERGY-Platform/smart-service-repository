@@ -62,7 +62,7 @@ func (this *BulkModules) CreateBulkByProcessInstance(config configuration.Config
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.AddModulesForProcessInstance(params.ByName("id"), modules)
+		result, err, code := ctrl.AddModulesForProcessInstance(request.Context(), params.ByName("id"), modules)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

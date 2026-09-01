@@ -17,15 +17,17 @@
 package controller
 
 import (
+	"context"
 	"errors"
+	"net/http"
+
 	"github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
-	"net/http"
 )
 
-func (this *Controller) SetVariable(token auth.Token, variable model.SmartServiceInstanceVariable) (result model.SmartServiceInstanceVariable, err error, code int) {
-	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, variable.InstanceId, client.Write)
+func (this *Controller) SetVariable(ctx context.Context, token auth.Token, variable model.SmartServiceInstanceVariable) (result model.SmartServiceInstanceVariable, err error, code int) {
+	access, err, code := this.permissions.CheckPermissionContext(ctx, token.Token, this.config.SmartServiceInstancePermissionsTopic, variable.InstanceId, client.Write)
 	if err != nil {
 		return result, err, code
 	}
@@ -33,7 +35,7 @@ func (this *Controller) SetVariable(token auth.Token, variable model.SmartServic
 		return result, errors.New("missing instance write access"), http.StatusForbidden
 	}
 
-	userId, err, code := this.getInstanceUserId(variable.InstanceId)
+	userId, err, code := this.getInstanceUserId(ctx, variable.InstanceId)
 	if err != nil {
 		return result, err, code
 	}
@@ -48,40 +50,40 @@ func (this *Controller) SetVariable(token auth.Token, variable model.SmartServic
 	if err != nil {
 		return result, err, code
 	}
-	return this.db.SetVariable(variable)
+	return this.db.SetVariable(ctx, variable)
 }
 
-func (this *Controller) SetVariableForProcessInstance(processInstanceId string, element model.SmartServiceInstanceVariable) (result model.SmartServiceInstanceVariable, err error, code int) {
+func (this *Controller) SetVariableForProcessInstance(ctx context.Context, processInstanceId string, element model.SmartServiceInstanceVariable) (result model.SmartServiceInstanceVariable, err error, code int) {
 	if processInstanceId == "" {
 		return result, errors.New("missing process instance id"), http.StatusBadRequest
 	}
-	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(ctx, processInstanceId)
 	if err != nil {
 		return result, err, code
 	}
-	instance, err, code := this.db.GetInstance(businessKey, "")
+	instance, err, code := this.db.GetInstance(ctx, businessKey, "")
 	if err != nil {
 		return result, err, code
 	}
 	element.InstanceId = instance.Id
 	element.UserId = instance.UserId
-	return this.db.SetVariable(element)
+	return this.db.SetVariable(ctx, element)
 }
 
-func (this *Controller) SetVariablesMapOfProcessInstance(processInstanceId string, mappedVariableValues map[string]interface{}) (err error, code int) {
+func (this *Controller) SetVariablesMapOfProcessInstance(ctx context.Context, processInstanceId string, mappedVariableValues map[string]interface{}) (err error, code int) {
 	if processInstanceId == "" {
 		return errors.New("missing process instance id"), http.StatusBadRequest
 	}
-	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(ctx, processInstanceId)
 	if err != nil {
 		return err, code
 	}
-	instance, err, code := this.db.GetInstance(businessKey, "")
+	instance, err, code := this.db.GetInstance(ctx, businessKey, "")
 	if err != nil {
 		return err, code
 	}
 	for key, value := range mappedVariableValues {
-		_, err, code = this.db.SetVariable(model.SmartServiceInstanceVariable{
+		_, err, code = this.db.SetVariable(ctx, model.SmartServiceInstanceVariable{
 			InstanceId: instance.Id,
 			UserId:     instance.UserId,
 			Name:       key,
@@ -94,8 +96,8 @@ func (this *Controller) SetVariablesMapOfProcessInstance(processInstanceId strin
 	return
 }
 
-func (this *Controller) GetVariablesMap(token auth.Token, instanceId string, query model.VariableQueryOptions) (map[string]interface{}, error, int) {
-	variables, err, code := this.ListVariables(token, instanceId, query)
+func (this *Controller) GetVariablesMap(ctx context.Context, token auth.Token, instanceId string, query model.VariableQueryOptions) (map[string]interface{}, error, int) {
+	variables, err, code := this.ListVariables(ctx, token, instanceId, query)
 	if err != nil {
 		return nil, err, code
 	}
@@ -106,19 +108,19 @@ func (this *Controller) GetVariablesMap(token auth.Token, instanceId string, que
 	return result, nil, http.StatusOK
 }
 
-func (this *Controller) ListVariables(token auth.Token, instanceId string, query model.VariableQueryOptions) ([]model.SmartServiceInstanceVariable, error, int) {
-	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Read)
+func (this *Controller) ListVariables(ctx context.Context, token auth.Token, instanceId string, query model.VariableQueryOptions) ([]model.SmartServiceInstanceVariable, error, int) {
+	access, err, code := this.permissions.CheckPermissionContext(ctx, token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Read)
 	if err != nil {
 		return nil, err, code
 	}
 	if !access {
 		return nil, errors.New("missing instance read access"), http.StatusForbidden
 	}
-	return this.db.ListVariables(instanceId, "", query)
+	return this.db.ListVariables(ctx, instanceId, "", query)
 }
 
-func (this *Controller) GetVariablesMapOfProcessInstance(processInstanceId string) (map[string]interface{}, error, int) {
-	variables, err, code := this.ListVariablesOfProcessInstance(processInstanceId, model.VariableQueryOptions{
+func (this *Controller) GetVariablesMapOfProcessInstance(ctx context.Context, processInstanceId string) (map[string]interface{}, error, int) {
+	variables, err, code := this.ListVariablesOfProcessInstance(ctx, processInstanceId, model.VariableQueryOptions{
 		Limit:  0,
 		Offset: 0,
 		Sort:   "name.asc",
@@ -133,16 +135,16 @@ func (this *Controller) GetVariablesMapOfProcessInstance(processInstanceId strin
 	return result, nil, http.StatusOK
 }
 
-func (this *Controller) ListVariablesOfProcessInstance(processInstanceId string, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int) {
-	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+func (this *Controller) ListVariablesOfProcessInstance(ctx context.Context, processInstanceId string, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int) {
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(ctx, processInstanceId)
 	if err != nil {
 		return result, err, code
 	}
-	instance, err, code := this.db.GetInstance(businessKey, "")
+	instance, err, code := this.db.GetInstance(ctx, businessKey, "")
 	if err != nil {
 		return result, err, code
 	}
-	return this.db.ListVariables(instance.Id, instance.UserId, query)
+	return this.db.ListVariables(ctx, instance.Id, instance.UserId, query)
 }
 
 func (this *Controller) ValidateVariable(element model.SmartServiceInstanceVariable) (error, int) {
@@ -158,24 +160,24 @@ func (this *Controller) ValidateVariable(element model.SmartServiceInstanceVaria
 	return nil, http.StatusOK
 }
 
-func (this *Controller) DeleteVariable(token auth.Token, instanceId string, name string) (error, int) {
-	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Administrate)
+func (this *Controller) DeleteVariable(ctx context.Context, token auth.Token, instanceId string, name string) (error, int) {
+	access, err, code := this.permissions.CheckPermissionContext(ctx, token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Administrate)
 	if err != nil {
 		return err, code
 	}
 	if !access {
 		return errors.New("missing instance administrate access"), http.StatusForbidden
 	}
-	return this.db.DeleteVariable(instanceId, "", name)
+	return this.db.DeleteVariable(ctx, instanceId, "", name)
 }
 
-func (this *Controller) GetVariable(token auth.Token, instanceId string, name string) (model.SmartServiceInstanceVariable, error, int) {
-	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Read)
+func (this *Controller) GetVariable(ctx context.Context, token auth.Token, instanceId string, name string) (model.SmartServiceInstanceVariable, error, int) {
+	access, err, code := this.permissions.CheckPermissionContext(ctx, token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Read)
 	if err != nil {
 		return model.SmartServiceInstanceVariable{}, err, code
 	}
 	if !access {
 		return model.SmartServiceInstanceVariable{}, errors.New("missing instance read access"), http.StatusForbidden
 	}
-	return this.db.GetVariable(instanceId, "", name)
+	return this.db.GetVariable(ctx, instanceId, "", name)
 }

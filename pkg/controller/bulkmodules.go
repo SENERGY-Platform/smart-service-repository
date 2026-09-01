@@ -17,6 +17,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"runtime/debug"
@@ -26,50 +27,50 @@ import (
 	"github.com/google/uuid"
 )
 
-func (this *Controller) AddModules(token auth.Token, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
-	return this.addModules(token.GetUserId(), instanceId, modules)
+func (this *Controller) AddModules(ctx context.Context, token auth.Token, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
+	return this.addModules(ctx, token.GetUserId(), instanceId, modules)
 }
 
-func (this *Controller) addModules(userId string, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
+func (this *Controller) addModules(ctx context.Context, userId string, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
 	if instanceId == "" {
 		return result, errors.New("missing instance id"), http.StatusBadRequest
 	}
-	elements, err, code := this.prepareModules(userId, instanceId, modules)
+	elements, err, code := this.prepareModules(ctx, userId, instanceId, modules)
 	if err != nil {
 		return result, err, code
 	}
 	for _, element := range elements {
-		err, code = this.ValidateModule(userId, element)
+		err, code = this.ValidateModule(ctx, userId, element)
 		if err != nil {
 			return result, err, code
 		}
 	}
-	err, code = this.db.SetModules(elements)
+	err, code = this.db.SetModules(ctx, elements)
 	if err != nil {
 		return result, err, code
 	}
 	return elements, nil, http.StatusOK
 }
 
-func (this *Controller) AddModulesForProcessInstance(processInstanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
+func (this *Controller) AddModulesForProcessInstance(ctx context.Context, processInstanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
 	if processInstanceId == "" {
 		return result, errors.New("missing process instance id"), http.StatusBadRequest
 	}
-	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(processInstanceId)
+	businessKey, err, code := this.camunda.GetProcessInstanceBusinessKey(ctx, processInstanceId)
 	if err != nil {
 		return result, err, code
 	}
-	userId, err, code := this.getInstanceUserId(businessKey)
+	userId, err, code := this.getInstanceUserId(ctx, businessKey)
 	if err != nil {
 		return result, err, code
 	}
-	return this.addModules(userId, businessKey, modules)
+	return this.addModules(ctx, userId, businessKey, modules)
 }
 
-func (this *Controller) prepareModules(userId string, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
-	instance, err, code := this.db.GetInstance(instanceId, userId)
+func (this *Controller) prepareModules(ctx context.Context, userId string, instanceId string, modules []model.SmartServiceModuleInit) (result []model.SmartServiceModule, err error, code int) {
+	instance, err, code := this.db.GetInstance(ctx, instanceId, userId)
 	if err != nil {
-		this.config.GetLogger().Error("error in prepareModules", "error", err, "stack", string(debug.Stack()), "userId", userId, "instanceId", instanceId)
+		this.config.GetLogger().ErrorContext(ctx, "error in prepareModules", "error", err, "stack", string(debug.Stack()), "userId", userId, "instanceId", instanceId)
 		return result, err, code
 	}
 	for _, module := range modules {

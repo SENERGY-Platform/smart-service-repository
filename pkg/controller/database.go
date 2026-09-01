@@ -16,7 +16,11 @@
 
 package controller
 
-import "github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+import (
+	"context"
+
+	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
+)
 
 type Database interface {
 	DesignsInterface
@@ -28,55 +32,55 @@ type Database interface {
 }
 
 type DesignsInterface interface {
-	GetDesign(id string, userId string) (model.SmartServiceDesign, error, int)
-	SetDesign(element model.SmartServiceDesign) (error, int)
-	DeleteDesign(id string, userId string) (error, int)
-	ListDesigns(userId string, query model.DesignQueryOptions) ([]model.SmartServiceDesign, error, int)
+	GetDesign(ctx context.Context, id string, userId string) (model.SmartServiceDesign, error, int)
+	SetDesign(ctx context.Context, element model.SmartServiceDesign) (error, int)
+	DeleteDesign(ctx context.Context, id string, userId string) (error, int)
+	ListDesigns(ctx context.Context, userId string, query model.DesignQueryOptions) ([]model.SmartServiceDesign, error, int)
 }
 
 type ModuleInterface interface {
-	SetModule(element model.SmartServiceModule) (error, int)
-	SetModules(element []model.SmartServiceModule) (error, int)
-	GetModule(id string, userId string) (model.SmartServiceModule, error, int)
-	DeleteModule(id string, userId string) (error, int)
-	ListModules(userId string, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
-	ListAllModules(query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int)
-	SetInstanceError(id string, userId string, errMsg string) error
-	SetModuleError(id string, userId string, errMsg string) error
+	SetModule(ctx context.Context, element model.SmartServiceModule) (error, int)
+	SetModules(ctx context.Context, element []model.SmartServiceModule) (error, int)
+	GetModule(ctx context.Context, id string, userId string) (model.SmartServiceModule, error, int)
+	DeleteModule(ctx context.Context, id string, userId string) (error, int)
+	ListModules(ctx context.Context, userId string, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
+	ListAllModules(ctx context.Context, query model.ModuleQueryOptions) (result []model.SmartServiceModule, err error, code int)
+	SetInstanceError(ctx context.Context, id string, userId string, errMsg string) error
+	SetModuleError(ctx context.Context, id string, userId string, errMsg string) error
 }
 
 type InstanceInterface interface {
-	GetInstance(id string, userId string) (model.SmartServiceInstance, error, int)
-	DeleteInstance(id string, userId string) (error, int)
-	SetInstance(element model.SmartServiceInstance) (error, int)
-	ListInstances(userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int)
-	ListInstancesOfRelease(userId string, releaseId string) (result []model.SmartServiceInstance, err error, code int)
+	GetInstance(ctx context.Context, id string, userId string) (model.SmartServiceInstance, error, int)
+	DeleteInstance(ctx context.Context, id string, userId string) (error, int)
+	SetInstance(ctx context.Context, element model.SmartServiceInstance) (error, int)
+	ListInstances(ctx context.Context, userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int)
+	ListInstancesOfRelease(ctx context.Context, userId string, releaseId string) (result []model.SmartServiceInstance, err error, code int)
 }
 
 type ReleaseInterface interface {
-	SetRelease(element model.SmartServiceReleaseExtended, markAsUnfinished bool) (error, int)
-	MarkReleaseAsFinished(id string) (err error)
+	SetRelease(ctx context.Context, element model.SmartServiceReleaseExtended, markAsUnfinished bool) (error, int)
+	MarkReleaseAsFinished(ctx context.Context, id string) (err error)
 
-	GetRelease(id string, withMarked bool) (model.SmartServiceReleaseExtended, error, int)
-	ListReleases(options model.ListReleasesOptions) ([]model.SmartServiceReleaseExtended, int64, error)
-	GetReleasesByDesignId(designId string) ([]model.SmartServiceReleaseExtended, error)
-	GetPreviousReleases(releaseId string) (result []model.SmartServiceReleaseExtended, err error)
+	GetRelease(ctx context.Context, id string, withMarked bool) (model.SmartServiceReleaseExtended, error, int)
+	ListReleases(ctx context.Context, options model.ListReleasesOptions) ([]model.SmartServiceReleaseExtended, int64, error)
+	GetReleasesByDesignId(ctx context.Context, designId string) ([]model.SmartServiceReleaseExtended, error)
+	GetPreviousReleases(ctx context.Context, releaseId string) (result []model.SmartServiceReleaseExtended, err error)
 
-	MarlReleaseAsDeleted(id string) (error, int)
-	DeleteRelease(id string) (error, int)
+	MarlReleaseAsDeleted(ctx context.Context, id string) (error, int)
+	DeleteRelease(ctx context.Context, id string) (error, int)
 
-	GetMarkedReleases() (markedAsDeleted []model.SmartServiceReleaseExtended, markedAsUnfinished []model.SmartServiceReleaseExtended, err error)
+	GetMarkedReleases(ctx context.Context) (markedAsDeleted []model.SmartServiceReleaseExtended, markedAsUnfinished []model.SmartServiceReleaseExtended, err error)
 }
 
 type MaintenanceInterface interface {
-	RemoveFromRunningMaintenanceIds(instanceId string, removeMaintenanceIds []string) error
-	AddToRunningMaintenanceIds(instanceId string, maintenanceId string) error
+	RemoveFromRunningMaintenanceIds(ctx context.Context, instanceId string, removeMaintenanceIds []string) error
+	AddToRunningMaintenanceIds(ctx context.Context, instanceId string, maintenanceId string) error
 }
 
 type VariableInterface interface {
-	GetVariable(instanceId string, userId string, variableName string) (result model.SmartServiceInstanceVariable, err error, code int)
-	SetVariable(element model.SmartServiceInstanceVariable) (model.SmartServiceInstanceVariable, error, int)
-	DeleteVariable(instanceId string, userId string, variableName string) (error, int)
-	ListVariables(instanceId string, userId string, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int)
-	ListAllVariables(query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int)
+	GetVariable(ctx context.Context, instanceId string, userId string, variableName string) (result model.SmartServiceInstanceVariable, err error, code int)
+	SetVariable(ctx context.Context, element model.SmartServiceInstanceVariable) (model.SmartServiceInstanceVariable, error, int)
+	DeleteVariable(ctx context.Context, instanceId string, userId string, variableName string) (error, int)
+	ListVariables(ctx context.Context, instanceId string, userId string, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int)
+	ListAllVariables(ctx context.Context, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int)
 }

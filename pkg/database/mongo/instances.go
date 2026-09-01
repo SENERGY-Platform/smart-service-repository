@@ -66,8 +66,8 @@ func (this *Mongo) instanceCollection() *mongo.Collection {
 	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionInstance)
 }
 
-func (this *Mongo) GetInstance(id string, userId string) (result model.SmartServiceInstance, err error, code int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) GetInstance(ctx context.Context, id string, userId string) (result model.SmartServiceInstance, err error, code int) {
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{"$or": []interface{}{
 		bson.M{InstanceBson.Id: id},
 		bson.M{"running_maintenance_ids": id},
@@ -90,15 +90,15 @@ func (this *Mongo) GetInstance(id string, userId string) (result model.SmartServ
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
-	result, err = this.AddModuleErrorToInstance(userId, result)
+	result, err = this.AddModuleErrorToInstance(ctx, userId, result)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
 	return result, nil, http.StatusOK
 }
 
-func (this *Mongo) SetInstance(element model.SmartServiceInstance) (error, int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) SetInstance(ctx context.Context, element model.SmartServiceInstance) (error, int) {
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.instanceCollection().ReplaceOne(
 		ctx,
 		bson.M{
@@ -113,16 +113,16 @@ func (this *Mongo) SetInstance(element model.SmartServiceInstance) (error, int) 
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) DeleteInstance(id string, userId string) (err error, code int) {
-	err, code = this.RemoveModulesOfInstance(id, userId)
+func (this *Mongo) DeleteInstance(ctx context.Context, id string, userId string) (err error, code int) {
+	err, code = this.RemoveModulesOfInstance(ctx, id, userId)
 	if err != nil {
 		return err, code
 	}
-	err, code = this.RemoveVariablesOfInstance(id, userId)
+	err, code = this.RemoveVariablesOfInstance(ctx, id, userId)
 	if err != nil {
 		return err, code
 	}
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{
 		InstanceBson.Id: id,
 	}
@@ -136,9 +136,9 @@ func (this *Mongo) DeleteInstance(id string, userId string) (err error, code int
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int) {
+func (this *Mongo) ListInstances(ctx context.Context, userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int) {
 	opt := createFindOptions(query)
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{}
 	if userId != "" {
 		filter[InstanceBson.UserId] = userId
@@ -158,7 +158,7 @@ func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions
 	if err != nil {
 		return result, total, err, code
 	}
-	result, err = this.AddModuleErrorToInstances(userId, result)
+	result, err = this.AddModuleErrorToInstances(ctx, userId, result)
 	if err != nil {
 		return result, total, err, http.StatusInternalServerError
 	}
@@ -169,8 +169,8 @@ func (this *Mongo) ListInstances(userId string, query model.InstanceQueryOptions
 	return result, total, err, code
 }
 
-func (this *Mongo) SetInstanceError(id string, userId string, errMsg string) error {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) SetInstanceError(ctx context.Context, id string, userId string, errMsg string) error {
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.instanceCollection().UpdateOne(ctx, bson.M{
 		InstanceBson.Id:     id,
 		InstanceBson.UserId: userId,
@@ -182,14 +182,14 @@ func (this *Mongo) SetInstanceError(id string, userId string, errMsg string) err
 
 // ListInstancesOfRelease returns instances referencing the given release (only ReleaseId and not NewReleaseId)
 // userId is only used if the value is not empty
-func (this *Mongo) ListInstancesOfRelease(userId string, releaseId string) (result []model.SmartServiceInstance, err error, code int) {
+func (this *Mongo) ListInstancesOfRelease(ctx context.Context, userId string, releaseId string) (result []model.SmartServiceInstance, err error, code int) {
 	filter := bson.M{
 		InstanceBson.ReleaseId: releaseId,
 	}
 	if userId != "" {
 		filter[InstanceBson.UserId] = userId
 	}
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	cursor, err := this.instanceCollection().Find(ctx, filter)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
@@ -199,15 +199,15 @@ func (this *Mongo) ListInstancesOfRelease(userId string, releaseId string) (resu
 	if err != nil {
 		return result, err, code
 	}
-	result, err = this.AddModuleErrorToInstances(userId, result)
+	result, err = this.AddModuleErrorToInstances(ctx, userId, result)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
 	return result, nil, http.StatusOK
 }
 
-func (this *Mongo) AddModuleErrorToInstance(userId string, instance model.SmartServiceInstance) (model.SmartServiceInstance, error) {
-	list, err := this.AddModuleErrorToInstances(userId, []model.SmartServiceInstance{instance})
+func (this *Mongo) AddModuleErrorToInstance(ctx context.Context, userId string, instance model.SmartServiceInstance) (model.SmartServiceInstance, error) {
+	list, err := this.AddModuleErrorToInstances(ctx, userId, []model.SmartServiceInstance{instance})
 	if err != nil {
 		return instance, err
 	}
@@ -217,7 +217,7 @@ func (this *Mongo) AddModuleErrorToInstance(userId string, instance model.SmartS
 	return list[0], nil
 }
 
-func (this *Mongo) AddModuleErrorToInstances(userId string, instances []model.SmartServiceInstance) ([]model.SmartServiceInstance, error) {
+func (this *Mongo) AddModuleErrorToInstances(ctx context.Context, userId string, instances []model.SmartServiceInstance) ([]model.SmartServiceInstance, error) {
 	ids := []string{}
 	for _, instance := range instances {
 		if instance.Error == "" && !slices.Contains(ids, instance.Id) {
@@ -227,7 +227,7 @@ func (this *Mongo) AddModuleErrorToInstances(userId string, instances []model.Sm
 	if len(ids) == 0 {
 		return instances, nil
 	}
-	modules, err, _ := this.ListModules(userId, model.ModuleQueryOptions{InstanceIds: ids})
+	modules, err, _ := this.ListModules(ctx, userId, model.ModuleQueryOptions{InstanceIds: ids})
 	if err != nil {
 		return instances, err
 	}

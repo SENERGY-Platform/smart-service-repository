@@ -18,6 +18,7 @@ package camunda
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -27,13 +28,15 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
-func (this *Camunda) Start(instance model.SmartServiceInstance) error {
+func (this *Camunda) Start(ctx context.Context, instance model.SmartServiceInstance) error {
 	requestBody := new(bytes.Buffer)
 	key := idToCNName(instance.ReleaseId)
-	variables, err := this.GetProcessParameters(key)
+	variables, err := this.GetProcessParameters(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -50,6 +53,10 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 		debug.PrintStack()
 		return err
 	}
+	err = otelx.InjectContextToRequest(ctx, req)
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -61,17 +68,17 @@ func (this *Camunda) Start(instance model.SmartServiceInstance) error {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		err = errors.New(buf.String())
-		this.config.GetLogger().Error("error in camunda.Start", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in camunda.Start", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	_, _ = io.ReadAll(resp.Body)
 	return nil
 }
 
-func (this *Camunda) StartMaintenance(releaseId string, procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error {
+func (this *Camunda) StartMaintenance(ctx context.Context, releaseId string, procedure model.MaintenanceProcedure, id string, parameter []model.SmartServiceParameter) error {
 	requestBody := new(bytes.Buffer)
 	key := idToCNName(releaseId)
-	variables, err := this.GetProcessParameters(key)
+	variables, err := this.GetProcessParameters(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -88,6 +95,10 @@ func (this *Camunda) StartMaintenance(releaseId string, procedure model.Maintena
 		debug.PrintStack()
 		return err
 	}
+	err = otelx.InjectContextToRequest(ctx, req)
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -99,7 +110,7 @@ func (this *Camunda) StartMaintenance(releaseId string, procedure model.Maintena
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		err = errors.New(buf.String())
-		this.config.GetLogger().Error("error in camunda.StartMaintenance", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in camunda.StartMaintenance", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	_, _ = io.ReadAll(resp.Body)
@@ -112,8 +123,12 @@ type Variable struct {
 	ValueInfo interface{} `json:"valueInfo"`
 }
 
-func (this *Camunda) GetProcessParameters(processDefinitionKey string) (result map[string]Variable, err error) {
+func (this *Camunda) GetProcessParameters(ctx context.Context, processDefinitionKey string) (result map[string]Variable, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/process-definition/key/"+url.PathEscape(processDefinitionKey)+"/form-variables", nil)
+	if err != nil {
+		return result, err
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
 	if err != nil {
 		return result, err
 	}

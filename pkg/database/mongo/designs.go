@@ -58,8 +58,8 @@ func (this *Mongo) designCollection() *mongo.Collection {
 	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionDesign)
 }
 
-func (this *Mongo) GetDesign(id string, userId string) (result model.SmartServiceDesign, err error, code int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) GetDesign(ctx context.Context, id string, userId string) (result model.SmartServiceDesign, err error, code int) {
+	ctx, _ = getTimeoutContext(ctx)
 	temp := this.designCollection().FindOne(ctx, bson.M{DesignBson.Id: id, DesignBson.UserId: userId})
 	err = temp.Err()
 	if err == mongo.ErrNoDocuments {
@@ -75,8 +75,8 @@ func (this *Mongo) GetDesign(id string, userId string) (result model.SmartServic
 	return result, nil, http.StatusOK
 }
 
-func (this *Mongo) SetDesign(element model.SmartServiceDesign) (error, int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) SetDesign(ctx context.Context, element model.SmartServiceDesign) (error, int) {
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.designCollection().ReplaceOne(
 		ctx,
 		bson.M{
@@ -91,8 +91,8 @@ func (this *Mongo) SetDesign(element model.SmartServiceDesign) (error, int) {
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) DeleteDesign(id string, userId string) (error, int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) DeleteDesign(ctx context.Context, id string, userId string) (error, int) {
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.designCollection().DeleteMany(ctx, bson.M{
 		DesignBson.Id:     id,
 		DesignBson.UserId: userId,
@@ -103,9 +103,9 @@ func (this *Mongo) DeleteDesign(id string, userId string) (error, int) {
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) ListDesigns(userId string, query model.DesignQueryOptions) (result []model.SmartServiceDesign, err error, code int) {
+func (this *Mongo) ListDesigns(ctx context.Context, userId string, query model.DesignQueryOptions) (result []model.SmartServiceDesign, err error, code int) {
 	opt := createFindOptions(query)
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{DesignBson.UserId: userId}
 	if query.Search != "" {
 		filter["$text"] = bson.M{"$search": query.Search}

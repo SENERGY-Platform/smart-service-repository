@@ -53,8 +53,8 @@ func (this *Mongo) variableCollection() *mongo.Collection {
 	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionVariables)
 }
 
-func (this *Mongo) GetVariable(instanceId string, userId string, variableName string) (result model.SmartServiceInstanceVariable, err error, code int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) GetVariable(ctx context.Context, instanceId string, userId string, variableName string) (result model.SmartServiceInstanceVariable, err error, code int) {
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{VariableBson.InstanceId: instanceId, VariableBson.Name: variableName}
 	if userId != "" {
 		filter[VariableBson.UserId] = userId
@@ -74,13 +74,13 @@ func (this *Mongo) GetVariable(instanceId string, userId string, variableName st
 	return result, nil, http.StatusOK
 }
 
-func (this *Mongo) SetVariable(element model.SmartServiceInstanceVariable) (model.SmartServiceInstanceVariable, error, int) {
-	instance, err, code := this.GetInstance(element.InstanceId, element.UserId)
+func (this *Mongo) SetVariable(ctx context.Context, element model.SmartServiceInstanceVariable) (model.SmartServiceInstanceVariable, error, int) {
+	instance, err, code := this.GetInstance(ctx, element.InstanceId, element.UserId)
 	if err != nil {
 		return element, err, code
 	}
 	element.InstanceId = instance.Id //replace possible running_maintenance_ids with instance id
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	_, err = this.variableCollection().ReplaceOne(
 		ctx,
 		bson.M{
@@ -96,8 +96,8 @@ func (this *Mongo) SetVariable(element model.SmartServiceInstanceVariable) (mode
 	return element, nil, http.StatusOK
 }
 
-func (this *Mongo) DeleteVariable(instanceId string, userId string, variableName string) (error, int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) DeleteVariable(ctx context.Context, instanceId string, userId string, variableName string) (error, int) {
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{
 		VariableBson.InstanceId: instanceId,
 		VariableBson.Name:       variableName,
@@ -112,9 +112,9 @@ func (this *Mongo) DeleteVariable(instanceId string, userId string, variableName
 	return nil, http.StatusOK
 }
 
-func (this *Mongo) ListVariables(instanceId string, userId string, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int) {
+func (this *Mongo) ListVariables(ctx context.Context, instanceId string, userId string, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int) {
 	opt := createFindOptions(query)
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{VariableBson.InstanceId: instanceId}
 	if userId != "" {
 		filter[VariableBson.UserId] = userId
@@ -127,9 +127,9 @@ func (this *Mongo) ListVariables(instanceId string, userId string, query model.V
 	return readCursorResult[model.SmartServiceInstanceVariable](ctx, cursor)
 }
 
-func (this *Mongo) ListAllVariables(query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int) {
+func (this *Mongo) ListAllVariables(ctx context.Context, query model.VariableQueryOptions) (result []model.SmartServiceInstanceVariable, err error, code int) {
 	opt := createFindOptions(query)
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{}
 	cursor, err := this.variableCollection().Find(ctx, filter, opt)
 	if err != nil {
@@ -139,8 +139,8 @@ func (this *Mongo) ListAllVariables(query model.VariableQueryOptions) (result []
 	return readCursorResult[model.SmartServiceInstanceVariable](ctx, cursor)
 }
 
-func (this *Mongo) RemoveVariablesOfInstance(instanceId string, userId string) (error, int) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) RemoveVariablesOfInstance(ctx context.Context, instanceId string, userId string) (error, int) {
+	ctx, _ = getTimeoutContext(ctx)
 	filter := bson.M{
 		VariableBson.InstanceId: instanceId,
 	}

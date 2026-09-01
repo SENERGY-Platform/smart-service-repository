@@ -211,7 +211,7 @@ func TestVariableApi(t *testing.T) {
 
 	processIdOfInstanceA := ""
 	t.Run("read process instances", func(t *testing.T) {
-		instances, err := camunda.New(config).GetProcessInstanceList()
+		instances, err := camunda.New(config).GetProcessInstanceList(ctx)
 		if err != nil {
 			t.Error(err)
 			return

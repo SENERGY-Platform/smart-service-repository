@@ -48,7 +48,7 @@ func (this *Maintenance) ListMaintenanceProcedures(config configuration.Config, 
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		result, _, _, err, code := ctrl.GetMaintenanceProceduresOfInstance(token, params.ByName("id"))
+		result, _, _, err, code := ctrl.GetMaintenanceProceduresOfInstance(request.Context(), token, params.ByName("id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -76,7 +76,7 @@ func (this *Maintenance) GetMaintenanceProcedure(config configuration.Config, ro
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		result, _, _, err, code := ctrl.GetMaintenanceProcedureOfInstance(token, params.ByName("id"), params.ByName("public_event_id"))
+		result, _, _, err, code := ctrl.GetMaintenanceProcedureOfInstance(request.Context(), token, params.ByName("id"), params.ByName("public_event_id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -104,7 +104,7 @@ func (this *Maintenance) GetMaintenanceProcedureParameters(config configuration.
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		result, err, code := ctrl.GetMaintenanceProcedureParametersOfInstance(token, params.ByName("id"), params.ByName("public_event_id"))
+		result, err, code := ctrl.GetMaintenanceProcedureParametersOfInstance(request.Context(), token, params.ByName("id"), params.ByName("public_event_id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -150,7 +150,7 @@ func (this *Maintenance) Start(config configuration.Config, router *httprouter.R
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		err, code := ctrl.StartMaintenanceProcedure(token, id, publicEventId, parameters)
+		err, code := ctrl.StartMaintenanceProcedure(request.Context(), token, id, publicEventId, parameters)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

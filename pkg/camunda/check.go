@@ -17,13 +17,14 @@
 package camunda
 
 import (
+	"context"
 	"runtime/debug"
 )
 
-func (this *Camunda) CheckInstanceReady(smartServiceInstanceId string) (finished bool, missing bool, err error) {
-	instances, err := this.getProcessInstanceListByKey(smartServiceInstanceId)
+func (this *Camunda) CheckInstanceReady(ctx context.Context, smartServiceInstanceId string) (finished bool, missing bool, err error) {
+	instances, err := this.getProcessInstanceListByKey(ctx, smartServiceInstanceId)
 	if err != nil {
-		this.config.GetLogger().Error("CheckInstanceReady()", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "CheckInstanceReady()", "error", err, "stack", string(debug.Stack()))
 		return finished, missing, err
 	}
 	if len(instances) == 0 {

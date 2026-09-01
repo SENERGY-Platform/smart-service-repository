@@ -17,6 +17,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,21 +28,21 @@ import (
 	"github.com/google/uuid"
 )
 
-func (this *Controller) GetMaintenanceProceduresOfInstance(token auth.Token, instanceId string) (maintenanceProcedure []model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int) {
-	instance, err, code = this.GetInstance(token, instanceId)
+func (this *Controller) GetMaintenanceProceduresOfInstance(ctx context.Context, token auth.Token, instanceId string) (maintenanceProcedure []model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int) {
+	instance, err, code = this.GetInstance(ctx, token, instanceId)
 	if err != nil {
 		return maintenanceProcedure, instance, release, err, code
 	}
-	release, err, code = this.GetExtendedRelease(token, instance.ReleaseId)
+	release, err, code = this.GetExtendedRelease(ctx, token, instance.ReleaseId)
 	if err != nil {
 		return maintenanceProcedure, instance, release, err, code
 	}
 	return release.ParsedInfo.MaintenanceProcedures, instance, release, nil, http.StatusOK
 }
 
-func (this *Controller) GetMaintenanceProcedureOfInstance(token auth.Token, instanceId string, publicEventId string) (maintenanceProcedure model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int) {
+func (this *Controller) GetMaintenanceProcedureOfInstance(ctx context.Context, token auth.Token, instanceId string, publicEventId string) (maintenanceProcedure model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int) {
 	var procedures []model.MaintenanceProcedure
-	procedures, instance, release, err, code = this.GetMaintenanceProceduresOfInstance(token, instanceId)
+	procedures, instance, release, err, code = this.GetMaintenanceProceduresOfInstance(ctx, token, instanceId)
 	if err != nil {
 		return model.MaintenanceProcedure{}, instance, release, err, code
 	}
@@ -53,23 +54,23 @@ func (this *Controller) GetMaintenanceProcedureOfInstance(token auth.Token, inst
 	return model.MaintenanceProcedure{}, instance, release, errors.New("not found"), http.StatusNotFound
 }
 
-func (this *Controller) GetMaintenanceProcedureParametersOfInstance(token auth.Token, instanceId string, publicEventId string) ([]model.SmartServiceExtendedParameter, error, int) {
-	procedure, _, _, err, code := this.GetMaintenanceProcedureOfInstance(token, instanceId, publicEventId)
+func (this *Controller) GetMaintenanceProcedureParametersOfInstance(ctx context.Context, token auth.Token, instanceId string, publicEventId string) ([]model.SmartServiceExtendedParameter, error, int) {
+	procedure, _, _, err, code := this.GetMaintenanceProcedureOfInstance(ctx, token, instanceId, publicEventId)
 	if err != nil {
 		return nil, err, code
 	}
-	return this.parameterDescriptionsToSmartServiceExtendedParameter(token, procedure.ParameterDescriptions)
+	return this.parameterDescriptionsToSmartServiceExtendedParameter(ctx, token, procedure.ParameterDescriptions)
 }
 
-func (this *Controller) StartMaintenanceProcedure(token auth.Token, instanceId string, publicEventId string, parameters model.SmartServiceParameters) (error, int) {
-	access, err, code := this.permissions.CheckPermission(token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Administrate)
+func (this *Controller) StartMaintenanceProcedure(ctx context.Context, token auth.Token, instanceId string, publicEventId string, parameters model.SmartServiceParameters) (error, int) {
+	access, err, code := this.permissions.CheckPermissionContext(ctx, token.Token, this.config.SmartServiceInstancePermissionsTopic, instanceId, client.Administrate)
 	if err != nil {
 		return err, code
 	}
 	if !access {
 		return errors.New("missing instance administrate access"), http.StatusForbidden
 	}
-	procedure, instance, release, err, code := this.GetMaintenanceProcedureOfInstance(token, instanceId, publicEventId)
+	procedure, instance, release, err, code := this.GetMaintenanceProcedureOfInstance(ctx, token, instanceId, publicEventId)
 	if err != nil {
 		return err, code
 	}
@@ -91,7 +92,7 @@ func (this *Controller) StartMaintenanceProcedure(token auth.Token, instanceId s
 
 	extendedProcedureParameters := append(release.ParsedInfo.ParameterDescriptions, procedure.ParameterDescriptions...)
 
-	paramListWithAutoSelect, err, code := this.appendAutoSelectParams(token, parameterWithInstanceInputs, extendedProcedureParameters)
+	paramListWithAutoSelect, err, code := this.appendAutoSelectParams(ctx, token, parameterWithInstanceInputs, extendedProcedureParameters)
 	if err != nil {
 		return err, code
 	}
@@ -101,12 +102,12 @@ func (this *Controller) StartMaintenanceProcedure(token auth.Token, instanceId s
 	this.cleanupMux.Lock()
 	defer this.cleanupMux.Unlock()
 
-	err = this.db.AddToRunningMaintenanceIds(instanceId, maintenanceId)
+	err = this.db.AddToRunningMaintenanceIds(ctx, instanceId, maintenanceId)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
 
-	err = this.camunda.StartMaintenance(instance.ReleaseId, procedure, maintenanceId, paramListWithAutoSelect)
+	err = this.camunda.StartMaintenance(ctx, instance.ReleaseId, procedure, maintenanceId, paramListWithAutoSelect)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

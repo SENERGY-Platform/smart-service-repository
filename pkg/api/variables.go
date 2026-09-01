@@ -77,7 +77,7 @@ func (this *Variables) Set(config configuration.Config, router *httprouter.Route
 			return
 		}
 
-		result, err, code := ctrl.SetVariable(token, element)
+		result, err, code := ctrl.SetVariable(request.Context(), token, element)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -118,7 +118,7 @@ func (this *Variables) Get(config configuration.Config, router *httprouter.Route
 			return
 		}
 
-		result, err, code := ctrl.GetVariable(token, instanceId, name)
+		result, err, code := ctrl.GetVariable(request.Context(), token, instanceId, name)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -159,7 +159,7 @@ func (this *Variables) GetValue(config configuration.Config, router *httprouter.
 			return
 		}
 
-		result, err, code := ctrl.GetVariable(token, instanceId, name)
+		result, err, code := ctrl.GetVariable(request.Context(), token, instanceId, name)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -218,7 +218,7 @@ func (this *Variables) List(config configuration.Config, router *httprouter.Rout
 			query.Sort = "name.asc"
 		}
 
-		result, err, code := ctrl.ListVariables(token, instanceId, query)
+		result, err, code := ctrl.ListVariables(request.Context(), token, instanceId, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -277,7 +277,7 @@ func (this *Variables) Map(config configuration.Config, router *httprouter.Route
 			query.Sort = "name.asc"
 		}
 
-		result, err, code := ctrl.GetVariablesMap(token, instanceId, query)
+		result, err, code := ctrl.GetVariablesMap(request.Context(), token, instanceId, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -318,7 +318,7 @@ func (this *Variables) Delete(config configuration.Config, router *httprouter.Ro
 			return
 		}
 
-		err, code := ctrl.DeleteVariable(token, instanceId, name)
+		err, code := ctrl.DeleteVariable(request.Context(), token, instanceId, name)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -357,7 +357,7 @@ func (this *Instances) SetVariablesMapByProcessInstance(config configuration.Con
 			http.Error(writer, "expect json encoded object in body", http.StatusBadRequest)
 			return
 		}
-		err, code := ctrl.SetVariablesMapOfProcessInstance(params.ByName("id"), variables)
+		err, code := ctrl.SetVariablesMapOfProcessInstance(request.Context(), params.ByName("id"), variables)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -390,7 +390,7 @@ func (this *Instances) GetVariablesMapByProcessInstance(config configuration.Con
 			http.Error(writer, "only admins may ask for instance user-id", http.StatusForbidden)
 			return
 		}
-		result, err, code := ctrl.GetVariablesMapOfProcessInstance(params.ByName("id"))
+		result, err, code := ctrl.GetVariablesMapOfProcessInstance(request.Context(), params.ByName("id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

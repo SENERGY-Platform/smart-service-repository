@@ -79,13 +79,13 @@ func TestMapMarshalling(t *testing.T) {
 		ReleaseId: "test",
 	}
 
-	err, _ = m.SetInstance(instance)
+	err, _ = m.SetInstance(ctx, instance)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	result, err, _ := m.GetInstance("test", "test")
+	result, err, _ := m.GetInstance(ctx, "test", "test")
 	if err != nil {
 		t.Error(err)
 		return

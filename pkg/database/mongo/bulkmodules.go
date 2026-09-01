@@ -27,14 +27,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (this *Mongo) SetModules(elements []model.SmartServiceModule) (error, int) {
+func (this *Mongo) SetModules(ctx context.Context, elements []model.SmartServiceModule) (error, int) {
 	if len(elements) == 0 {
 		return nil, http.StatusOK //nothing to add -> ok
 	}
 	if len(elements) == 1 {
-		return this.SetModule(elements[0]) //no need for transactions
+		return this.SetModule(ctx, elements[0]) //no need for transactions
 	}
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 
 	f := func(ctx context.Context) (result interface{}, err error) {
 		for _, element := range elements {

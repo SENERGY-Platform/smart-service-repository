@@ -75,7 +75,7 @@ func (this *Designs) List(config configuration.Config, router *httprouter.Router
 		}
 		query.Search = request.URL.Query().Get("search")
 
-		result, err, code := ctrl.ListDesigns(token, query)
+		result, err, code := ctrl.ListDesigns(request.Context(), token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -107,7 +107,7 @@ func (this *Designs) Get(config configuration.Config, router *httprouter.Router,
 			http.Error(writer, "missing id", http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.GetDesign(token, id)
+		result, err, code := ctrl.GetDesign(request.Context(), token, id)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -160,7 +160,7 @@ func (this *Designs) Update(config configuration.Config, router *httprouter.Rout
 
 		element.UserId = token.GetUserId()
 
-		result, err, code := ctrl.SetDesign(token, element)
+		result, err, code := ctrl.SetDesign(request.Context(), token, element)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -202,7 +202,7 @@ func (this *Designs) Create(config configuration.Config, router *httprouter.Rout
 
 		element.UserId = token.GetUserId()
 
-		result, err, code := ctrl.SetDesign(token, element)
+		result, err, code := ctrl.SetDesign(request.Context(), token, element)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -234,7 +234,7 @@ func (this *Designs) Delete(config configuration.Config, router *httprouter.Rout
 			return
 		}
 
-		err, code := ctrl.DeleteDesign(token, id)
+		err, code := ctrl.DeleteDesign(request.Context(), token, id)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

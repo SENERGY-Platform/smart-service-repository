@@ -17,56 +17,57 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
-func (this *Controller) Cleanup(ignoreModuleDeleteError bool) (result []error) {
-	this.config.GetLogger().Info("start cleanup")
+func (this *Controller) Cleanup(ctx context.Context, ignoreModuleDeleteError bool) (result []error) {
+	this.config.GetLogger().InfoContext(ctx, "start cleanup")
 	this.cleanupMux.Lock()
 	defer this.cleanupMux.Unlock()
-	this.retryMarkedReleases()
-	err := this.instanceCleanup()
+	this.retryMarkedReleases(ctx)
+	err := this.instanceCleanup(ctx)
 	if err != nil {
 		result = append(result, err...)
 	}
-	err = this.moduleCleanup(ignoreModuleDeleteError)
+	err = this.moduleCleanup(ctx, ignoreModuleDeleteError)
 	if err != nil {
 		result = append(result, err...)
 	}
-	err = this.variableCleanup()
+	err = this.variableCleanup(ctx)
 	if err != nil {
 		result = append(result, err...)
 	}
 	return result
 }
 
-func (this *Controller) instanceCleanup() (result []error) {
-	instances, err := this.camunda.GetProcessInstanceList()
+func (this *Controller) instanceCleanup(ctx context.Context) (result []error) {
+	instances, err := this.camunda.GetProcessInstanceList(ctx)
 	if err != nil {
 		return []error{err}
 	}
 	for _, instance := range instances {
-		_, err, code := this.db.GetInstance(instance.BusinessKey, "")
+		_, err, code := this.db.GetInstance(ctx, instance.BusinessKey, "")
 		if err != nil && code == http.StatusNotFound {
-			this.config.GetLogger().Info("found orphaned process-instance --> delete from camunda", "instanceId", instance.Id, "businessKey", instance.BusinessKey, "endTime", instance.EndTime, "error", err)
-			err = this.camunda.DeleteInstance(instance)
+			this.config.GetLogger().InfoContext(ctx, "found orphaned process-instance --> delete from camunda", "instanceId", instance.Id, "businessKey", instance.BusinessKey, "endTime", instance.EndTime, "error", err)
+			err = this.camunda.DeleteInstance(ctx, instance)
 		}
 		if err != nil {
 			result = append(result, err)
-			this.config.GetLogger().Error("unable to remove instance from camunda in cleanup", "instanceId", instance.Id, "businessKey", instance.BusinessKey, "error", err)
+			this.config.GetLogger().ErrorContext(ctx, "unable to remove instance from camunda in cleanup", "instanceId", instance.Id, "businessKey", instance.BusinessKey, "error", err)
 		}
 	}
 	return result
 }
 
-func (this *Controller) moduleCleanup(ignoreModuleDeleteError bool) (result []error) {
+func (this *Controller) moduleCleanup(ctx context.Context, ignoreModuleDeleteError bool) (result []error) {
 	offset := 0
 	limit := 1000
 	cache := map[string]bool{}
 	for {
-		modules, err, _ := this.db.ListAllModules(model.ModuleQueryOptions{
+		modules, err, _ := this.db.ListAllModules(ctx, model.ModuleQueryOptions{
 			Limit:  limit,
 			Offset: offset,
 			Sort:   "id.asc",
@@ -79,24 +80,24 @@ func (this *Controller) moduleCleanup(ignoreModuleDeleteError bool) (result []er
 			exists, checked := cache[module.InstanceId]
 			if !checked {
 				exists = true
-				_, err, code := this.db.GetInstance(module.InstanceId, "")
+				_, err, code := this.db.GetInstance(ctx, module.InstanceId, "")
 				if err != nil && code == http.StatusNotFound {
 					exists = false
 					err = nil
 				}
 				if err != nil {
 					result = append(result, err)
-					this.config.GetLogger().Error("unable to read instance for cleanup", "error", err)
+					this.config.GetLogger().ErrorContext(ctx, "unable to read instance for cleanup", "error", err)
 				} else {
 					cache[module.InstanceId] = exists
 				}
 			}
 			if !exists {
-				this.config.GetLogger().Info("found orphaned module --> remove", "moduleId", module.Id, "instanceId", module.InstanceId)
-				err, _ = this.deleteModule(module, ignoreModuleDeleteError)
+				this.config.GetLogger().InfoContext(ctx, "found orphaned module --> remove", "moduleId", module.Id, "instanceId", module.InstanceId)
+				err, _ = this.deleteModule(ctx, module, ignoreModuleDeleteError)
 				if err != nil {
 					result = append(result, err)
-					this.config.GetLogger().Error("unable to remove module", "error", err)
+					this.config.GetLogger().ErrorContext(ctx, "unable to remove module", "error", err)
 				}
 			}
 		}
@@ -107,12 +108,12 @@ func (this *Controller) moduleCleanup(ignoreModuleDeleteError bool) (result []er
 	}
 }
 
-func (this *Controller) variableCleanup() (result []error) {
+func (this *Controller) variableCleanup(ctx context.Context) (result []error) {
 	offset := 0
 	limit := 1000
 	cache := map[string]bool{}
 	for {
-		variables, err, _ := this.db.ListAllVariables(model.VariableQueryOptions{
+		variables, err, _ := this.db.ListAllVariables(ctx, model.VariableQueryOptions{
 			Limit:  limit,
 			Offset: offset,
 			Sort:   "name.asc",
@@ -125,24 +126,24 @@ func (this *Controller) variableCleanup() (result []error) {
 			exists, checked := cache[variable.InstanceId]
 			if !checked {
 				exists = true
-				_, err, code := this.db.GetInstance(variable.InstanceId, "")
+				_, err, code := this.db.GetInstance(ctx, variable.InstanceId, "")
 				if err != nil && code == http.StatusNotFound {
 					exists = false
 					err = nil
 				}
 				if err != nil {
 					result = append(result, err)
-					this.config.GetLogger().Error("unable to read instance for cleanup", "error", err)
+					this.config.GetLogger().ErrorContext(ctx, "unable to read instance for cleanup", "error", err)
 				} else {
 					cache[variable.InstanceId] = exists
 				}
 			}
 			if !exists {
-				this.config.GetLogger().Info("found orphaned variable --> remove", "instanceId", variable.InstanceId, "variableName", variable.Name)
-				err, _ = this.db.DeleteVariable(variable.InstanceId, variable.UserId, variable.Name)
+				this.config.GetLogger().InfoContext(ctx, "found orphaned variable --> remove", "instanceId", variable.InstanceId, "variableName", variable.Name)
+				err, _ = this.db.DeleteVariable(ctx, variable.InstanceId, variable.UserId, variable.Name)
 				if err != nil {
 					result = append(result, err)
-					this.config.GetLogger().Error("unable to remove variable", "error", err)
+					this.config.GetLogger().ErrorContext(ctx, "unable to remove variable", "error", err)
 				}
 			}
 		}

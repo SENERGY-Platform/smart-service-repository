@@ -25,38 +25,47 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 )
 
-func Send(notificationUrl string, message Message, logger *slog.Logger) error {
+func Send(ctx context.Context, notificationUrl string, message Message, logger *slog.Logger) error {
 	if notificationUrl == "" {
 		return nil
 	}
 	if message.Topic == "" {
 		message.Topic = "smart_service"
 	}
-	logger.Debug("send notification", "notificationUrl", notificationUrl, "message", message)
+	logger.DebugContext(ctx, "send notification", "notificationUrl", notificationUrl, "message", message)
 	b := new(bytes.Buffer)
 	err := json.NewEncoder(b).Encode(message)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("POST", notificationUrl+"/notifications", b)
+	//WithoutCancel keeps trace-context and baggage, but leaves the notification unaffected
+	//by a client that aborts the request it was triggered by
+	timeout, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(timeout, "POST", notificationUrl+"/notifications", b)
 	if err != nil {
-		logger.Error("unable to send notification", "error", err)
+		logger.ErrorContext(ctx, "unable to send notification", "error", err)
 		return err
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	req.WithContext(ctx)
+	err = otelx.InjectContextToRequest(ctx, req)
+	if err != nil {
+		logger.ErrorContext(ctx, "unable to send notification", "error", err)
+		return err
+	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		logger.Error("unable to send notification", "error", err)
+		logger.ErrorContext(ctx, "unable to send notification", "error", err)
 		return err
 	}
 	if resp.StatusCode >= 300 {
 		respMsg, _ := io.ReadAll(resp.Body)
 		err = errors.New("unexpected response status from notifier " + resp.Status)
-		logger.Error("unexpected response status from notifier", "error", err, "respMsg", string(respMsg))
+		logger.ErrorContext(ctx, "unexpected response status from notifier", "error", err, "respMsg", string(respMsg))
 		return err
 	}
 	return nil

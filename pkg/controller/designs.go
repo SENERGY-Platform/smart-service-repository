@@ -17,6 +17,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -28,44 +29,44 @@ import (
 	"github.com/beevik/etree"
 )
 
-func (this *Controller) ListDesigns(token auth.Token, query model.DesignQueryOptions) ([]model.SmartServiceDesign, error, int) {
-	return this.db.ListDesigns(token.GetUserId(), query)
+func (this *Controller) ListDesigns(ctx context.Context, token auth.Token, query model.DesignQueryOptions) ([]model.SmartServiceDesign, error, int) {
+	return this.db.ListDesigns(ctx, token.GetUserId(), query)
 }
 
-func (this *Controller) GetDesign(token auth.Token, id string) (result model.SmartServiceDesign, err error, code int) {
-	return this.db.GetDesign(id, token.GetUserId())
+func (this *Controller) GetDesign(ctx context.Context, token auth.Token, id string) (result model.SmartServiceDesign, err error, code int) {
+	return this.db.GetDesign(ctx, id, token.GetUserId())
 }
 
-func (this *Controller) SetDesign(token auth.Token, element model.SmartServiceDesign) (result model.SmartServiceDesign, err error, code int) {
+func (this *Controller) SetDesign(ctx context.Context, token auth.Token, element model.SmartServiceDesign) (result model.SmartServiceDesign, err error, code int) {
 	if element.Name == "" {
-		element.Name, err = this.getProcessModelName(element.BpmnXml)
+		element.Name, err = this.getProcessModelName(ctx, element.BpmnXml)
 		if err != nil {
 			return result, err, http.StatusBadRequest
 		}
 	}
 	if element.Description == "" {
-		element.Description, err = this.getProcessModelDescription(element.BpmnXml)
+		element.Description, err = this.getProcessModelDescription(ctx, element.BpmnXml)
 		if err != nil {
 			return result, err, http.StatusBadRequest
 		}
 	}
 	element.UpdatedAt = time.Now().Unix()
-	err, code = this.ValidateDesign(token, element)
+	err, code = this.ValidateDesign(ctx, token, element)
 	if err != nil {
 		return result, err, code
 	}
-	err, code = this.db.SetDesign(element)
+	err, code = this.db.SetDesign(ctx, element)
 	if err != nil {
 		return result, err, code
 	}
-	return this.db.GetDesign(element.Id, token.GetUserId())
+	return this.db.GetDesign(ctx, element.Id, token.GetUserId())
 }
 
-func (this *Controller) DeleteDesign(token auth.Token, id string) (error, int) {
-	return this.db.DeleteDesign(id, token.GetUserId())
+func (this *Controller) DeleteDesign(ctx context.Context, token auth.Token, id string) (error, int) {
+	return this.db.DeleteDesign(ctx, id, token.GetUserId())
 }
 
-func (this *Controller) ValidateDesign(token auth.Token, element model.SmartServiceDesign) (err error, code int) {
+func (this *Controller) ValidateDesign(ctx context.Context, token auth.Token, element model.SmartServiceDesign) (err error, code int) {
 	if element.Id == "" {
 		return errors.New("missing id"), http.StatusBadRequest
 	}
@@ -81,19 +82,19 @@ func (this *Controller) ValidateDesign(token auth.Token, element model.SmartServ
 	if element.BpmnXml == "" {
 		return errors.New("missing bpmn xml"), http.StatusBadRequest
 	}
-	if err = this.validateBpmnXml(element.BpmnXml); err != nil {
+	if err = this.validateBpmnXml(ctx, element.BpmnXml); err != nil {
 		return err, http.StatusBadRequest
 	}
 	return nil, http.StatusOK
 }
 
-func (this *Controller) validateBpmnXml(xml string) (err error) {
+func (this *Controller) validateBpmnXml(ctx context.Context, xml string) (err error) {
 	if xml == "" {
 		return errors.New("missing bpmn xml")
 	}
 	defer func() {
 		if r := recover(); r != nil && err == nil {
-			this.config.GetLogger().Error("error while validating bpmn xml", "error", r, "stack", string(debug.Stack()))
+			this.config.GetLogger().ErrorContext(ctx, "error while validating bpmn xml", "error", r, "stack", string(debug.Stack()))
 			err = errors.New(fmt.Sprint("Recovered Error: ", r))
 		}
 	}()
@@ -113,10 +114,10 @@ func (this *Controller) validateBpmnXml(xml string) (err error) {
 	return nil
 }
 
-func (this *Controller) getProcessModelName(bpmn string) (name string, err error) {
+func (this *Controller) getProcessModelName(ctx context.Context, bpmn string) (name string, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
-			this.config.GetLogger().Error("error in getProcessModelName", "error", r, "stack", string(debug.Stack()))
+			this.config.GetLogger().ErrorContext(ctx, "error in getProcessModelName", "error", r, "stack", string(debug.Stack()))
 			err = errors.New(fmt.Sprint("Recovered Error: ", r))
 		}
 	}()
@@ -136,10 +137,10 @@ func (this *Controller) getProcessModelName(bpmn string) (name string, err error
 	return name, nil
 }
 
-func (this *Controller) getProcessModelDescription(bpmn string) (name string, err error) {
+func (this *Controller) getProcessModelDescription(ctx context.Context, bpmn string) (name string, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
-			this.config.GetLogger().Error("error in getProcessModelDescription", "error", r, "stack", string(debug.Stack()))
+			this.config.GetLogger().ErrorContext(ctx, "error in getProcessModelDescription", "error", r, "stack", string(debug.Stack()))
 			err = errors.New(fmt.Sprint("Recovered Error: ", r))
 		}
 	}()

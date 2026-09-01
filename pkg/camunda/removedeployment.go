@@ -17,24 +17,27 @@
 package camunda
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"runtime/debug"
+
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 )
 
-func (this *Camunda) RemoveRelease(id string) error {
+func (this *Camunda) RemoveRelease(ctx context.Context, id string) error {
 	id = idToCNName(id)
-	deplIds, err := this.getDeploymentIds(id)
+	deplIds, err := this.getDeploymentIds(ctx, id)
 	if err != nil {
 		return err
 	}
 	if len(deplIds) > 0 {
-		this.config.GetLogger().Debug("remove deployments", "ids", deplIds)
+		this.config.GetLogger().DebugContext(ctx, "remove deployments", "ids", deplIds)
 	}
 	for _, deplId := range deplIds {
-		err = this.removeDeployment(deplId)
+		err = this.removeDeployment(ctx, deplId)
 		if err != nil {
 			return fmt.Errorf("unable to delete release %v\n%w", id, err)
 		}
@@ -42,39 +45,43 @@ func (this *Camunda) RemoveRelease(id string) error {
 	return nil
 }
 
-func (this *Camunda) removeDeployment(deplId string) error {
+func (this *Camunda) removeDeployment(ctx context.Context, deplId string) error {
 	req, err := http.NewRequest("DELETE", this.config.CamundaUrl+"/engine-rest/deployment/"+url.PathEscape(deplId)+"?cascade=true&skipIoMappings=true", nil)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in removeDeployment", "error", err, "stack", string(debug.Stack()))
+		return err
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
+	if err != nil {
 		return err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in removeDeployment", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
 		temp, _ := io.ReadAll(resp.Body)
 		err = fmt.Errorf("unable to remove deployment (%v) from camunda: %v", deplId, string(temp))
-		this.config.GetLogger().Error("error in removeDeployment", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in removeDeployment", "error", err, "stack", string(debug.Stack()))
 		return err
 	}
 	_, _ = io.ReadAll(resp.Body)
 	return nil
 }
 
-func (this *Camunda) getDeploymentId(id string) (deplId string, exists bool, err error) {
+func (this *Camunda) getDeploymentId(ctx context.Context, id string) (deplId string, exists bool, err error) {
 	var definition ProcessDefinition
-	definition, exists, err = this.getProcessDefinition(id)
+	definition, exists, err = this.getProcessDefinition(ctx, id)
 	return definition.DeploymentId, exists, err
 }
 
-func (this *Camunda) getDeploymentIds(id string) (deplIds []string, err error) {
+func (this *Camunda) getDeploymentIds(ctx context.Context, id string) (deplIds []string, err error) {
 	var definitions []ProcessDefinition
-	definitions, err = this.getProcessDefinitionListByKey(id)
+	definitions, err = this.getProcessDefinitionListByKey(ctx, id)
 	if err != nil {
 		return deplIds, err
 	}

@@ -85,6 +85,31 @@ examples can be found in ./pkg/tests/resources
 - value: string
 - value example: `urn:infai:ses:characteristic:5b4eea52-e8e5-4e80-9455-0382f81a1b43`
 
+## OpenTelemetry
+
+Traces are sent to an OTLP collector over gRPC. The endpoint is set with the config value
+`otel_endpoint` (env `OTEL_ENDPOINT`); if it is empty, the default
+`jaeger.logging.svc.cluster.local:4317` is used.
+
+What is instrumented:
+
+- incoming requests, through `otelx.HTTPOpenTelemetry` of
+  [gin-middleware](https://github.com/SENERGY-Platform/gin-middleware/tree/main/otelx). It picks up
+  the trace-context of the caller and puts `user_id` and `username` into the baggage.
+- mongodb, through `otelmongo`.
+- outgoing requests to camunda, device-selection, permissions-v2, the notifier and the delete-urls
+  of modules. They carry trace-context and baggage on, so a request can be followed across services.
+- log records, through the open-telemetry handler of `struct-logger`. It writes the baggage into the
+  record and the record into the current span, but **only for the context based log methods**
+  (`ErrorContext`, `InfoContext`, ...). A `logger.Error()` without a context stays untraced.
+
+`POST /releases/:id/instances` adds the id of the new smart-service-instance to the baggage as
+`smart_service_instance_id` as soon as it is known, so every following request and log record of
+that creation carries it.
+
+Not propagated: the keycloak token-exchange and the device-repository client, which has no
+context aware methods.
+
 ## OpenAPI
 uses https://github.com/swaggo/swag
 

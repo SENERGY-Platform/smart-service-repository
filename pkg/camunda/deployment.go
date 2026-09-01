@@ -17,6 +17,7 @@
 package camunda
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,22 +26,24 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/notification"
 	"github.com/beevik/etree"
 )
 
-func (this *Camunda) DeployRelease(owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool) {
+func (this *Camunda) DeployRelease(ctx context.Context, owner string, release model.SmartServiceReleaseExtended) (err error, isInvalidCamundaDeployment bool) {
 	id := idToCNName(release.Id)
-	err = this.RemoveRelease(release.Id) //remove existing releases with the same id
+	err = this.RemoveRelease(ctx, release.Id) //remove existing releases with the same id
 	if err != nil {
 		return err, false
 	}
-	releaseXml, err := this.modifyBpmnWithReleaseIds(release.BpmnXml, id, release.ParsedInfo.MaintenanceProcedures)
+	releaseXml, err := this.modifyBpmnWithReleaseIds(ctx, release.BpmnXml, id, release.ParsedInfo.MaintenanceProcedures)
 	if err != nil {
 		return err, true
 	}
-	responseWrapper, err, code := this.deployProcess(release.Name, releaseXml, release.SvgXml)
+	responseWrapper, err, code := this.deployProcess(ctx, release.Name, releaseXml, release.SvgXml)
 	if err != nil {
 		return err, code > 0
 	}
@@ -52,7 +55,7 @@ func (this *Camunda) DeployRelease(owner string, release model.SmartServiceRelea
 			if !ok {
 				msg = "unknown error"
 			}
-			_ = notification.Send(this.config.NotificationUrl, notification.Message{
+			_ = notification.Send(ctx, this.config.NotificationUrl, notification.Message{
 				UserId:  owner,
 				Title:   "Smart-Service-Release Error: ProcessEngineException",
 				Message: msg,
@@ -64,14 +67,25 @@ func (this *Camunda) DeployRelease(owner string, release model.SmartServiceRelea
 	return nil, false
 }
 
-func (this *Camunda) deployProcess(name string, xml string, svg string) (result map[string]interface{}, err error, code int) {
+func (this *Camunda) deployProcess(ctx context.Context, name string, xml string, svg string) (result map[string]interface{}, err error, code int) {
 	result = map[string]interface{}{}
 	boundary := "---------------------------" + time.Now().String()
 	b := strings.NewReader(buildDeploymentPayLoad(name, xml, svg, boundary))
-	resp, err := http.Post(this.config.CamundaUrl+"/engine-rest/deployment/create", "multipart/form-data; boundary="+boundary, b)
+	req, err := http.NewRequest("POST", this.config.CamundaUrl+"/engine-rest/deployment/create", b)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in request to processengine ", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in request to processengine ", "error", err, "stack", string(debug.Stack()))
+		return result, err, 0
+	}
+	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
+	err = otelx.InjectContextToRequest(ctx, req)
+	if err != nil {
+		return result, err, 0
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		err = this.filterUrlFromErr(err)
+		this.config.GetLogger().ErrorContext(ctx, "error in request to processengine ", "error", err, "stack", string(debug.Stack()))
 		return result, err, 0
 	}
 	defer resp.Body.Close()
@@ -79,10 +93,10 @@ func (this *Camunda) deployProcess(name string, xml string, svg string) (result 
 	return result, err, resp.StatusCode
 }
 
-func (this *Camunda) modifyBpmnWithReleaseIds(xml string, id string, maintenanceProcedures []model.MaintenanceProcedure) (resultXml string, err error) {
+func (this *Camunda) modifyBpmnWithReleaseIds(ctx context.Context, xml string, id string, maintenanceProcedures []model.MaintenanceProcedure) (resultXml string, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
-			this.config.GetLogger().Error("error in modifyBpmnWithReleaseIds", "error", r, "stack", string(debug.Stack()))
+			this.config.GetLogger().ErrorContext(ctx, "error in modifyBpmnWithReleaseIds", "error", r, "stack", string(debug.Stack()))
 			err = errors.New(fmt.Sprint("Recovered Error: ", r))
 		}
 	}()

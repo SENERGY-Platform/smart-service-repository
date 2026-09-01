@@ -17,6 +17,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,11 +31,11 @@ import (
 	"github.com/beevik/etree"
 )
 
-func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml string, element model.SmartServiceRelease) (result model.SmartServiceReleaseInfo, err error) {
+func (this *Controller) parseDesignXmlForReleaseInfo(ctx context.Context, token auth.Token, xml string, element model.SmartServiceRelease) (result model.SmartServiceReleaseInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
 			err = fmt.Errorf("panic in parseDesignXmlForReleaseInfo: %v", r)
-			this.config.GetLogger().Error("Recovered Error", "error", r, "stack", string(debug.Stack()))
+			this.config.GetLogger().ErrorContext(ctx, "Recovered Error", "error", r, "stack", string(debug.Stack()))
 		}
 	}()
 	doc := etree.NewDocument()
@@ -42,7 +43,7 @@ func (this *Controller) parseDesignXmlForReleaseInfo(token auth.Token, xml strin
 	if err != nil {
 		return result, err
 	}
-	result.ModuleInfo, err = this.parseReleaseModuleInfo(doc)
+	result.ModuleInfo, err = this.parseReleaseModuleInfo(ctx, doc)
 	if err != nil {
 		return result, err
 	}
@@ -270,16 +271,16 @@ func (this *Controller) validateParsedReleaseInfos(info model.SmartServiceReleas
 const AnalyticsTopic = "analytics"
 const AnalyticsParamPrefix = "analytics."
 
-func (this *Controller) parseReleaseModuleInfo(doc *etree.Document) (result model.ReleaseModuleInfo, err error) {
+func (this *Controller) parseReleaseModuleInfo(ctx context.Context, doc *etree.Document) (result model.ReleaseModuleInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
 			err = fmt.Errorf("panic in parseReleaseModuleInfo: %v", r)
-			this.config.GetLogger().Error("Recovered Error", "error", r, "stack", string(debug.Stack()))
+			this.config.GetLogger().ErrorContext(ctx, "Recovered Error", "error", r, "stack", string(debug.Stack()))
 		}
 	}()
 	result.Analytics = []model.AnalyticsReleaseModuleInfo{}
 	for _, element := range doc.FindElements("//bpmn:serviceTask[@camunda:topic='" + AnalyticsTopic + "']") {
-		analyticsInfo, err := this.parseAnalyticsReleaseModuleInfo(element)
+		analyticsInfo, err := this.parseAnalyticsReleaseModuleInfo(ctx, element)
 		if err != nil {
 			return result, err
 		}
@@ -290,11 +291,11 @@ func (this *Controller) parseReleaseModuleInfo(doc *etree.Document) (result mode
 	return result, nil
 }
 
-func (this *Controller) parseAnalyticsReleaseModuleInfo(element *etree.Element) (result model.AnalyticsReleaseModuleInfo, err error) {
+func (this *Controller) parseAnalyticsReleaseModuleInfo(ctx context.Context, element *etree.Element) (result model.AnalyticsReleaseModuleInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil && err == nil {
 			err = fmt.Errorf("panic in parseAnalyticsReleaseModuleInfo: %v", r)
-			this.config.GetLogger().Error("Recovered Error", "error", r, "stack", string(debug.Stack()))
+			this.config.GetLogger().ErrorContext(ctx, "Recovered Error", "error", r, "stack", string(debug.Stack()))
 		}
 	}()
 	for _, param := range element.FindElements(".//camunda:inputParameter") {
@@ -312,7 +313,7 @@ func (this *Controller) parseAnalyticsReleaseModuleInfo(element *etree.Element) 
 	return result, nil
 }
 
-func (this *Controller) ensureValidReleaseModuleInfo(element model.SmartServiceReleaseExtended) (result model.SmartServiceReleaseExtended, err error) {
+func (this *Controller) ensureValidReleaseModuleInfo(ctx context.Context, element model.SmartServiceReleaseExtended) (result model.SmartServiceReleaseExtended, err error) {
 	if element.ParsedInfo.ModuleInfo.Analytics != nil {
 		return element, nil
 	}
@@ -322,7 +323,7 @@ func (this *Controller) ensureValidReleaseModuleInfo(element model.SmartServiceR
 	if err != nil {
 		return result, fmt.Errorf("unable to parse bpmn xml for ensureValidReleaseModuleInfo: %w", err)
 	}
-	result.ParsedInfo.ModuleInfo, err = this.parseReleaseModuleInfo(doc)
+	result.ParsedInfo.ModuleInfo, err = this.parseReleaseModuleInfo(ctx, doc)
 	if err != nil {
 		return result, fmt.Errorf("unable to parse release module info for ensureValidReleaseModuleInfo: %w", err)
 	}

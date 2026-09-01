@@ -17,6 +17,7 @@
 package mocks
 
 import (
+	"context"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 	"net/http"
@@ -34,7 +35,7 @@ func NewSelectables(response []model.Selectable) *Selectables {
 	return &Selectables{Response: response}
 }
 
-func (this *Selectables) Get(token auth.Token, searchedEntities []string, criteria []model.Criteria) (result []model.Selectable, err error, code int) {
+func (this *Selectables) Get(_ context.Context, token auth.Token, searchedEntities []string, criteria []model.Criteria) (result []model.Selectable, err error, code int) {
 	result = this.Response
 	if len(searchedEntities) == 0 {
 		return result, nil, http.StatusOK

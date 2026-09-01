@@ -98,7 +98,7 @@ func TestReleaseDeleteRetry(t *testing.T) {
 		return
 	}
 
-	err = cmd.saveReleaseCreate(model.SmartServiceReleaseExtended{
+	err = cmd.saveReleaseCreate(ctx, model.SmartServiceReleaseExtended{
 		SmartServiceRelease: model.SmartServiceRelease{
 			Id:        "test-release-id-1",
 			DesignId:  "test-design-id-1",
@@ -116,7 +116,7 @@ func TestReleaseDeleteRetry(t *testing.T) {
 
 	camundaMock.Err = errors.New("test-error")
 
-	err = cmd.deleteRelease("test-release-id-1")
+	err = cmd.deleteRelease(ctx, "test-release-id-1")
 	if err == nil || !errors.Is(err, camundaMock.Err) {
 		t.Error(err)
 		return
@@ -124,12 +124,12 @@ func TestReleaseDeleteRetry(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err := db.GetMarkedReleases()
+	todelete, unfinished, err := db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -141,14 +141,14 @@ func TestReleaseDeleteRetry(t *testing.T) {
 		t.Error(todelete)
 	}
 
-	cmd.retryMarkedReleases()
+	cmd.retryMarkedReleases(ctx)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err = db.GetMarkedReleases()
+	todelete, unfinished, err = db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -162,14 +162,14 @@ func TestReleaseDeleteRetry(t *testing.T) {
 
 	camundaMock.Err = nil
 
-	cmd.retryMarkedReleases()
+	cmd.retryMarkedReleases(ctx)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err == nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err = db.GetMarkedReleases()
+	todelete, unfinished, err = db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -262,12 +262,12 @@ func TestUnfinishedReleaseRollback(t *testing.T) {
 		SvgXml:  resources.ProcessDeploymentSvg,
 	}
 
-	err, _ = db.SetRelease(release, true)
+	err, _ = db.SetRelease(ctx, release, true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = cmd.deployRelease(release)
+	err = cmd.deployRelease(ctx, release)
 	if !errors.Is(err, camundaMock.Err) || err == nil {
 		t.Error(err)
 		return
@@ -275,12 +275,12 @@ func TestUnfinishedReleaseRollback(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err := db.GetMarkedReleases()
+	todelete, unfinished, err := db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -294,14 +294,14 @@ func TestUnfinishedReleaseRollback(t *testing.T) {
 		return
 	}
 
-	cmd.retryMarkedReleases()
+	cmd.retryMarkedReleases(ctx)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err = db.GetMarkedReleases()
+	todelete, unfinished, err = db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -317,14 +317,14 @@ func TestUnfinishedReleaseRollback(t *testing.T) {
 
 	camundaMock.Err = nil
 
-	cmd.retryMarkedReleases()
+	cmd.retryMarkedReleases(ctx)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err == nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err = db.GetMarkedReleases()
+	todelete, unfinished, err = db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -405,7 +405,7 @@ func TestReleaseDeploymentRollback(t *testing.T) {
 		return
 	}
 
-	err = cmd.saveReleaseCreate(model.SmartServiceReleaseExtended{
+	err = cmd.saveReleaseCreate(ctx, model.SmartServiceReleaseExtended{
 		SmartServiceRelease: model.SmartServiceRelease{
 			Id:        "test-release-id-1",
 			DesignId:  "test-design-id-1",
@@ -423,12 +423,12 @@ func TestReleaseDeploymentRollback(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err := db.GetMarkedReleases()
+	todelete, unfinished, err := db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -440,14 +440,14 @@ func TestReleaseDeploymentRollback(t *testing.T) {
 		t.Error(todelete)
 	}
 
-	cmd.retryMarkedReleases()
+	cmd.retryMarkedReleases(ctx)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err = db.GetMarkedReleases()
+	todelete, unfinished, err = db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -461,14 +461,14 @@ func TestReleaseDeploymentRollback(t *testing.T) {
 
 	camundaMock.Err = nil
 
-	cmd.retryMarkedReleases()
+	cmd.retryMarkedReleases(ctx)
 
-	_, err, _ = db.GetRelease("test-release-id-1", true)
+	_, err, _ = db.GetRelease(ctx, "test-release-id-1", true)
 	if err == nil {
 		t.Error(err)
 		return
 	}
-	todelete, unfinished, err = db.GetMarkedReleases()
+	todelete, unfinished, err = db.GetMarkedReleases(ctx)
 	if err != nil {
 		t.Error(err)
 		return

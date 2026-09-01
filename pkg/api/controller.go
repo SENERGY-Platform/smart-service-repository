@@ -17,6 +17,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
@@ -33,64 +35,64 @@ type Controller interface {
 }
 
 type ModulesInterface interface {
-	SetModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit, moduleId string) (model.SmartServiceModule, error, int)
-	AddModuleForProcessInstance(processInstanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
-	ListModulesOfProcessInstance(processInstanceId string, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
-	AddModule(token auth.Token, instanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
-	ListModules(token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
-	DeleteModule(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)
-	GetModule(token auth.Token, id string) (model.SmartServiceModule, error, int)
-	SetModuleError(token auth.Token, moduleId string, errMsg string) (error, int)
+	SetModuleForProcessInstance(ctx context.Context, processInstanceId string, module model.SmartServiceModuleInit, moduleId string) (model.SmartServiceModule, error, int)
+	AddModuleForProcessInstance(ctx context.Context, processInstanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
+	ListModulesOfProcessInstance(ctx context.Context, processInstanceId string, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
+	AddModule(ctx context.Context, token auth.Token, instanceId string, module model.SmartServiceModuleInit) (model.SmartServiceModule, error, int)
+	ListModules(ctx context.Context, token auth.Token, query model.ModuleQueryOptions) ([]model.SmartServiceModule, error, int)
+	DeleteModule(ctx context.Context, token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)
+	GetModule(ctx context.Context, token auth.Token, id string) (model.SmartServiceModule, error, int)
+	SetModuleError(ctx context.Context, token auth.Token, moduleId string, errMsg string) (error, int)
 }
 
 type BulkModulesInterface interface {
-	AddModulesForProcessInstance(processInstanceId string, module []model.SmartServiceModuleInit) ([]model.SmartServiceModule, error, int)
+	AddModulesForProcessInstance(ctx context.Context, processInstanceId string, module []model.SmartServiceModuleInit) ([]model.SmartServiceModule, error, int)
 }
 
 type DesignsInterface interface {
-	ListDesigns(token auth.Token, query model.DesignQueryOptions) ([]model.SmartServiceDesign, error, int)
-	GetDesign(token auth.Token, id string) (model.SmartServiceDesign, error, int)
-	SetDesign(token auth.Token, element model.SmartServiceDesign) (model.SmartServiceDesign, error, int)
-	DeleteDesign(token auth.Token, id string) (error, int)
+	ListDesigns(ctx context.Context, token auth.Token, query model.DesignQueryOptions) ([]model.SmartServiceDesign, error, int)
+	GetDesign(ctx context.Context, token auth.Token, id string) (model.SmartServiceDesign, error, int)
+	SetDesign(ctx context.Context, token auth.Token, element model.SmartServiceDesign) (model.SmartServiceDesign, error, int)
+	DeleteDesign(ctx context.Context, token auth.Token, id string) (error, int)
 }
 
 type ReleaseInterface interface {
-	CreateRelease(token auth.Token, element model.SmartServiceRelease) (model.SmartServiceRelease, error, int)
-	DeleteRelease(token auth.Token, id string, deletePreviousReleases bool) (error, int)
-	GetRelease(token auth.Token, id string) (model.SmartServiceRelease, error, int)
-	GetExtendedRelease(token auth.Token, id string) (model.SmartServiceReleaseExtended, error, int)
-	ListReleases(token auth.Token, query model.ReleaseQueryOptions) ([]model.SmartServiceRelease, int64, error, int)
-	ListExtendedReleases(token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, total int64, err error, code int)
-	GetReleaseParameter(token auth.Token, id string) ([]model.SmartServiceExtendedParameter, error, int)
-	GetReleaseParameterWithoutAuthCheck(token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int)
+	CreateRelease(ctx context.Context, token auth.Token, element model.SmartServiceRelease) (model.SmartServiceRelease, error, int)
+	DeleteRelease(ctx context.Context, token auth.Token, id string, deletePreviousReleases bool) (error, int)
+	GetRelease(ctx context.Context, token auth.Token, id string) (model.SmartServiceRelease, error, int)
+	GetExtendedRelease(ctx context.Context, token auth.Token, id string) (model.SmartServiceReleaseExtended, error, int)
+	ListReleases(ctx context.Context, token auth.Token, query model.ReleaseQueryOptions) ([]model.SmartServiceRelease, int64, error, int)
+	ListExtendedReleases(ctx context.Context, token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, total int64, err error, code int)
+	GetReleaseParameter(ctx context.Context, token auth.Token, id string) ([]model.SmartServiceExtendedParameter, error, int)
+	GetReleaseParameterWithoutAuthCheck(ctx context.Context, token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int)
 }
 
 type InstancesInterface interface {
-	CreateInstance(token auth.Token, releaseId string, instance model.SmartServiceInstanceInit) (model.SmartServiceInstance, error, int)
-	ListInstances(token auth.Token, query model.InstanceQueryOptions) ([]model.SmartServiceInstance, int64, error, int)
-	GetInstance(token auth.Token, id string) (model.SmartServiceInstance, error, int)
-	DeleteInstance(token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)
-	SetInstanceError(token auth.Token, instanceId string, errMsg string) (error, int)
-	SetInstanceErrorByProcessInstanceId(processInstanceId string, errMsg string) (error, int)
-	UpdateInstanceInfo(token auth.Token, id string, element model.SmartServiceInstanceInfo) (model.SmartServiceInstance, error, int)
-	RedeployInstance(token auth.Token, id string, parameters []model.SmartServiceParameter, releaseId string) (model.SmartServiceInstance, error, int)
-	GetInstanceUserIdByProcessInstanceId(processInstanceId string) (string, error, int)
-	GetInstanceByProcessInstanceId(processInstanceId string) (model.SmartServiceInstance, error, int)
+	CreateInstance(ctx context.Context, token auth.Token, releaseId string, instance model.SmartServiceInstanceInit) (model.SmartServiceInstance, error, int)
+	ListInstances(ctx context.Context, token auth.Token, query model.InstanceQueryOptions) ([]model.SmartServiceInstance, int64, error, int)
+	GetInstance(ctx context.Context, token auth.Token, id string) (model.SmartServiceInstance, error, int)
+	DeleteInstance(ctx context.Context, token auth.Token, id string, ignoreModuleDeleteError bool) (error, int)
+	SetInstanceError(ctx context.Context, token auth.Token, instanceId string, errMsg string) (error, int)
+	SetInstanceErrorByProcessInstanceId(ctx context.Context, processInstanceId string, errMsg string) (error, int)
+	UpdateInstanceInfo(ctx context.Context, token auth.Token, id string, element model.SmartServiceInstanceInfo) (model.SmartServiceInstance, error, int)
+	RedeployInstance(ctx context.Context, token auth.Token, id string, parameters []model.SmartServiceParameter, releaseId string) (model.SmartServiceInstance, error, int)
+	GetInstanceUserIdByProcessInstanceId(ctx context.Context, processInstanceId string) (string, error, int)
+	GetInstanceByProcessInstanceId(ctx context.Context, processInstanceId string) (model.SmartServiceInstance, error, int)
 }
 
 type MaintenanceInterface interface {
-	GetMaintenanceProceduresOfInstance(token auth.Token, instanceId string) (maintenanceProcedure []model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int)
-	GetMaintenanceProcedureOfInstance(token auth.Token, instanceId string, publicEventId string) (maintenanceProcedure model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int)
-	GetMaintenanceProcedureParametersOfInstance(token auth.Token, instanceId string, publicEventId string) ([]model.SmartServiceExtendedParameter, error, int)
-	StartMaintenanceProcedure(token auth.Token, instanceId string, publicEventId string, parameters model.SmartServiceParameters) (error, int)
+	GetMaintenanceProceduresOfInstance(ctx context.Context, token auth.Token, instanceId string) (maintenanceProcedure []model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int)
+	GetMaintenanceProcedureOfInstance(ctx context.Context, token auth.Token, instanceId string, publicEventId string) (maintenanceProcedure model.MaintenanceProcedure, instance model.SmartServiceInstance, release model.SmartServiceReleaseExtended, err error, code int)
+	GetMaintenanceProcedureParametersOfInstance(ctx context.Context, token auth.Token, instanceId string, publicEventId string) ([]model.SmartServiceExtendedParameter, error, int)
+	StartMaintenanceProcedure(ctx context.Context, token auth.Token, instanceId string, publicEventId string, parameters model.SmartServiceParameters) (error, int)
 }
 
 type VariablesInterface interface {
-	SetVariable(token auth.Token, variable model.SmartServiceInstanceVariable) (result model.SmartServiceInstanceVariable, err error, code int)
-	GetVariablesMap(token auth.Token, instanceId string, query model.VariableQueryOptions) (map[string]interface{}, error, int)
-	ListVariables(token auth.Token, instanceId string, query model.VariableQueryOptions) ([]model.SmartServiceInstanceVariable, error, int)
-	DeleteVariable(token auth.Token, instanceId string, name string) (error, int)
-	GetVariable(token auth.Token, instanceId string, name string) (model.SmartServiceInstanceVariable, error, int)
-	SetVariablesMapOfProcessInstance(processInstanceId string, mappedVariableValues map[string]interface{}) (err error, code int)
-	GetVariablesMapOfProcessInstance(processInstanceId string) (map[string]interface{}, error, int)
+	SetVariable(ctx context.Context, token auth.Token, variable model.SmartServiceInstanceVariable) (result model.SmartServiceInstanceVariable, err error, code int)
+	GetVariablesMap(ctx context.Context, token auth.Token, instanceId string, query model.VariableQueryOptions) (map[string]interface{}, error, int)
+	ListVariables(ctx context.Context, token auth.Token, instanceId string, query model.VariableQueryOptions) ([]model.SmartServiceInstanceVariable, error, int)
+	DeleteVariable(ctx context.Context, token auth.Token, instanceId string, name string) (error, int)
+	GetVariable(ctx context.Context, token auth.Token, instanceId string, name string) (model.SmartServiceInstanceVariable, error, int)
+	SetVariablesMapOfProcessInstance(ctx context.Context, processInstanceId string, mappedVariableValues map[string]interface{}) (err error, code int)
+	GetVariablesMapOfProcessInstance(ctx context.Context, processInstanceId string) (map[string]interface{}, error, int)
 }

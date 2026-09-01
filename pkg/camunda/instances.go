@@ -17,6 +17,7 @@
 package camunda
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,26 +25,32 @@ import (
 	"net/url"
 	"runtime/debug"
 
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
+
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
-func (this *Camunda) GetProcessInstanceBusinessKey(processInstanceId string) (string, error, int) {
-	instance, err := this.getProcessInstanceHistory(processInstanceId)
+func (this *Camunda) GetProcessInstanceBusinessKey(ctx context.Context, processInstanceId string) (string, error, int) {
+	instance, err := this.getProcessInstanceHistory(ctx, processInstanceId)
 	if err != nil {
 		return "", err, http.StatusInternalServerError
 	}
 	return instance.BusinessKey, nil, http.StatusOK
 }
 
-func (this *Camunda) getProcessInstanceHistory(processInstanceId string) (result HistoricProcessInstance, err error) {
+func (this *Camunda) getProcessInstanceHistory(ctx context.Context, processInstanceId string) (result HistoricProcessInstance, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/history/process-instance/"+url.QueryEscape(processInstanceId), nil)
+	if err != nil {
+		return result, this.filterUrlFromErr(err)
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
 	if err != nil {
 		return result, this.filterUrlFromErr(err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in getProcessInstanceHistory", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in getProcessInstanceHistory", "error", err, "stack", string(debug.Stack()))
 		return result, err
 	}
 	defer resp.Body.Close()
@@ -55,15 +62,19 @@ func (this *Camunda) getProcessInstanceHistory(processInstanceId string) (result
 	return
 }
 
-func (this *Camunda) GetProcessInstanceList() (result []model.HistoricProcessInstance, err error) {
+func (this *Camunda) GetProcessInstanceList(ctx context.Context) (result []model.HistoricProcessInstance, err error) {
 	req, err := http.NewRequest("GET", this.config.CamundaUrl+"/engine-rest/history/process-instance", nil)
+	if err != nil {
+		return result, this.filterUrlFromErr(err)
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
 	if err != nil {
 		return result, this.filterUrlFromErr(err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		err = this.filterUrlFromErr(err)
-		this.config.GetLogger().Error("error in GetProcessInstanceList", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in GetProcessInstanceList", "error", err, "stack", string(debug.Stack()))
 		return result, err
 	}
 	defer resp.Body.Close()

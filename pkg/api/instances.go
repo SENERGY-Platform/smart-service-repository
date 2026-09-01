@@ -75,7 +75,7 @@ func (this *Instances) List(config configuration.Config, router *httprouter.Rout
 		if query.Sort == "" {
 			query.Sort = "name.asc"
 		}
-		result, total, err, code := ctrl.ListInstances(token, query)
+		result, total, err, code := ctrl.ListInstances(request.Context(), token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -108,7 +108,7 @@ func (this *Instances) Get(config configuration.Config, router *httprouter.Route
 			http.Error(writer, "missing id", http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.GetInstance(token, id)
+		result, err, code := ctrl.GetInstance(request.Context(), token, id)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -143,7 +143,7 @@ func (this *Instances) Delete(config configuration.Config, router *httprouter.Ro
 
 		ignoreModuleDeleteErrors, _ := strconv.ParseBool(request.URL.Query().Get("ignore_module_delete_errors"))
 
-		err, code := ctrl.DeleteInstance(token, id, ignoreModuleDeleteErrors)
+		err, code := ctrl.DeleteInstance(request.Context(), token, id, ignoreModuleDeleteErrors)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -176,7 +176,7 @@ func (this *Instances) SetError(config configuration.Config, router *httprouter.
 			http.Error(writer, "expect json encoded string in body", http.StatusBadRequest)
 			return
 		}
-		err, code := ctrl.SetInstanceError(token, params.ByName("id"), errMsg)
+		err, code := ctrl.SetInstanceError(request.Context(), token, params.ByName("id"), errMsg)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -206,7 +206,7 @@ func (this *Instances) GetInstanceByProcessId(config configuration.Config, route
 			http.Error(writer, "only admins may ask for instances-by-process-id", http.StatusForbidden)
 			return
 		}
-		instance, err, code := ctrl.GetInstanceByProcessInstanceId(params.ByName("id"))
+		instance, err, code := ctrl.GetInstanceByProcessInstanceId(request.Context(), params.ByName("id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -237,7 +237,7 @@ func (this *Instances) GetInstanceUserId(config configuration.Config, router *ht
 			http.Error(writer, "only admins may ask for instance user-id", http.StatusForbidden)
 			return
 		}
-		userId, err, code := ctrl.GetInstanceUserIdByProcessInstanceId(params.ByName("id"))
+		userId, err, code := ctrl.GetInstanceUserIdByProcessInstanceId(request.Context(), params.ByName("id"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -275,7 +275,7 @@ func (this *Instances) SetErrorByProcessInstance(config configuration.Config, ro
 			http.Error(writer, "expect json encoded string in body", http.StatusBadRequest)
 			return
 		}
-		err, code := ctrl.SetInstanceErrorByProcessInstanceId(params.ByName("id"), errMsg)
+		err, code := ctrl.SetInstanceErrorByProcessInstanceId(request.Context(), params.ByName("id"), errMsg)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -318,7 +318,7 @@ func (this *Instances) UpdateInfo(config configuration.Config, router *httproute
 			return
 		}
 
-		result, err, code := ctrl.UpdateInstanceInfo(token, id, element)
+		result, err, code := ctrl.UpdateInstanceInfo(request.Context(), token, id, element)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -364,7 +364,7 @@ func (this *Instances) Redeploy(config configuration.Config, router *httprouter.
 			return
 		}
 
-		result, err, code := ctrl.RedeployInstance(token, id, parameters, releaseId)
+		result, err, code := ctrl.RedeployInstance(request.Context(), token, id, parameters, releaseId)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return

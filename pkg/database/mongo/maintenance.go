@@ -17,11 +17,13 @@
 package mongo
 
 import (
+	"context"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (this *Mongo) RemoveFromRunningMaintenanceIds(instanceId string, removeMaintenanceIds []string) error {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) RemoveFromRunningMaintenanceIds(ctx context.Context, instanceId string, removeMaintenanceIds []string) error {
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.instanceCollection().UpdateOne(ctx, bson.M{
 		InstanceBson.Id: instanceId,
 	}, bson.M{
@@ -30,8 +32,8 @@ func (this *Mongo) RemoveFromRunningMaintenanceIds(instanceId string, removeMain
 	return err
 }
 
-func (this *Mongo) AddToRunningMaintenanceIds(instanceId string, maintenanceId string) error {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) AddToRunningMaintenanceIds(ctx context.Context, instanceId string, maintenanceId string) error {
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.instanceCollection().UpdateOne(ctx, bson.M{
 		InstanceBson.Id: instanceId,
 	}, bson.M{

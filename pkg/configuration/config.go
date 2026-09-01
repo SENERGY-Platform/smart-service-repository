@@ -28,7 +28,11 @@ import (
 	"time"
 
 	struct_logger "github.com/SENERGY-Platform/go-service-base/struct-logger"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/handlers"
 )
+
+// ServiceName is used as open-telemetry service name
+const ServiceName = "smart-service-repository"
 
 type Config struct {
 	ServerPort                           string   `json:"server_port"`
@@ -56,6 +60,7 @@ type Config struct {
 	CleanupCycle                         string   `json:"cleanup_cycle"`
 	MarkAgeLimit                         Duration `json:"mark_age_limit"`
 	LogLevel                             string   `json:"log_level"`
+	OtelEndpoint                         string   `json:"otel_endpoint"`
 
 	DeleteUnusedOldVersionReleases bool `json:"delete_unused_old_version_releases"`
 
@@ -195,7 +200,7 @@ func (this *Duration) UnmarshalJSON(bytes []byte) (err error) {
 
 func (this *Config) GetLogger() *slog.Logger {
 	if this.logger == nil {
-		this.logger = struct_logger.New(
+		base := struct_logger.New(
 			struct_logger.Config{
 				Handler:    struct_logger.JsonHandlerSelector,
 				Level:      this.LogLevel,
@@ -205,7 +210,10 @@ func (this *Config) GetLogger() *slog.Logger {
 			},
 			os.Stdout,
 			"",
-			"smart-service-repository").With("project-group", "smart-service")
+			"smart-service-repository")
+		//the open-telemetry handler adds the baggage of the context to the log record and the record to the current span.
+		//it only takes effect if the context based log methods are used (ErrorContext(), InfoContext(), ...)
+		this.logger = slog.New(handlers.NewOpenTelemetryHandler(base.Handler())).With("project-group", "smart-service")
 	}
 	return this.logger
 }

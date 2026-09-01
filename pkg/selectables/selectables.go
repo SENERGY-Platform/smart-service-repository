@@ -18,12 +18,14 @@ package selectables
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"runtime/debug"
 
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
@@ -37,7 +39,7 @@ func New(config configuration.Config) *Selectables {
 	return &Selectables{config: config}
 }
 
-func (this *Selectables) Get(token auth.Token, searchedEntities []string, criteria []model.Criteria) (result []model.Selectable, err error, code int) {
+func (this *Selectables) Get(ctx context.Context, token auth.Token, searchedEntities []string, criteria []model.Criteria) (result []model.Selectable, err error, code int) {
 	requestBody := new(bytes.Buffer)
 	err = json.NewEncoder(requestBody).Encode(criteria)
 	if err != nil {
@@ -73,7 +75,11 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 	req, err := http.NewRequest("POST", endpoint, requestBody)
 	if err != nil {
 		temp, _ := json.Marshal(criteria)
-		this.config.GetLogger().Error("error in Selectables.Get", "error", err, "stack", string(debug.Stack()), "criteria", string(temp))
+		this.config.GetLogger().ErrorContext(ctx, "error in Selectables.Get", "error", err, "stack", string(debug.Stack()), "criteria", string(temp))
+		return result, err, http.StatusInternalServerError
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
+	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
 	req.Header.Set("Authorization", token.Jwt())
@@ -81,7 +87,7 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		temp, _ := json.Marshal(criteria)
-		this.config.GetLogger().Error("error in Selectables.Get", "error", err, "stack", string(debug.Stack()), "criteria", string(temp))
+		this.config.GetLogger().ErrorContext(ctx, "error in Selectables.Get", "error", err, "stack", string(debug.Stack()), "criteria", string(temp))
 		return result, err, http.StatusInternalServerError
 	}
 	if resp.StatusCode >= 300 {
@@ -89,12 +95,12 @@ func (this *Selectables) Get(token auth.Token, searchedEntities []string, criter
 		buf.ReadFrom(resp.Body)
 		err = fmt.Errorf("unable to load selectables: %v, %v", resp.StatusCode, buf.String())
 		criteriaJson, _ := json.Marshal(criteria)
-		this.config.GetLogger().Error("unable to load selectables", "error", err, "stack", string(debug.Stack()), "criteria", criteriaJson, "searchedEntities", searchedEntities)
+		this.config.GetLogger().ErrorContext(ctx, "unable to load selectables", "error", err, "stack", string(debug.Stack()), "criteria", criteriaJson, "searchedEntities", searchedEntities)
 		return result, err, http.StatusInternalServerError
 	}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
-		this.config.GetLogger().Error("error in Selectables.Get", "error", err, "stack", string(debug.Stack()))
+		this.config.GetLogger().ErrorContext(ctx, "error in Selectables.Get", "error", err, "stack", string(debug.Stack()))
 		return result, err, http.StatusInternalServerError
 	}
 	return result, nil, http.StatusOK

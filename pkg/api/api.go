@@ -25,6 +25,7 @@ import (
 	"reflect"
 	"runtime/debug"
 
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api/util"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
@@ -45,15 +46,15 @@ func Start(ctx context.Context, config configuration.Config, ctrl Controller) (e
 
 	server := &http.Server{Addr: ":" + config.ServerPort, Handler: router}
 	go func() {
-		config.GetLogger().Info("listening on " + server.Addr)
+		config.GetLogger().InfoContext(ctx, "listening on "+server.Addr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			config.GetLogger().Error("fatal error", "error", err, "stack", string(debug.Stack()))
+			config.GetLogger().ErrorContext(ctx, "fatal error", "error", err, "stack", string(debug.Stack()))
 			os.Exit(1)
 		}
 	}()
 	go func() {
 		<-ctx.Done()
-		config.GetLogger().Info("api shutdown", "error", server.Shutdown(context.Background()))
+		config.GetLogger().InfoContext(ctx, "api shutdown", "error", server.Shutdown(context.Background()))
 	}()
 	return
 }
@@ -75,8 +76,15 @@ func GetRouter(config configuration.Config, command Controller) http.Handler {
 		}
 	}
 
-	var handler http.Handler
-	handler = accesslog.New(util.NewCors(router))
+	var handler http.Handler = router
+	//HTTPOpenTelemetry extracts the trace-context of incoming requests and adds user-id and username to the baggage
+	otelHandler, err := otelx.HTTPOpenTelemetry(context.Background(), config.OtelEndpoint, configuration.ServiceName, handler)
+	if err != nil {
+		config.GetLogger().Error("unable to init open-telemetry -> continue without tracing", "error", err)
+	} else {
+		handler = otelHandler
+	}
+	handler = accesslog.New(util.NewCors(handler))
 	return handler
 }
 

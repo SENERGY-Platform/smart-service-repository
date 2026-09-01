@@ -99,7 +99,7 @@ func (this *Modules) List(config configuration.Config, router *httprouter.Router
 			query.Sort = "id.asc"
 		}
 
-		result, err, code := ctrl.ListModules(token, query)
+		result, err, code := ctrl.ListModules(request.Context(), token, query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -144,7 +144,7 @@ func (this *Modules) ListByProcessInstance(config configuration.Config, router *
 			query.TypeFilter = &moduleTypeFilter
 		}
 
-		result, err, code := ctrl.ListModulesOfProcessInstance(params.ByName("id"), query)
+		result, err, code := ctrl.ListModulesOfProcessInstance(request.Context(), params.ByName("id"), query)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -185,7 +185,7 @@ func (this *Modules) CreateByProcessInstance(config configuration.Config, router
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.AddModuleForProcessInstance(params.ByName("id"), module)
+		result, err, code := ctrl.AddModuleForProcessInstance(request.Context(), params.ByName("id"), module)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -227,7 +227,7 @@ func (this *Modules) SetByProcessInstance(config configuration.Config, router *h
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.SetModuleForProcessInstance(params.ByName("id"), module, params.ByName("moduleId"))
+		result, err, code := ctrl.SetModuleForProcessInstance(request.Context(), params.ByName("id"), module, params.ByName("moduleId"))
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -264,7 +264,7 @@ func (this *Modules) Create(config configuration.Config, router *httprouter.Rout
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		result, err, code := ctrl.AddModule(token, params.ByName("id"), module)
+		result, err, code := ctrl.AddModule(request.Context(), token, params.ByName("id"), module)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -299,7 +299,7 @@ func (this *Modules) Delete(config configuration.Config, router *httprouter.Rout
 
 		ignoreModuleDeleteErrors, _ := strconv.ParseBool(request.URL.Query().Get("ignore_module_delete_errors"))
 
-		err, code := ctrl.DeleteModule(token, id, ignoreModuleDeleteErrors)
+		err, code := ctrl.DeleteModule(request.Context(), token, id, ignoreModuleDeleteErrors)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -330,7 +330,7 @@ func (this *Modules) Get(config configuration.Config, router *httprouter.Router,
 			return
 		}
 
-		module, err, code := ctrl.GetModule(token, id)
+		module, err, code := ctrl.GetModule(request.Context(), token, id)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
@@ -364,7 +364,7 @@ func (this *Modules) SetModuleError(config configuration.Config, router *httprou
 			http.Error(writer, "expect json encoded string in body", http.StatusBadRequest)
 			return
 		}
-		err, code := ctrl.SetModuleError(token, params.ByName("id"), errMsg)
+		err, code := ctrl.SetModuleError(request.Context(), token, params.ByName("id"), errMsg)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 			return
