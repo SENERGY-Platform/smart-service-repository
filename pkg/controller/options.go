@@ -177,7 +177,7 @@ func optionFromImport(importOption model.Import, path string, characteristicId s
 	return option, nil
 }
 
-func optionFromDeviceServiceAndPath(device model.Device, service model.Service, lenServices int, path string, characteristicId string, lenPaths int, sameEntityInParameter string) (option model.Option, err error) {
+func optionFromDeviceServiceAndPath(device model.DeviceWithDisplayName, service model.Service, lenServices int, path string, characteristicId string, lenPaths int, sameEntityInParameter string) (option model.Option, err error) {
 	option.Kind = "Devices"
 	option.EntityId = device.Id
 	option.Label = device.DisplayName

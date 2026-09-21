@@ -16,50 +16,20 @@
 
 package model
 
-type Selectable struct {
-	Device             *Device                 `json:"device,omitempty"`
-	Services           []Service               `json:"services,omitempty"`
-	DeviceGroup        *DeviceGroup            `json:"device_group,omitempty"`
-	Import             *Import                 `json:"import,omitempty"`
-	ServicePathOptions map[string][]PathOption `json:"servicePathOptions,omitempty"`
-}
+import "github.com/SENERGY-Platform/models/go/models"
 
-type DeviceGroup struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type Device struct {
-	Id          string `json:"id"`
-	Name        string `json:"name"`
-	DisplayName string `json:"display_name"`
-}
-
-type Service struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type Interaction string
-
-const (
-	EVENT             Interaction = "event"
-	REQUEST           Interaction = "request"
-	EVENT_AND_REQUEST Interaction = "event+request"
+// The shapes of the device-selection selectables answer are defined in the shared model, and
+// they are aliased here instead of copied. A copy silently drops whatever the answer gained
+// since it was written - encoding/json discards a field the target struct does not declare,
+// without a compiler error - which is how the aspect node lists of a path option would be
+// lost here.
+type (
+	Selectable            = models.Selectable
+	DeviceWithDisplayName = models.DeviceWithDisplayName
+	Service               = models.Service
+	DeviceGroup           = models.DeviceGroup
+	Import                = models.Import
+	ImportType            = models.ImportType
+	PathOption            = models.PathOption
+	Interaction           = models.Interaction
 )
-
-type Import struct {
-	Id           string `json:"id"`
-	Name         string `json:"name"`
-	ImportTypeId string `json:"import_type_id"`
-}
-
-type ImportType struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type PathOption struct {
-	Path             string `json:"path"`
-	CharacteristicId string `json:"characteristicId"`
-}
