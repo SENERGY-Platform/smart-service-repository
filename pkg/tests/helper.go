@@ -30,8 +30,8 @@ import (
 	"testing"
 	"time"
 
-	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
-	"github.com/SENERGY-Platform/device-repository/lib/database"
+	devicerepository "github.com/SENERGY-Platform/device-repository/v2/lib/client"
+	"github.com/SENERGY-Platform/device-repository/v2/lib/database"
 	permissionsv2 "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/api"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"

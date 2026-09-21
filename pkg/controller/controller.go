@@ -22,7 +22,7 @@ import (
 	"slices"
 	"sync"
 
-	devicerepository "github.com/SENERGY-Platform/device-repository/lib/client"
+	devicerepository "github.com/SENERGY-Platform/device-repository/v2/lib/client"
 	permclient "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/configuration"
