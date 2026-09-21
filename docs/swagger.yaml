@@ -33,7 +33,12 @@ definitions:
   model.Criteria:
     properties:
       aspect_id:
+        description: 'deprecated: alias for a single element AspectIds'
         type: string
+      aspect_ids:
+        items:
+          type: string
+        type: array
       device_class_id:
         type: string
       function_id:

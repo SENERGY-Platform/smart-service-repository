@@ -43,11 +43,24 @@ type IotDescription struct {
 	NeedsSameEntityIdInParameter string              `json:"needs_same_entity_id_in_parameter" bson:"needs_same_entity_id_in_parameter"`
 }
 
+// Criteria is what a smart service design asks its iot parameters to be filled with. It is
+// parsed from the bpmn, stored with the release and handed to device-selection unchanged.
+//
+// AspectIds is what everything behind that boundary evaluates; several aspects in one
+// criteria are an AND on a single content variable, not an OR over the device type.
+// AspectId is the deprecated alias for a single element list.
+//
+// Both spellings are passed on exactly as the design named them, because this service writes
+// a record that other readers consume. Folding AspectId into AspectIds here would put
+// aspect_ids into a stored release that a reader predating the lists cannot see, and drop the
+// aspect_id that is the only field such a reader looks at. The fold belongs on the read side,
+// and device-selection does it.
 type Criteria struct {
 	Interaction   *Interaction `json:"interaction" bson:"interaction"`
 	FunctionId    *string      `json:"function_id" bson:"function_id"`
 	DeviceClassId *string      `json:"device_class_id" bson:"device_class_id"`
-	AspectId      *string      `json:"aspect_id" bson:"aspect_id"`
+	AspectId      *string      `json:"aspect_id" bson:"aspect_id"` //deprecated: alias for a single element AspectIds
+	AspectIds     []string     `json:"aspect_ids,omitempty" bson:"aspect_ids,omitempty"`
 }
 
 type FilterPossibility = string

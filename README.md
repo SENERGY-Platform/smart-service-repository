@@ -36,6 +36,24 @@ examples can be found in ./pkg/tests/resources
 - value: `json.Marshal([]Criteria{})`
 - value example: `[{"interaction": "request, "function_id": "urn:infai:ses:measuring-function:826e5a04-71cc-4935-9fd4-92c930dc06bb"}]`
 
+### aspects in a criteria
+
+A criteria names its aspects in `aspect_ids`:
+
+```json
+{"function_id": "urn:infai:ses:measuring-function:...", "aspect_ids": ["urn:infai:ses:aspect:a", "urn:infai:ses:aspect:b"]}
+```
+
+Several aspects in **one** criteria are an AND on a single content variable: the same variable
+has to carry all of them, each of them covering its own aspect subtree. That is a different
+AND from the one over `criteria_list`, where each entry may be answered by a different
+variable of the device type. Two sibling aspects in one criteria therefore match nothing,
+because a content variable carries at most one aspect out of a classified hierarchy.
+
+`aspect_id` is deprecated and kept as the alias for a list with a single element, so a design
+written before the lists keeps its results. Both spellings are passed on to device-selection as
+the design wrote them; it resolves the alias.
+
 
 ### entity_only
 

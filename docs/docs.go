@@ -2123,7 +2123,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "aspect_id": {
+                    "description": "deprecated: alias for a single element AspectIds",
                     "type": "string"
+                },
+                "aspect_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "device_class_id": {
                     "type": "string"
