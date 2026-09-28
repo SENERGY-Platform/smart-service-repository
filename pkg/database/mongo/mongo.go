@@ -18,6 +18,8 @@ package mongo
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -37,7 +39,17 @@ type Mongo struct {
 
 var CreateCollections = []func(db *Mongo) error{}
 
+var (
+	ErrEmptyDatabase   = errors.New("mongo database name must not be empty")
+	ErrMissingPassword = errors.New("mongo password must not be empty when a mongo user is set")
+)
+
+const startupCheckTimeout = 10 * time.Second
+
 func New(conf configuration.Config) (*Mongo, error) {
+	if err := validateConfig(conf); err != nil {
+		return nil, err
+	}
 	ctx, _ := getTimeoutContext()
 	//otelmongo needs an initialized open-telemetry; mongo.New() may run before the api is started.
 	//the returned handler is unused, the call is done for the initialisation, which happens only once per process.
@@ -46,7 +58,13 @@ func New(conf configuration.Config) (*Mongo, error) {
 		conf.GetLogger().Error("unable to init open-telemetry -> continue without tracing", "error", err)
 	}
 	reg := bson.NewRegistryBuilder().RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{})).Build() //ensure map marshalling to interface
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoUrl), options.Client().SetRegistry(reg), options.Client().SetMonitor(otelmongo.NewMonitor()))
+	opts := clientOptions(conf).SetRegistry(reg).SetMonitor(otelmongo.NewMonitor())
+	return start(ctx, conf, opts, startupCheckTimeout)
+}
+
+// start disconnects the client on every failure path, so a failed startup leaves nothing connected.
+func start(ctx context.Context, conf configuration.Config, opts *options.ClientOptions, timeout time.Duration) (*Mongo, error) {
+	client, err := connect(ctx, opts, conf.MongoDatabase, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -54,11 +72,58 @@ func New(conf configuration.Config) (*Mongo, error) {
 	for _, creators := range CreateCollections {
 		err = creators(db)
 		if err != nil {
-			client.Disconnect(context.Background())
+			disconnect(client)
 			return nil, err
 		}
 	}
 	return db, nil
+}
+
+// connect runs listCollections on the service database because Connect is lazy and ping needs no
+// authentication; unreachable servers and wrong or missing credentials then fail at startup.
+func connect(ctx context.Context, opts *options.ClientOptions, database string, timeout time.Duration) (*mongo.Client, error) {
+	client, err := mongo.Connect(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	checkCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	listOpts := options.ListCollections().SetNameOnly(true).SetAuthorizedCollections(true)
+	if _, err = client.Database(database).ListCollectionNames(checkCtx, bson.D{}, listOpts); err != nil {
+		disconnect(client)
+		return nil, fmt.Errorf("mongo startup check failed: %w", err)
+	}
+	return client, nil
+}
+
+// disconnect uses a fresh context, because the caller's context may be the reason for the failure.
+func disconnect(client *mongo.Client) {
+	ctx, cancel := getTimeoutContext()
+	defer cancel()
+	_ = client.Disconnect(ctx)
+}
+
+func validateConfig(conf configuration.Config) error {
+	if conf.MongoDatabase == "" {
+		return ErrEmptyDatabase
+	}
+	if conf.MongoUser != "" && conf.MongoPassword == "" {
+		return ErrMissingPassword
+	}
+	return nil
+}
+
+// clientOptions applies the credentials after the URI so they replace any given in MONGO_URL.
+func clientOptions(conf configuration.Config) *options.ClientOptions {
+	opts := options.Client().ApplyURI(conf.MongoUrl)
+	if conf.MongoUser != "" {
+		opts.SetAuth(options.Credential{
+			Username:   conf.MongoUser,
+			Password:   conf.MongoPassword,
+			AuthSource: conf.MongoAuthSource,
+		})
+	}
+	return opts
 }
 
 // getTimeoutContext derives a context with the mongo timeout from the given parent.

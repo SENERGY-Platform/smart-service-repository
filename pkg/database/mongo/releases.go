@@ -53,7 +53,7 @@ type SmartServiceReleaseExtendedWithSyncMarks struct {
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
 		var err error
-		collection := db.client.Database(db.config.MongoTable).Collection(db.config.MongoCollectionRelease)
+		collection := db.client.Database(db.config.MongoDatabase).Collection(db.config.MongoCollectionRelease)
 		err = db.ensureIndex(collection, "release_id_index", ReleaseBson.Id, true, true)
 		if err != nil {
 			debug.PrintStack()
@@ -74,7 +74,7 @@ func init() {
 }
 
 func (this *Mongo) releaseCollection() *mongo.Collection {
-	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionRelease)
+	return this.client.Database(this.config.MongoDatabase).Collection(this.config.MongoCollectionRelease)
 }
 
 func (this *Mongo) MarkReleaseAsFinished(ctx context.Context, id string) (err error) {

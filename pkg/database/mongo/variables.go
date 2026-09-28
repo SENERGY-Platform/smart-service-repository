@@ -34,7 +34,7 @@ var ErrVariableNotFound = errors.New("variable not found")
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
 		var err error
-		collection := db.client.Database(db.config.MongoTable).Collection(db.config.MongoCollectionVariables)
+		collection := db.client.Database(db.config.MongoDatabase).Collection(db.config.MongoCollectionVariables)
 		err = db.ensureCompoundIndex(collection, "variables_instance_name_user_index", true, true, VariableBson.InstanceId, VariableBson.UserId, VariableBson.Name)
 		if err != nil {
 			debug.PrintStack()
@@ -50,7 +50,7 @@ func init() {
 }
 
 func (this *Mongo) variableCollection() *mongo.Collection {
-	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionVariables)
+	return this.client.Database(this.config.MongoDatabase).Collection(this.config.MongoCollectionVariables)
 }
 
 func (this *Mongo) GetVariable(ctx context.Context, instanceId string, userId string, variableName string) (result model.SmartServiceInstanceVariable, err error, code int) {

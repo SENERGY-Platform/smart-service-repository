@@ -36,7 +36,7 @@ var ErrModuleNotFound = errors.New("module not found")
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
 		var err error
-		collection := db.client.Database(db.config.MongoTable).Collection(db.config.MongoCollectionModule)
+		collection := db.client.Database(db.config.MongoDatabase).Collection(db.config.MongoCollectionModule)
 		err = db.ensureCompoundIndex(collection, "module_id_user_index", true, true, ModuleBson.Id, ModuleBson.UserId)
 		if err != nil {
 			debug.PrintStack()
@@ -67,7 +67,7 @@ func init() {
 }
 
 func (this *Mongo) moduleCollection() *mongo.Collection {
-	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionModule)
+	return this.client.Database(this.config.MongoDatabase).Collection(this.config.MongoCollectionModule)
 }
 
 func (this *Mongo) GetModule(ctx context.Context, id string, userId string) (result model.SmartServiceModule, err error, code int) {

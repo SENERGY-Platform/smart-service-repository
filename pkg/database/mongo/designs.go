@@ -34,7 +34,7 @@ var ErrDesignNotFound = errors.New("design not found")
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
 		var err error
-		collection := db.client.Database(db.config.MongoTable).Collection(db.config.MongoCollectionDesign)
+		collection := db.client.Database(db.config.MongoDatabase).Collection(db.config.MongoCollectionDesign)
 		err = db.ensureCompoundIndex(collection, "design_id_user_index", true, true, DesignBson.Id, DesignBson.UserId)
 		if err != nil {
 			debug.PrintStack()
@@ -55,7 +55,7 @@ func init() {
 }
 
 func (this *Mongo) designCollection() *mongo.Collection {
-	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionDesign)
+	return this.client.Database(this.config.MongoDatabase).Collection(this.config.MongoCollectionDesign)
 }
 
 func (this *Mongo) GetDesign(ctx context.Context, id string, userId string) (result model.SmartServiceDesign, err error, code int) {

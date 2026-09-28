@@ -37,7 +37,7 @@ var ErrInstanceNotFound = errors.New("instance not found")
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
 		var err error
-		collection := db.client.Database(db.config.MongoTable).Collection(db.config.MongoCollectionInstance)
+		collection := db.client.Database(db.config.MongoDatabase).Collection(db.config.MongoCollectionInstance)
 		err = db.ensureCompoundIndex(collection, "instance_id_user_index", true, true, InstanceBson.Id, InstanceBson.UserId)
 		if err != nil {
 			debug.PrintStack()
@@ -63,7 +63,7 @@ func init() {
 }
 
 func (this *Mongo) instanceCollection() *mongo.Collection {
-	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionInstance)
+	return this.client.Database(this.config.MongoDatabase).Collection(this.config.MongoCollectionInstance)
 }
 
 func (this *Mongo) GetInstance(ctx context.Context, id string, userId string) (result model.SmartServiceInstance, err error, code int) {
