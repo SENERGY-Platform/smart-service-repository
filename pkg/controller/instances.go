@@ -217,13 +217,30 @@ func (this *Controller) RedeployInstance(ctx context.Context, token auth.Token, 
 	if err != nil {
 		return result, err, code
 	}
-	access, err, _ = this.permissions.CheckPermissionContext(ctx, token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, result.ReleaseId, client.Execute)
+	//resolve the target release before the instance is torn down, so that a failure leaves the running instance untouched
+	targetReleaseId := result.ReleaseId
+	if releaseId != "" {
+		targetReleaseId = releaseId
+	}
+	access, err, _ = this.permissions.CheckPermissionContext(ctx, token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, targetReleaseId, client.Execute)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
 	if !access {
 		return result, errors.New("missing release access"), http.StatusForbidden
 	}
+	release, err, code := this.GetExtendedRelease(ctx, token, targetReleaseId)
+	if err != nil {
+		return result, err, code
+	}
+
+	paramListWithoutAutoSelect := parameters
+
+	paramListWithAutoSelect, err, code := this.appendAutoSelectParams(ctx, token, parameters, release.ParsedInfo.ParameterDescriptions)
+	if err != nil {
+		return result, err, code
+	}
+
 	err, code = this.DeleteInstance(ctx, token, id, false)
 	if err != nil {
 		return result, err, code
@@ -231,33 +248,11 @@ func (this *Controller) RedeployInstance(ctx context.Context, token auth.Token, 
 	result.Ready = false
 	result.Deleting = false
 	result.Error = ""
-	result.Parameters = parameters
 	result.UpdatedAt = time.Now().Unix()
-
-	var release model.SmartServiceReleaseExtended
 	if releaseId != "" {
-		release, err, code = this.GetExtendedRelease(ctx, token, releaseId)
-		if err != nil {
-			return result, err, code
-		}
 		result.ReleaseId = release.Id
-		if result.NewReleaseId == release.Id {
-			result.NewReleaseId = ""
-		}
 		result.DesignId = release.DesignId
 		result.NewReleaseId = release.NewReleaseId
-	} else {
-		release, err, code = this.GetExtendedRelease(ctx, token, result.ReleaseId)
-		if err != nil {
-			return result, err, code
-		}
-	}
-
-	paramListWithoutAutoSelect := result.Parameters
-
-	paramListWithAutoSelect, err, code := this.appendAutoSelectParams(ctx, token, result.Parameters, release.ParsedInfo.ParameterDescriptions)
-	if err != nil {
-		return result, err, code
 	}
 
 	//store without auto_select_all parameter

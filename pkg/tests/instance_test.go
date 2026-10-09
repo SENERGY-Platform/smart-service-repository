@@ -484,6 +484,38 @@ func TestInstanceEditApi(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
+	t.Run("update instance to unknown release keeps the instance", func(t *testing.T) {
+		resp, err := put(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id)+"/parameters?release_id=unknown", fillTestParameter(parameters))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode == http.StatusOK {
+			t.Error("expected an error for an unknown release")
+			return
+		}
+		resp, err = get(userToken, apiUrl+"/instances/"+url.PathEscape(instance.Id))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			temp, _ := io.ReadAll(resp.Body)
+			t.Error(resp.StatusCode, string(temp))
+			return
+		}
+		kept := model.SmartServiceInstance{}
+		err = json.NewDecoder(resp.Body).Decode(&kept)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if kept.ReleaseId != release.Id || kept.Deleting || kept.Error != "" {
+			t.Error(kept.ReleaseId, kept.Deleting, kept.Error)
+			return
+		}
+	})
+
 	t.Run("update instance release", func(t *testing.T) {
 		p := fillTestParameter(parameters)
 		p = append(p, model.SmartServiceParameter{
