@@ -93,12 +93,17 @@ func (this *Controller) CreateRelease(ctx context.Context, token auth.Token, ele
 	if err != nil {
 		return result, err, http.StatusBadRequest
 	}
+	usedResources, err := parseReleaseUsedResources(design.BpmnXml)
+	if err != nil {
+		return result, fmt.Errorf("unable to parse used resources of release: %w", err), http.StatusBadRequest
+	}
 
 	err = this.saveReleaseCreate(ctx, model.SmartServiceReleaseExtended{
 		SmartServiceRelease: element,
 		BpmnXml:             design.BpmnXml,
 		SvgXml:              design.SvgXml,
 		ParsedInfo:          parsedInfo,
+		UsedResources:       &usedResources,
 	})
 	if err != nil {
 		return result, err, http.StatusInternalServerError
@@ -111,6 +116,7 @@ func (this *Controller) saveReleaseCreate(ctx context.Context, release model.Sma
 	if release.Creator == "" {
 		return errors.New("missing creator")
 	}
+	release = this.ensureReleaseUsedResources(ctx, release) //SetRelease replaces the document: a release read before the backfill would otherwise drop the backfilled field
 	err, _ = this.db.SetRelease(ctx, release, true)
 	if err != nil {
 		return err
@@ -225,6 +231,7 @@ func (this *Controller) deployRelease(ctx context.Context, release model.SmartSe
 				}
 			} else {
 				old.NewReleaseId = release.Id
+				old = this.ensureReleaseUsedResources(ctx, old)
 				err, _ = this.db.SetRelease(ctx, old, false)
 				if err != nil {
 					return err
@@ -275,6 +282,7 @@ func (this *Controller) GetExtendedRelease(ctx context.Context, token auth.Token
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
+	result = this.ensureReleaseUsedResources(ctx, result)
 	return result, nil, http.StatusOK
 }
 
@@ -330,6 +338,7 @@ func (this *Controller) ListExtendedReleases(ctx context.Context, token auth.Tok
 		if err != nil {
 			return result, total, err, http.StatusInternalServerError
 		}
+		release = this.ensureReleaseUsedResources(ctx, release)
 		result = append(result, release)
 	}
 	return result, total, nil, http.StatusOK

@@ -31,7 +31,12 @@ type Controller interface {
 	InstancesInterface
 	MaintenanceInterface
 	VariablesInterface
+	ResourceUsageInterface
 	GetNewId() string
+}
+
+type ResourceUsageInterface interface {
+	GetResourceUsage(ctx context.Context, token auth.Token, kind model.ResourceKind, resourceId string) (model.ResourceUsage, error, int)
 }
 
 type ModulesInterface interface {

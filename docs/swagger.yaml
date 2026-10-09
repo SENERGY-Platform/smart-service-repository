@@ -173,6 +173,45 @@ definitions:
           $ref: '#/definitions/model.AnalyticsReleaseModuleInfo'
         type: array
     type: object
+  model.ReleaseUsedResources:
+    properties:
+      flows:
+        items:
+          type: string
+        type: array
+      import_types:
+        items:
+          type: string
+        type: array
+      process_models:
+        items:
+          type: string
+        type: array
+      unparsable:
+        description: the bpmn could not be parsed and the lists are empty; workers
+          cannot run such a release either
+        type: boolean
+    type: object
+  model.ResourceUsage:
+    properties:
+      instances:
+        type: integer
+      readable:
+        items:
+          $ref: '#/definitions/model.ResourceUsageRelease'
+        type: array
+      releases:
+        type: integer
+    type: object
+  model.ResourceUsageRelease:
+    properties:
+      design_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   model.SmartServiceDesign:
     properties:
       bpmn_xml:
@@ -392,6 +431,11 @@ definitions:
         description: optional, set if query parameter permissions_info=true
       svg_xml:
         type: string
+      used_resources:
+        allOf:
+        - $ref: '#/definitions/model.ReleaseUsedResources'
+        description: missing on releases stored before the field existed, until the
+          backfill reaches them
     type: object
   model.SmartServiceReleaseInfo:
     properties:
@@ -1870,6 +1914,44 @@ paths:
       tags:
       - releases
       - parameter
+  /resource-usage/{kind}/{id}:
+    get:
+      description: counts the releases and instances of all users that use the process
+        model, flow or import type with the given id; a release counts if it is not
+        deleted and is the newest of its design or has instances; readable lists only
+        the counted releases the caller may read; any authenticated user may ask
+      parameters:
+      - description: resource kind
+        enum:
+        - process-models
+        - flows
+        - import-types
+        in: path
+        name: kind
+        required: true
+        type: string
+      - description: resource id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ResourceUsage'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      summary: tells which smart-service releases use a resource
+      tags:
+      - releases
+      - resource-usage
 securityDefinitions:
   Bearer:
     in: header

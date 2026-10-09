@@ -55,6 +55,15 @@ func Start(ctx context.Context, config configuration.Config) error {
 	if err != nil {
 		return err
 	}
+	// asynchronous, since the resource usage query fills missing releases itself before it answers
+	go func() {
+		filled, unparsable, err := cmd.BackfillReleaseUsedResources(ctx)
+		if err != nil {
+			config.GetLogger().WarnContext(ctx, "backfill of release used resources interrupted, the next usage query or start continues it", "filled", filled, "unparsable", unparsable, "error", err)
+			return
+		}
+		config.GetLogger().InfoContext(ctx, "backfill of release used resources", "filled", filled, "unparsable", unparsable)
+	}()
 	cleanupResult := cmd.Cleanup(ctx, false)
 	config.GetLogger().InfoContext(ctx, "cleanup", "result", cleanupResult)
 	duration, err := time.ParseDuration(config.CleanupCycle)

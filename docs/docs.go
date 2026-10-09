@@ -2114,6 +2114,57 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/resource-usage/{kind}/{id}": {
+            "get": {
+                "description": "counts the releases and instances of all users that use the process model, flow or import type with the given id; a release counts if it is not deleted and is the newest of its design or has instances; readable lists only the counted releases the caller may read; any authenticated user may ask",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases",
+                    "resource-usage"
+                ],
+                "summary": "tells which smart-service releases use a resource",
+                "parameters": [
+                    {
+                        "enum": [
+                            "process-models",
+                            "flows",
+                            "import-types"
+                        ],
+                        "type": "string",
+                        "description": "resource kind",
+                        "name": "kind",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "resource id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.ResourceUsage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2365,6 +2416,64 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.AnalyticsReleaseModuleInfo"
                     }
+                }
+            }
+        },
+        "model.ReleaseUsedResources": {
+            "type": "object",
+            "properties": {
+                "flows": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "import_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "process_models": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "unparsable": {
+                    "description": "the bpmn could not be parsed and the lists are empty; workers cannot run such a release either",
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.ResourceUsage": {
+            "type": "object",
+            "properties": {
+                "instances": {
+                    "type": "integer"
+                },
+                "readable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ResourceUsageRelease"
+                    }
+                },
+                "releases": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.ResourceUsageRelease": {
+            "type": "object",
+            "properties": {
+                "design_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -2693,6 +2802,14 @@ const docTemplate = `{
                 },
                 "svg_xml": {
                     "type": "string"
+                },
+                "used_resources": {
+                    "description": "missing on releases stored before the field existed, until the backfill reaches them",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.ReleaseUsedResources"
+                        }
+                    ]
                 }
             }
         },

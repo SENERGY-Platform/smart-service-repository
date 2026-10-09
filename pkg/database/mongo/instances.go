@@ -216,6 +216,36 @@ func (this *Mongo) CountInstancesOfRelease(ctx context.Context, releaseId string
 	return count, nil, http.StatusOK
 }
 
+// CountInstancesOfReleases counts the instances of all users per given release (only ReleaseId and not NewReleaseId); releases without instances are missing in the result
+func (this *Mongo) CountInstancesOfReleases(ctx context.Context, releaseIds []string) (counts map[string]int64, err error) {
+	counts = map[string]int64{}
+	if len(releaseIds) == 0 {
+		return counts, nil
+	}
+	ctx, cancel := getTimeoutContext(ctx)
+	defer cancel()
+	cursor, err := this.instanceCollection().Aggregate(ctx, mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{InstanceBson.ReleaseId: bson.M{"$in": releaseIds}}}},
+		{{Key: "$group", Value: bson.M{"_id": "$" + InstanceBson.ReleaseId, "count": bson.M{"$sum": 1}}}},
+	})
+	if err != nil {
+		return counts, err
+	}
+	defer cursor.Close(context.Background())
+	type releaseCount struct {
+		ReleaseId string `bson:"_id"`
+		Count     int64  `bson:"count"`
+	}
+	list, err, _ := readCursorResult[releaseCount](ctx, cursor)
+	if err != nil {
+		return counts, err
+	}
+	for _, element := range list {
+		counts[element.ReleaseId] = element.Count
+	}
+	return counts, nil
+}
+
 func (this *Mongo) AddModuleErrorToInstance(ctx context.Context, userId string, instance model.SmartServiceInstance) (model.SmartServiceInstance, error) {
 	list, err := this.AddModuleErrorToInstances(ctx, userId, []model.SmartServiceInstance{instance})
 	if err != nil {

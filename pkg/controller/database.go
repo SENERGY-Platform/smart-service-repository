@@ -56,6 +56,7 @@ type InstanceInterface interface {
 	ListInstances(ctx context.Context, userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int)
 	ListInstancesOfRelease(ctx context.Context, userId string, releaseId string) (result []model.SmartServiceInstance, err error, code int)
 	CountInstancesOfRelease(ctx context.Context, releaseId string) (count int64, err error, code int)
+	CountInstancesOfReleases(ctx context.Context, releaseIds []string) (counts map[string]int64, err error)
 }
 
 type ReleaseInterface interface {
@@ -71,6 +72,11 @@ type ReleaseInterface interface {
 	DeleteRelease(ctx context.Context, id string) (error, int)
 
 	GetMarkedReleases(ctx context.Context) (markedAsDeleted []model.SmartServiceReleaseExtended, markedAsUnfinished []model.SmartServiceReleaseExtended, err error)
+
+	ForEachReleaseWithoutUsedResources(ctx context.Context, f func(release model.SmartServiceReleaseExtended) error) error
+	SetReleaseUsedResources(ctx context.Context, id string, used model.ReleaseUsedResources) (updated bool, err error)
+	ListReleasesUsingResource(ctx context.Context, kind model.ResourceKind, resourceId string) ([]model.SmartServiceRelease, error)
+	ListFinishedReleaseIds(ctx context.Context, ids []string) ([]string, error)
 }
 
 type MaintenanceInterface interface {

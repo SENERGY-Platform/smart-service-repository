@@ -40,6 +40,8 @@ type Controller struct {
 	userTokenProvider UserTokenProvider
 	adminAccess       *auth.OpenidToken
 	cleanupMux        sync.Mutex
+
+	usedResourcesBackfillMux sync.Mutex
 }
 
 type Permissions = permclient.Client

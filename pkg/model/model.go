@@ -51,7 +51,46 @@ type SmartServiceReleaseExtended struct {
 	BpmnXml             string                  `json:"bpmn_xml" bson:"bpmn_xml"`
 	SvgXml              string                  `json:"svg_xml" bson:"svg_xml"`
 	ParsedInfo          SmartServiceReleaseInfo `json:"parsed_info" bson:"parsed_info"`
-	PermissionsInfo     PermissionsInfo         `json:"permissions_info,omitempty" bson:"-"` //optional, set if query parameter permissions_info=true
+	UsedResources       *ReleaseUsedResources   `json:"used_resources,omitempty" bson:"used_resources,omitempty"` //missing on releases stored before the field existed, until the backfill reaches them
+	PermissionsInfo     PermissionsInfo         `json:"permissions_info,omitempty" bson:"-"`                      //optional, set if query parameter permissions_info=true
+}
+
+// ReleaseUsedResources lists the ids of the resources the release bpmn references literally; each list is deduplicated and sorted
+type ReleaseUsedResources struct {
+	ProcessModels []string `json:"process_models" bson:"process_models"`
+	Flows         []string `json:"flows" bson:"flows"`
+	ImportTypes   []string `json:"import_types" bson:"import_types"`
+	Unparsable    bool     `json:"unparsable,omitempty" bson:"unparsable,omitempty"` //the bpmn could not be parsed and the lists are empty; workers cannot run such a release either
+}
+
+type ResourceKind string
+
+const (
+	ResourceKindProcessModels ResourceKind = "process-models"
+	ResourceKindFlows         ResourceKind = "flows"
+	ResourceKindImportTypes   ResourceKind = "import-types"
+)
+
+func (this ResourceKind) Valid() bool {
+	switch this {
+	case ResourceKindProcessModels, ResourceKindFlows, ResourceKindImportTypes:
+		return true
+	default:
+		return false
+	}
+}
+
+// ResourceUsage counts the releases and instances of all users that use a resource; Readable lists only those releases the caller may read
+type ResourceUsage struct {
+	Releases  int64                  `json:"releases"`
+	Instances int64                  `json:"instances"`
+	Readable  []ResourceUsageRelease `json:"readable"`
+}
+
+type ResourceUsageRelease struct {
+	Id       string `json:"id"`
+	DesignId string `json:"design_id"`
+	Name     string `json:"name"`
 }
 
 type SmartServiceReleaseExtendedWithUsableFlag struct {

@@ -37,6 +37,12 @@ const ReleaseBsonMarkedAsUnfinished = "marked_as_unfinished"
 const ReleaseBsonMarkedAsDeleted = "marked_as_deleted"
 const ReleaseBsonMarkedAtUnixTimestamp = "marked_at_unix_timestamp"
 
+// paths into model.ReleaseUsedResources, which getBsonFieldObject does not reach because the field is a pointer
+const ReleaseBsonUsedResources = "used_resources"
+const ReleaseBsonUsedProcessModels = ReleaseBsonUsedResources + ".process_models"
+const ReleaseBsonUsedFlows = ReleaseBsonUsedResources + ".flows"
+const ReleaseBsonUsedImportTypes = ReleaseBsonUsedResources + ".import_types"
+
 var ErrReleaseNotFound = errors.New("release not found")
 
 type SyncMarks struct {
@@ -65,6 +71,21 @@ func init() {
 			return err
 		}
 		err = db.ensureIndex(collection, "release_creation_index", "created_at", true, false)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
+		err = db.ensureIndex(collection, "release_used_process_models_index", ReleaseBsonUsedProcessModels, true, false)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
+		err = db.ensureIndex(collection, "release_used_flows_index", ReleaseBsonUsedFlows, true, false)
+		if err != nil {
+			debug.PrintStack()
+			return err
+		}
+		err = db.ensureIndex(collection, "release_used_import_types_index", ReleaseBsonUsedImportTypes, true, false)
 		if err != nil {
 			debug.PrintStack()
 			return err
@@ -276,4 +297,121 @@ func (this *Mongo) GetPreviousReleases(ctx context.Context, releaseId string) (r
 	defer cursor.Close(context.Background())
 	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
 	return result, err
+}
+
+// withoutUsedResourcesFilter matches releases that lack used_resources; the null match on an indexed path also matches a missing field
+func withoutUsedResourcesFilter() bson.M {
+	return bson.M{ReleaseBsonUsedProcessModels: nil}
+}
+
+const usedResourcesBackfillBatchSize = 10
+
+// ForEachReleaseWithoutUsedResources calls f with id and bpmn_xml of every release not marked as deleted that lacks used_resources;
+// the cursor reads in small batches, so the bpmn of all releases is never held at once. An error of f stops the iteration.
+func (this *Mongo) ForEachReleaseWithoutUsedResources(ctx context.Context, f func(release model.SmartServiceReleaseExtended) error) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	defer cancel()
+	filter := withoutUsedResourcesFilter()
+	filter[ReleaseBsonMarkedAsDeleted] = bson.M{"$ne": true}
+	opts := options.Find().
+		SetProjection(bson.M{ReleaseBson.Id: 1, ReleaseBson.BpmnXml: 1}).
+		SetBatchSize(usedResourcesBackfillBatchSize)
+	cursor, err := this.releaseCollection().Find(ctx, filter, opts)
+	if err != nil {
+		return err
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(ctx) {
+		release := model.SmartServiceReleaseExtended{}
+		err = cursor.Decode(&release)
+		if err != nil {
+			return err
+		}
+		err = f(release)
+		if err != nil {
+			return err
+		}
+	}
+	return cursor.Err()
+}
+
+// SetReleaseUsedResources sets used_resources only where it is still missing, so it never replaces a value stored meanwhile;
+// updated reports whether this call wrote it
+func (this *Mongo) SetReleaseUsedResources(ctx context.Context, id string, used model.ReleaseUsedResources) (updated bool, err error) {
+	ctx, cancel := getTimeoutContext(ctx)
+	defer cancel()
+	// a nil list would be stored as null and make the release look unindexed forever
+	for _, list := range []*[]string{&used.ProcessModels, &used.Flows, &used.ImportTypes} {
+		if *list == nil {
+			*list = []string{}
+		}
+	}
+	filter := withoutUsedResourcesFilter()
+	filter[ReleaseBson.Id] = id
+	result, err := this.releaseCollection().UpdateOne(ctx, filter, bson.M{"$set": bson.M{ReleaseBsonUsedResources: used}})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, nil
+}
+
+func usedResourcesPath(kind model.ResourceKind) (string, error) {
+	switch kind {
+	case model.ResourceKindProcessModels:
+		return ReleaseBsonUsedProcessModels, nil
+	case model.ResourceKindFlows:
+		return ReleaseBsonUsedFlows, nil
+	case model.ResourceKindImportTypes:
+		return ReleaseBsonUsedImportTypes, nil
+	default:
+		return "", errors.New("unknown resource kind")
+	}
+}
+
+// ListReleasesUsingResource returns id, design_id, name and new_release_id of the releases not marked as deleted that use the resource
+func (this *Mongo) ListReleasesUsingResource(ctx context.Context, kind model.ResourceKind, resourceId string) (result []model.SmartServiceRelease, err error) {
+	path, err := usedResourcesPath(kind)
+	if err != nil {
+		return result, err
+	}
+	ctx, cancel := getTimeoutContext(ctx)
+	defer cancel()
+	projection := bson.M{ReleaseBson.Id: 1, ReleaseBson.DesignId: 1, ReleaseBson.Name: 1, ReleaseBson.NewReleaseId: 1}
+	cursor, err := this.releaseCollection().Find(ctx, bson.M{
+		path:                       resourceId,
+		ReleaseBsonMarkedAsDeleted: bson.M{"$ne": true},
+	}, options.Find().SetProjection(projection))
+	if err != nil {
+		return result, err
+	}
+	defer cursor.Close(context.Background())
+	result, err, _ = readCursorResult[model.SmartServiceRelease](ctx, cursor)
+	return result, err
+}
+
+// ListFinishedReleaseIds returns those of the given ids that name a stored release marked neither as deleted nor as unfinished
+func (this *Mongo) ListFinishedReleaseIds(ctx context.Context, ids []string) (result []string, err error) {
+	result = []string{}
+	if len(ids) == 0 {
+		return result, nil
+	}
+	ctx, cancel := getTimeoutContext(ctx)
+	defer cancel()
+	cursor, err := this.releaseCollection().Find(ctx, bson.M{
+		ReleaseBson.Id:                bson.M{"$in": ids},
+		ReleaseBsonMarkedAsDeleted:    bson.M{"$ne": true},
+		ReleaseBsonMarkedAsUnfinished: bson.M{"$ne": true},
+	}, options.Find().SetProjection(bson.M{ReleaseBson.Id: 1}))
+	if err != nil {
+		return result, err
+	}
+	defer cursor.Close(context.Background())
+	releases, err, _ := readCursorResult[model.SmartServiceRelease](ctx, cursor)
+	if err != nil {
+		return result, err
+	}
+	for _, release := range releases {
+		result = append(result, release.Id)
+	}
+	return result, nil
 }
