@@ -65,6 +65,7 @@ type ReleaseInterface interface {
 	ListExtendedReleases(ctx context.Context, token auth.Token, query model.ReleaseQueryOptions) (result []model.SmartServiceReleaseExtended, total int64, err error, code int)
 	GetReleaseParameter(ctx context.Context, token auth.Token, id string) ([]model.SmartServiceExtendedParameter, error, int)
 	GetReleaseParameterWithoutAuthCheck(ctx context.Context, token auth.Token, id string) (result []model.SmartServiceExtendedParameter, err error, code int)
+	GetReleaseInstanceCount(ctx context.Context, token auth.Token, id string) (count int64, err error, code int)
 }
 
 type InstancesInterface interface {

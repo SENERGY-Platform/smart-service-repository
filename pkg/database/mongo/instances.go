@@ -206,6 +206,16 @@ func (this *Mongo) ListInstancesOfRelease(ctx context.Context, userId string, re
 	return result, nil, http.StatusOK
 }
 
+// CountInstancesOfRelease counts the instances of all users referencing the given release (only ReleaseId and not NewReleaseId)
+func (this *Mongo) CountInstancesOfRelease(ctx context.Context, releaseId string) (count int64, err error, code int) {
+	ctx, _ = getTimeoutContext(ctx)
+	count, err = this.instanceCollection().CountDocuments(ctx, bson.M{InstanceBson.ReleaseId: releaseId})
+	if err != nil {
+		return 0, err, http.StatusInternalServerError
+	}
+	return count, nil, http.StatusOK
+}
+
 func (this *Mongo) AddModuleErrorToInstance(ctx context.Context, userId string, instance model.SmartServiceInstance) (model.SmartServiceInstance, error) {
 	list, err := this.AddModuleErrorToInstances(ctx, userId, []model.SmartServiceInstance{instance})
 	if err != nil {

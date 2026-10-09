@@ -42,6 +42,10 @@ type SmartServiceReleaseWithUsableFlag struct {
 	Usable bool `json:"usable"`
 }
 
+type ReleaseInstanceCount struct {
+	Count int64 `json:"count"`
+}
+
 type SmartServiceReleaseExtended struct {
 	SmartServiceRelease `bson:",inline"`
 	BpmnXml             string                  `json:"bpmn_xml" bson:"bpmn_xml"`

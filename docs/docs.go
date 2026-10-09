@@ -1986,6 +1986,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/releases/{id}/instance-count": {
+            "get": {
+                "description": "returns the number of instances of all users that run on exactly this release; needs administrate permission on the release; ids and users of the instances are not exposed",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "releases",
+                    "instances"
+                ],
+                "summary": "returns the number of instances of a release",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Release ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.ReleaseInstanceCount"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/releases/{id}/instances": {
             "post": {
                 "description": "creates a smart-service instance from the release",
@@ -2304,6 +2346,14 @@ const docTemplate = `{
                 },
                 "shared": {
                     "type": "boolean"
+                }
+            }
+        },
+        "model.ReleaseInstanceCount": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
                 }
             }
         },

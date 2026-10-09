@@ -55,6 +55,7 @@ type InstanceInterface interface {
 	SetInstance(ctx context.Context, element model.SmartServiceInstance) (error, int)
 	ListInstances(ctx context.Context, userId string, query model.InstanceQueryOptions) (result []model.SmartServiceInstance, total int64, err error, code int)
 	ListInstancesOfRelease(ctx context.Context, userId string, releaseId string) (result []model.SmartServiceInstance, err error, code int)
+	CountInstancesOfRelease(ctx context.Context, releaseId string) (count int64, err error, code int)
 }
 
 type ReleaseInterface interface {

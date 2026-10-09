@@ -477,6 +477,40 @@ func (this *Releases) Parameters(config configuration.Config, router *httprouter
 	})
 }
 
+// InstanceCount godoc
+// @Summary      returns the number of instances of a release
+// @Description  returns the number of instances of all users that run on exactly this release; needs administrate permission on the release; ids and users of the instances are not exposed
+// @Tags         releases, instances
+// @Produce      json
+// @Param        id path string true "Release ID"
+// @Success      200 {object} model.ReleaseInstanceCount
+// @Failure      500
+// @Failure      401
+// @Failure      403
+// @Failure      404
+// @Router       /releases/{id}/instance-count [get]
+func (this *Releases) InstanceCount(config configuration.Config, router *httprouter.Router, ctrl Controller) {
+	router.GET("/releases/:id/instance-count", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		token, err := auth.GetParsedToken(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		id := params.ByName("id")
+		if id == "" {
+			http.Error(writer, "missing id", http.StatusBadRequest)
+			return
+		}
+		count, err, code := ctrl.GetReleaseInstanceCount(request.Context(), token, id)
+		if err != nil {
+			http.Error(writer, err.Error(), code)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(model.ReleaseInstanceCount{Count: count})
+	})
+}
+
 // Start godoc
 // @Summary      creates a smart-service instance from the release
 // @Description  creates a smart-service instance from the release

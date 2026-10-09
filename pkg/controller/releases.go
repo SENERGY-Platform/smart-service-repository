@@ -398,6 +398,22 @@ func (this *Controller) DeleteRelease(ctx context.Context, token auth.Token, rel
 	return nil, http.StatusOK
 }
 
+// GetReleaseInstanceCount returns the number of instances of all users on the release; it exposes neither ids nor user ids
+func (this *Controller) GetReleaseInstanceCount(ctx context.Context, token auth.Token, id string) (count int64, err error, code int) {
+	access, err, _ := this.permissions.CheckPermissionContext(ctx, token.Jwt(), this.config.SmartServiceReleasePermissionsTopic, id, client.Administrate)
+	if err != nil {
+		return 0, err, http.StatusInternalServerError
+	}
+	if !access {
+		return 0, errors.New("access denied"), http.StatusForbidden
+	}
+	_, err, code = this.db.GetRelease(ctx, id, false)
+	if err != nil {
+		return 0, err, code
+	}
+	return this.db.CountInstancesOfRelease(ctx, id)
+}
+
 func (this *Controller) deleteRelease(ctx context.Context, id string) error {
 	err, _ := this.db.MarlReleaseAsDeleted(ctx, id) //to enable retry if permissions.RemoveResource() fails
 	if err != nil {

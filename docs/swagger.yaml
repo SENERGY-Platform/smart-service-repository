@@ -161,6 +161,11 @@ definitions:
       shared:
         type: boolean
     type: object
+  model.ReleaseInstanceCount:
+    properties:
+      count:
+        type: integer
+    type: object
   model.ReleaseModuleInfo:
     properties:
       analytics:
@@ -1777,6 +1782,36 @@ paths:
       summary: returns a smart-service release
       tags:
       - releases
+  /releases/{id}/instance-count:
+    get:
+      description: returns the number of instances of all users that run on exactly
+        this release; needs administrate permission on the release; ids and users
+        of the instances are not exposed
+      parameters:
+      - description: Release ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ReleaseInstanceCount'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: returns the number of instances of a release
+      tags:
+      - releases
+      - instances
   /releases/{id}/instances:
     post:
       consumes:
