@@ -60,6 +60,16 @@ func (this *Controller) CreateRelease(ctx context.Context, token auth.Token, ele
 	if element.DesignId == "" {
 		return result, errors.New("missing design id"), http.StatusBadRequest
 	}
+	if element.Id != "" {
+		// saving replaces the release stored under the id and keeps its permissions, so an id in use would hand a release of another user to the caller's design
+		_, err, code := this.db.GetRelease(ctx, element.Id, true)
+		if err == nil {
+			return result, fmt.Errorf("release id %v is already in use", element.Id), http.StatusConflict
+		}
+		if code != http.StatusNotFound {
+			return result, err, http.StatusInternalServerError
+		}
+	}
 	design, err, code := this.GetDesign(ctx, token, element.DesignId)
 	if err != nil {
 		if code == http.StatusNotFound {
