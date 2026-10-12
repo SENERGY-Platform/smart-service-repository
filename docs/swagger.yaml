@@ -9,6 +9,21 @@ definitions:
       name:
         type: string
     type: object
+  model.ChangedResource:
+    properties:
+      at:
+        description: 'unix seconds: the change time of the resource, or when the check
+          first saw it gone or (import types) changed'
+        type: integer
+      id:
+        type: string
+      kind:
+        description: '"process_model" | "flow" | "import_type"'
+        type: string
+      reason:
+        description: '"changed" | "gone"'
+        type: string
+    type: object
   model.Characteristic:
     properties:
       allowed_values:
@@ -388,6 +403,11 @@ definitions:
     type: object
   model.SmartServiceRelease:
     properties:
+      changed_resources:
+        description: set by the periodic resource check; a hint only
+        items:
+          $ref: '#/definitions/model.ChangedResource'
+        type: array
       created_at:
         description: unix timestamp, set by service on creation
         type: integer
@@ -408,6 +428,11 @@ definitions:
     properties:
       bpmn_xml:
         type: string
+      changed_resources:
+        description: set by the periodic resource check; a hint only
+        items:
+          $ref: '#/definitions/model.ChangedResource'
+        type: array
       created_at:
         description: unix timestamp, set by service on creation
         type: integer

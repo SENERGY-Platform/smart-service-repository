@@ -2174,6 +2174,26 @@
                 }
             }
         },
+        "model.ChangedResource": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "description": "unix seconds: the change time of the resource, or when the check first saw it gone or (import types) changed",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "description": "\"process_model\" | \"flow\" | \"import_type\"",
+                    "type": "string"
+                },
+                "reason": {
+                    "description": "\"changed\" | \"gone\"",
+                    "type": "string"
+                }
+            }
+        },
         "model.Characteristic": {
             "type": "object",
             "properties": {
@@ -2729,6 +2749,13 @@
         "model.SmartServiceRelease": {
             "type": "object",
             "properties": {
+                "changed_resources": {
+                    "description": "set by the periodic resource check; a hint only",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ChangedResource"
+                    }
+                },
                 "created_at": {
                     "description": "unix timestamp, set by service on creation",
                     "type": "integer"
@@ -2758,6 +2785,13 @@
             "properties": {
                 "bpmn_xml": {
                     "type": "string"
+                },
+                "changed_resources": {
+                    "description": "set by the periodic resource check; a hint only",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ChangedResource"
+                    }
                 },
                 "created_at": {
                     "description": "unix timestamp, set by service on creation",

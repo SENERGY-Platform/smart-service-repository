@@ -43,6 +43,9 @@ const ReleaseBsonUsedProcessModels = ReleaseBsonUsedResources + ".process_models
 const ReleaseBsonUsedFlows = ReleaseBsonUsedResources + ".flows"
 const ReleaseBsonUsedImportTypes = ReleaseBsonUsedResources + ".import_types"
 
+const ReleaseBsonChangedResources = "changed_resources"
+const ReleaseBsonImportTypeHashes = "import_type_hashes"
+
 var ErrReleaseNotFound = errors.New("release not found")
 
 type SyncMarks struct {
@@ -353,6 +356,72 @@ func (this *Mongo) SetReleaseUsedResources(ctx context.Context, id string, used 
 		return false, err
 	}
 	return result.MatchedCount > 0, nil
+}
+
+// ForEachReleaseWithUsedResources calls f with the fields the resource check needs of every release not marked as deleted that has
+// used_resources; an error of f stops the iteration.
+func (this *Mongo) ForEachReleaseWithUsedResources(ctx context.Context, f func(release model.SmartServiceReleaseExtended) error) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	defer cancel()
+	filter := bson.M{
+		ReleaseBsonUsedProcessModels: bson.M{"$ne": nil},
+		ReleaseBsonMarkedAsDeleted:   bson.M{"$ne": true},
+	}
+	opts := options.Find().
+		SetProjection(bson.M{
+			ReleaseBson.Id:              1,
+			"created_at":                1,
+			"creator":                   1,
+			ReleaseBsonUsedResources:    1,
+			ReleaseBsonChangedResources: 1,
+			ReleaseBsonImportTypeHashes: 1,
+		}).
+		SetBatchSize(usedResourcesBackfillBatchSize)
+	cursor, err := this.releaseCollection().Find(ctx, filter, opts)
+	if err != nil {
+		return err
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(ctx) {
+		release := model.SmartServiceReleaseExtended{}
+		err = cursor.Decode(&release)
+		if err != nil {
+			return err
+		}
+		err = f(release)
+		if err != nil {
+			return err
+		}
+	}
+	return cursor.Err()
+}
+
+// SetReleaseResourceCheck stores the result of the resource check with a targeted update, so the rest of the release stays untouched;
+// an empty list removes changed_resources
+func (this *Mongo) SetReleaseResourceCheck(ctx context.Context, id string, changed []model.ChangedResource, hashes map[string]string) error {
+	ctx, cancel := getTimeoutContext(ctx)
+	defer cancel()
+	set := bson.M{}
+	unset := bson.M{}
+	if len(changed) > 0 {
+		set[ReleaseBsonChangedResources] = changed
+	} else {
+		unset[ReleaseBsonChangedResources] = ""
+	}
+	if len(hashes) > 0 {
+		set[ReleaseBsonImportTypeHashes] = hashes
+	} else {
+		unset[ReleaseBsonImportTypeHashes] = ""
+	}
+	update := bson.M{}
+	if len(set) > 0 {
+		update["$set"] = set
+	}
+	if len(unset) > 0 {
+		update["$unset"] = unset
+	}
+	_, err := this.releaseCollection().UpdateOne(ctx, bson.M{ReleaseBson.Id: id}, update)
+	return err
 }
 
 func usedResourcesPath(kind model.ResourceKind) (string, error) {

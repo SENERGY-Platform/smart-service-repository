@@ -35,6 +35,25 @@ type SmartServiceRelease struct {
 	CreatedAt    int64  `json:"created_at" bson:"created_at"` //unix timestamp, set by service on creation
 	NewReleaseId string `json:"new_release_id,omitempty"`
 	Creator      string `json:"creator"`
+
+	ChangedResources []ChangedResource `json:"changed_resources,omitempty" bson:"changed_resources,omitempty"` //set by the periodic resource check; a hint only
+}
+
+const (
+	ChangedResourceKindProcessModel = "process_model"
+	ChangedResourceKindFlow         = "flow"
+	ChangedResourceKindImportType   = "import_type"
+
+	ChangedResourceReasonChanged = "changed"
+	ChangedResourceReasonGone    = "gone"
+)
+
+// ChangedResource names a resource used by a release that changed or disappeared since the release was created
+type ChangedResource struct {
+	Kind   string `json:"kind" bson:"kind"` //"process_model" | "flow" | "import_type"
+	Id     string `json:"id" bson:"id"`
+	Reason string `json:"reason" bson:"reason"` //"changed" | "gone"
+	At     int64  `json:"at" bson:"at"`         //unix seconds: the change time of the resource, or when the check first saw it gone or (import types) changed
 }
 
 type SmartServiceReleaseWithUsableFlag struct {
@@ -52,6 +71,7 @@ type SmartServiceReleaseExtended struct {
 	SvgXml              string                  `json:"svg_xml" bson:"svg_xml"`
 	ParsedInfo          SmartServiceReleaseInfo `json:"parsed_info" bson:"parsed_info"`
 	UsedResources       *ReleaseUsedResources   `json:"used_resources,omitempty" bson:"used_resources,omitempty"` //missing on releases stored before the field existed, until the backfill reaches them
+	ImportTypeHashes    map[string]string       `json:"-" bson:"import_type_hashes,omitempty"`                    //baseline of the resource check: import type id -> hash of its first seen content
 	PermissionsInfo     PermissionsInfo         `json:"permissions_info,omitempty" bson:"-"`                      //optional, set if query parameter permissions_info=true
 }
 

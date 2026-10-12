@@ -9,6 +9,9 @@
     "device_selection_api": "",
     "camunda_url": "",
     "notification_url": "",
+    "process_model_repo_url": "",
+    "flow_repo_url": "",
+    "import_repo_url": "",
 
     "smart_service_release_permissions_topic": "smart_service_releases",
     "smart_service_instance_permissions_topic": "smart_service_instances",
@@ -35,5 +38,6 @@
     "delete_unused_old_version_releases": true,
 
     "cleanup_cycle": "1h",
+    "resource_check_cycle": "1h",
     "mark_age_limit": "5m"
 }

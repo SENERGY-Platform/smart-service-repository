@@ -85,5 +85,40 @@ func Start(ctx context.Context, config configuration.Config) error {
 		}()
 	}
 
+	startResourceCheck(ctx, config, cmd)
+
 	return api.Start(ctx, config, cmd)
+}
+
+// startResourceCheck runs the check once in the background and then every resource_check_cycle; an empty cycle switches it off
+func startResourceCheck(ctx context.Context, config configuration.Config, cmd *controller.Controller) {
+	if config.ResourceCheckCycle == "" {
+		return
+	}
+	cycle, err := time.ParseDuration(config.ResourceCheckCycle)
+	if err != nil || cycle <= 0 {
+		config.GetLogger().ErrorContext(ctx, "unable to parse resource check cycle", "error", err, "value", config.ResourceCheckCycle)
+		return
+	}
+	run := func() {
+		result, err := cmd.CheckReleaseResources(ctx)
+		if err != nil {
+			config.GetLogger().WarnContext(ctx, "resource check interrupted", "checked", result.Checked, "marked", result.Marked, "errors", result.Errors, "error", err)
+			return
+		}
+		config.GetLogger().InfoContext(ctx, "resource check", "checked", result.Checked, "marked", result.Marked, "errors", result.Errors)
+	}
+	go func() {
+		run()
+		ticker := time.NewTicker(cycle)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				run()
+			}
+		}
+	}()
 }

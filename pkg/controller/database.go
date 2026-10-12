@@ -77,6 +77,9 @@ type ReleaseInterface interface {
 	SetReleaseUsedResources(ctx context.Context, id string, used model.ReleaseUsedResources) (updated bool, err error)
 	ListReleasesUsingResource(ctx context.Context, kind model.ResourceKind, resourceId string) ([]model.SmartServiceRelease, error)
 	ListFinishedReleaseIds(ctx context.Context, ids []string) ([]string, error)
+
+	ForEachReleaseWithUsedResources(ctx context.Context, f func(release model.SmartServiceReleaseExtended) error) error
+	SetReleaseResourceCheck(ctx context.Context, id string, changed []model.ChangedResource, hashes map[string]string) error
 }
 
 type MaintenanceInterface interface {

@@ -61,6 +61,10 @@ type Config struct {
 	AuthExpirationTimeBuffer             float64  `json:"auth_expiration_time_buffer"`
 	TokenCacheDefaultExpirationInSeconds int      `json:"token_cache_default_expiration_in_seconds"`
 	CleanupCycle                         string   `json:"cleanup_cycle"`
+	ProcessModelRepoUrl                  string   `json:"process_model_repo_url"` //the resource check skips a kind whose url is empty
+	FlowRepoUrl                          string   `json:"flow_repo_url"`
+	ImportRepoUrl                        string   `json:"import_repo_url"`
+	ResourceCheckCycle                   string   `json:"resource_check_cycle"` //empty disables the resource check
 	MarkAgeLimit                         Duration `json:"mark_age_limit"`
 	LogLevel                             string   `json:"log_level"`
 	OtelEndpoint                         string   `json:"otel_endpoint"`

@@ -75,3 +75,49 @@ func TestReleaseBsonWithoutUsedResources(t *testing.T) {
 		t.Errorf("expected no %v field, got %v", ReleaseBsonUsedResources, err)
 	}
 }
+
+// the resource check writes these paths with $set, so they must match the bson tags of the stored document
+func TestReleaseBsonResourceCheckPaths(t *testing.T) {
+	release := SmartServiceReleaseExtendedWithSyncMarks{
+		SmartServiceReleaseExtended: model.SmartServiceReleaseExtended{
+			SmartServiceRelease: model.SmartServiceRelease{
+				ChangedResources: []model.ChangedResource{{Kind: "flow", Id: "f", Reason: "gone", At: 7}},
+			},
+			ImportTypeHashes: map[string]string{"it": "hash"},
+		},
+	}
+	raw, err := bson.Marshal(release)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed, err := bson.Raw(raw).LookupErr(strings.Split(ReleaseBsonChangedResources, ".")...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := changed.Array().IndexErr(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	entry := first.Value().Document()
+	if entry.Lookup("kind").StringValue() != "flow" || entry.Lookup("id").StringValue() != "f" || entry.Lookup("reason").StringValue() != "gone" || entry.Lookup("at").Int64() != 7 {
+		t.Errorf("unexpected changed resource %v", entry)
+	}
+	hash, err := bson.Raw(raw).LookupErr(ReleaseBsonImportTypeHashes, "it")
+	if err != nil || hash.StringValue() != "hash" {
+		t.Errorf("%v: %v, %v", ReleaseBsonImportTypeHashes, hash, err)
+	}
+}
+
+// releases without a resource check result are stored without both fields
+func TestReleaseBsonWithoutResourceCheck(t *testing.T) {
+	raw, err := bson.Marshal(SmartServiceReleaseExtendedWithSyncMarks{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{ReleaseBsonChangedResources, ReleaseBsonImportTypeHashes} {
+		_, err = bson.Raw(raw).LookupErr(path)
+		if !errors.Is(err, bsoncore.ErrElementNotFound) {
+			t.Errorf("expected no %v field, got %v", path, err)
+		}
+	}
+}

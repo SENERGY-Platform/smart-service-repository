@@ -21,6 +21,7 @@ import (
 	"maps"
 	"slices"
 	"sync"
+	"time"
 
 	devicerepository "github.com/SENERGY-Platform/device-repository/v2/lib/client"
 	permclient "github.com/SENERGY-Platform/permissions-v2/pkg/client"
@@ -42,6 +43,8 @@ type Controller struct {
 	cleanupMux        sync.Mutex
 
 	usedResourcesBackfillMux sync.Mutex
+	resourceCheckMux         sync.Mutex
+	clock                    func() time.Time //tests only; time.Now if nil
 }
 
 type Permissions = permclient.Client

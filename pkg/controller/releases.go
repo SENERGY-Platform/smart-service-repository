@@ -75,6 +75,7 @@ func (this *Controller) CreateRelease(ctx context.Context, token auth.Token, ele
 	}
 	element.CreatedAt = time.Now().Unix()
 	element.Creator = token.GetUserId()
+	element.ChangedResources = nil //only the resource check sets it
 
 	if element.Id == "" {
 		element.Id = this.GetNewId()
