@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 type mongoFields struct {
@@ -210,4 +211,55 @@ func captureStdout(t *testing.T, f func()) string {
 	f()
 	_ = w.Close()
 	return <-done
+}
+
+func TestResourceCheckCycle(t *testing.T) {
+	for value, expected := range map[string]struct {
+		cycle   time.Duration
+		enabled bool
+		err     bool
+	}{
+		"1h":    {cycle: time.Hour, enabled: true},
+		" 30m ": {cycle: 30 * time.Minute, enabled: true},
+		"":      {},
+		"0":     {},
+		"0s":    {},
+		"off":   {},
+		"OFF":   {},
+		"-1h":   {err: true},
+		"often": {err: true},
+	} {
+		cycle, enabled, err := Config{ResourceCheckCycle: value}.GetResourceCheckCycle()
+		if cycle != expected.cycle || enabled != expected.enabled || (err != nil) != expected.err {
+			t.Errorf("%q: got %v, %v, %v", value, cycle, enabled, err)
+		}
+	}
+}
+
+// an empty environment variable is ignored by the loader, so "off" is how the environment switches the check off
+func TestLoad_ResourceCheckCycleEnv(t *testing.T) {
+	clearMongoEnv(t)
+	cfg, err := Load("../../config.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, enabled, _ := cfg.GetResourceCheckCycle(); !enabled {
+		t.Error("expected the check to be enabled by config.json")
+	}
+	t.Setenv("RESOURCE_CHECK_CYCLE", "off")
+	cfg, err = Load("../../config.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, enabled, err := cfg.GetResourceCheckCycle(); enabled || err != nil {
+		t.Errorf("enabled=%v err=%v", enabled, err)
+	}
+	t.Setenv("RESOURCE_CHECK_CYCLE", "0")
+	cfg, err = Load("../../config.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, enabled, err := cfg.GetResourceCheckCycle(); enabled || err != nil {
+		t.Errorf("enabled=%v err=%v", enabled, err)
+	}
 }

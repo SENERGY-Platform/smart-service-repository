@@ -358,10 +358,10 @@ func (this *Mongo) SetReleaseUsedResources(ctx context.Context, id string, used 
 	return result.MatchedCount > 0, nil
 }
 
-// ForEachReleaseWithUsedResources calls f with the fields the resource check needs of every release not marked as deleted that has
-// used_resources; an error of f stops the iteration.
-func (this *Mongo) ForEachReleaseWithUsedResources(ctx context.Context, f func(release model.SmartServiceReleaseExtended) error) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+// ListReleasesWithUsedResources returns the fields the resource check needs of every release not marked as deleted that has used_resources;
+// the check reads them all first, so no cursor stays open while it calls other services
+func (this *Mongo) ListReleasesWithUsedResources(ctx context.Context) (result []model.SmartServiceReleaseExtended, err error) {
+	ctx, cancel := getTimeoutContext(ctx)
 	defer cancel()
 	filter := bson.M{
 		ReleaseBsonUsedProcessModels: bson.M{"$ne": nil},
@@ -379,21 +379,11 @@ func (this *Mongo) ForEachReleaseWithUsedResources(ctx context.Context, f func(r
 		SetBatchSize(usedResourcesBackfillBatchSize)
 	cursor, err := this.releaseCollection().Find(ctx, filter, opts)
 	if err != nil {
-		return err
+		return result, err
 	}
 	defer cursor.Close(context.Background())
-	for cursor.Next(ctx) {
-		release := model.SmartServiceReleaseExtended{}
-		err = cursor.Decode(&release)
-		if err != nil {
-			return err
-		}
-		err = f(release)
-		if err != nil {
-			return err
-		}
-	}
-	return cursor.Err()
+	result, err, _ = readCursorResult[model.SmartServiceReleaseExtended](ctx, cursor)
+	return result, err
 }
 
 // SetReleaseResourceCheck stores the result of the resource check with a targeted update, so the rest of the release stays untouched;

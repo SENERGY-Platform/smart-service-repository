@@ -40,11 +40,13 @@ type Controller struct {
 	selectables       Selectables
 	userTokenProvider UserTokenProvider
 	adminAccess       *auth.OpenidToken
+	adminAccessMux    sync.Mutex //adminAccess is shared by the request paths and the resource check
 	cleanupMux        sync.Mutex
 
 	usedResourcesBackfillMux sync.Mutex
 	resourceCheckMux         sync.Mutex
 	clock                    func() time.Time //tests only; time.Now if nil
+	releaseCheckTimeout      time.Duration    //tests only; resourceCheckReleaseTimeout if zero
 }
 
 type Permissions = permclient.Client
@@ -142,6 +144,13 @@ func New(ctx context.Context, config configuration.Config, db Database, permissi
 	}
 
 	return ctrl, nil
+}
+
+// adminAuthorization returns the authorization header value of the service's own client-credentials token
+func (this *Controller) adminAuthorization() (string, error) {
+	this.adminAccessMux.Lock()
+	defer this.adminAccessMux.Unlock()
+	return this.adminAccess.EnsureAccess(this.config)
 }
 
 func (this *Controller) GetNewId() string {

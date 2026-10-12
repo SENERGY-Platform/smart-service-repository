@@ -150,7 +150,7 @@ func (this *Controller) getInitialReleasePermissions(ctx context.Context, releas
 		},
 	}
 
-	token, err := this.adminAccess.EnsureAccess(this.config)
+	token, err := this.adminAuthorization()
 	if err != nil {
 		this.config.GetLogger().WarnContext(ctx, "error in getInitialReleasePermissions", "error", err, "stack", string(debug.Stack()))
 		return permissionAlreadyExists, initialPermissions, err

@@ -90,14 +90,14 @@ func Start(ctx context.Context, config configuration.Config) error {
 	return api.Start(ctx, config, cmd)
 }
 
-// startResourceCheck runs the check once in the background and then every resource_check_cycle; an empty cycle switches it off
+// startResourceCheck runs the check once in the background and then every resource_check_cycle; an empty cycle, "0" or "off" switches it off
 func startResourceCheck(ctx context.Context, config configuration.Config, cmd *controller.Controller) {
-	if config.ResourceCheckCycle == "" {
+	cycle, enabled, err := config.GetResourceCheckCycle()
+	if err != nil {
+		config.GetLogger().ErrorContext(ctx, "unable to parse resource check cycle", "error", err, "value", config.ResourceCheckCycle)
 		return
 	}
-	cycle, err := time.ParseDuration(config.ResourceCheckCycle)
-	if err != nil || cycle <= 0 {
-		config.GetLogger().ErrorContext(ctx, "unable to parse resource check cycle", "error", err, "value", config.ResourceCheckCycle)
+	if !enabled {
 		return
 	}
 	run := func() {

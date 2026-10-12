@@ -50,7 +50,8 @@ func GetCachedTokenProvider(config configuration.Config) (func(userid string) (t
 }
 
 func ExchangeUserToken(config configuration.Config, userid string) (token Token, expiration int, err error) {
-	resp, err := http.PostForm(config.AuthEndpoint+"/auth/realms/master/protocol/openid-connect/token", url.Values{
+	client := http.Client{Timeout: 30 * time.Second}
+	resp, err := client.PostForm(config.AuthEndpoint+"/auth/realms/master/protocol/openid-connect/token", url.Values{
 		"client_id":         {config.AuthClientId},
 		"client_secret":     {config.AuthClientSecret},
 		"grant_type":        {"urn:ietf:params:oauth:grant-type:token-exchange"},

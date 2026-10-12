@@ -24,6 +24,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -61,21 +62,28 @@ func TestReleaseResourceCheck(t *testing.T) {
 	var importTypeVersion atomic.Int64
 	importTypeVersion.Store(1)
 	var requestCount atomic.Int64
+	var flowGone atomic.Bool
 	repo := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		requestCount.Add(1)
-		if request.Header.Get("Authorization") == "" {
-			writer.WriteHeader(http.StatusUnauthorized)
-			return
+		// like the repositories: the permission is checked before the existence, so an unknown id is 403 for a user and 404 for the service
+		isService := strings.TrimPrefix(request.Header.Get("Authorization"), "Bearer ") != strings.TrimPrefix(userToken, "Bearer ")
+		path := request.URL.Path
+		if path == "/flow/flow-check" && flowGone.Load() {
+			path = ""
 		}
-		switch request.URL.Path {
+		switch path {
 		case "/processes/pm-check":
 			_ = json.NewEncoder(writer).Encode(map[string]interface{}{"id": "pm-check", "last_updated_unix": processModelUpdated})
 		case "/flow/flow-check":
 			_ = json.NewEncoder(writer).Encode(map[string]interface{}{"id": "flow-check", "dateUpdated": flowUpdated})
 		case "/import-types/it-check":
-			_ = json.NewEncoder(writer).Encode(map[string]interface{}{"id": "it-check", "version": importTypeVersion.Load()})
+			_ = json.NewEncoder(writer).Encode(map[string]interface{}{"id": "it-check", "name": "import type " + strconv.FormatInt(importTypeVersion.Load(), 10)})
 		default:
-			writer.WriteHeader(http.StatusNotFound)
+			if isService {
+				writer.WriteHeader(http.StatusNotFound)
+			} else {
+				writer.WriteHeader(http.StatusForbidden)
+			}
 		}
 	}))
 	defer repo.Close()
@@ -226,6 +234,28 @@ func TestReleaseResourceCheck(t *testing.T) {
 		}
 		if after.UsedResources == nil || after.BpmnXml == "" {
 			t.Error("release lost fields")
+		}
+	})
+
+	t.Run("a deleted resource is marked as gone", func(t *testing.T) {
+		flowGone.Store(true)
+		result, err := ctrl.CheckReleaseResources(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if result.Checked != 1 || result.Marked != 1 || result.Errors != 0 {
+			t.Errorf("%#v", result)
+		}
+		got := model.SmartServiceRelease{}
+		if err := json.Unmarshal([]byte(getBody("/releases/"+release.Id)), &got); err != nil {
+			t.Fatal(err)
+		}
+		kinds := []string{}
+		for _, entry := range got.ChangedResources {
+			kinds = append(kinds, entry.Kind+":"+entry.Reason)
+		}
+		if !reflect.DeepEqual(kinds, []string{"process_model:changed", "flow:gone", "import_type:changed"}) {
+			t.Errorf("%#v", got.ChangedResources)
 		}
 	})
 }

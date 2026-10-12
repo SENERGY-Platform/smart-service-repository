@@ -34,7 +34,8 @@ import (
 	"github.com/SENERGY-Platform/smart-service-repository/pkg/model"
 )
 
-const resourceCheckTimeout = 10 * time.Second
+const resourceCheckTimeout = 10 * time.Second   //one request
+const resourceCheckReleaseTimeout = time.Minute //all requests of one release
 
 type resourceState int
 
@@ -71,19 +72,29 @@ func (this *Controller) nowUnix() int64 {
 func (this *Controller) CheckReleaseResources(ctx context.Context) (result ResourceCheckResult, err error) {
 	this.resourceCheckMux.Lock()
 	defer this.resourceCheckMux.Unlock()
-	err = this.db.ForEachReleaseWithUsedResources(ctx, func(release model.SmartServiceReleaseExtended) error {
-		if err := ctx.Err(); err != nil {
-			return err
+	// all releases are read first: a slow repository must not hold a cursor open or make a later run skip the same releases again
+	releases, err := this.db.ListReleasesWithUsedResources(ctx)
+	if err != nil {
+		return result, err
+	}
+	releaseTimeout := resourceCheckReleaseTimeout
+	if this.releaseCheckTimeout > 0 {
+		releaseTimeout = this.releaseCheckTimeout
+	}
+	for _, release := range releases {
+		if err = ctx.Err(); err != nil {
+			return result, err
 		}
+		releaseCtx, cancel := context.WithTimeout(ctx, releaseTimeout)
+		marked, errCount := this.checkReleaseResources(releaseCtx, release)
+		cancel()
 		result.Checked++
-		marked, errCount := this.checkReleaseResources(ctx, release)
 		result.Errors += errCount
 		if marked {
 			result.Marked++
 		}
-		return nil
-	})
-	return result, err
+	}
+	return result, nil
 }
 
 // checkReleaseResources reports whether the release is marked afterwards and how many reads or writes failed
@@ -184,21 +195,21 @@ func resourceKey(kind string, id string) string {
 	return kind + "/" + id
 }
 
-// observeResource reads the resource with the token of the release creator;
-// 404 means gone, any other non-200 answer or a failed request leaves the state unknown and is returned as error
-func (this *Controller) observeResource(ctx context.Context, lookup resourceLookup, jwt string) (result resourceObservation, err error) {
-	var path string
-	switch lookup.kind {
-	case model.ChangedResourceKindProcessModel:
-		path = "/processes/"
-	case model.ChangedResourceKindFlow:
-		path = "/flow/"
-	case model.ChangedResourceKindImportType:
-		path = "/import-types/"
-	default:
-		return result, fmt.Errorf("unknown resource kind %v", lookup.kind)
+// observeResource reads the resource with the token of the release creator; 404 means gone.
+// The repositories check the permission before the existence, and a deleted resource loses its permission entry, so a deleted
+// resource answers 401 or 403 like one the creator may not read. Such an answer is repeated once with the token of the service,
+// which tells gone (404) from unreadable (200 with the resource).
+// Any other answer or a failed request leaves the state unknown and is returned as error.
+func (this *Controller) observeResource(ctx context.Context, lookup resourceLookup, userJwt string) (result resourceObservation, err error) {
+	body, status, err := this.readResource(ctx, lookup, userJwt)
+	if err == nil && (status == http.StatusUnauthorized || status == http.StatusForbidden) {
+		var adminJwt string
+		adminJwt, err = this.adminAuthorization()
+		if err != nil {
+			return result, fmt.Errorf("unable to get service token: %w", err)
+		}
+		body, status, err = this.readResource(ctx, lookup, adminJwt)
 	}
-	body, status, err := getResourceBody(ctx, lookup.baseUrl+path+url.PathEscape(lookup.id), jwt)
 	if err != nil {
 		return result, err
 	}
@@ -235,19 +246,81 @@ func (this *Controller) observeResource(ctx context.Context, lookup resourceLook
 			}
 		}
 	case model.ChangedResourceKindImportType:
-		var importType map[string]interface{}
-		if err = json.Unmarshal(body, &importType); err != nil {
-			return result, err
-		}
-		normalized, err := json.Marshal(importType) // map keys are sorted, so the hash does not depend on the key order of the response
+		result.hash, err = importTypeHash(body)
 		if err != nil {
 			return result, err
 		}
-		sum := sha256.Sum256(normalized)
-		result.hash = hex.EncodeToString(sum[:])
 	}
 	result.state = resourceFound
 	return result, nil
+}
+
+func (this *Controller) readResource(ctx context.Context, lookup resourceLookup, jwt string) (body []byte, status int, err error) {
+	var path string
+	switch lookup.kind {
+	case model.ChangedResourceKindProcessModel:
+		path = "/processes/"
+	case model.ChangedResourceKindFlow:
+		path = "/flow/"
+	case model.ChangedResourceKindImportType:
+		path = "/import-types/"
+	default:
+		return nil, 0, fmt.Errorf("unknown resource kind %v", lookup.kind)
+	}
+	return getResourceBody(ctx, lookup.baseUrl+path+url.PathEscape(lookup.id), jwt)
+}
+
+// the fields of an import type that decide what an import does; the hash covers only these, so new fields of the api
+// and metadata like owner or cost do not mark releases
+type importTypeContent struct {
+	Name           string                `json:"name"`
+	Description    string                `json:"description"`
+	Image          string                `json:"image"`
+	DefaultRestart bool                  `json:"default_restart"`
+	Configs        []importTypeConfig    `json:"configs,omitempty"`
+	Output         importContentVariable `json:"output"`
+}
+
+type importTypeConfig struct {
+	Name         string      `json:"name"`
+	Description  string      `json:"description"`
+	Type         string      `json:"type"`
+	DefaultValue interface{} `json:"default_value"`
+}
+
+type importContentVariable struct {
+	Name                string                  `json:"name"`
+	Type                string                  `json:"type"`
+	CharacteristicId    string                  `json:"characteristic_id"`
+	SubContentVariables []importContentVariable `json:"sub_content_variables,omitempty"`
+	UseAsTag            bool                    `json:"use_as_tag"`
+	FunctionId          string                  `json:"function_id,omitempty"`
+	AspectId            string                  `json:"aspect_id,omitempty"` // only read: folded into AspectIds
+	AspectIds           []string                `json:"aspect_ids,omitempty"`
+}
+
+func (this *importContentVariable) normalize() {
+	if len(this.AspectIds) == 0 && this.AspectId != "" {
+		this.AspectIds = []string{this.AspectId}
+	}
+	this.AspectId = ""
+	for i := range this.SubContentVariables {
+		this.SubContentVariables[i].normalize()
+	}
+}
+
+func importTypeHash(body []byte) (string, error) {
+	var content importTypeContent
+	if err := json.Unmarshal(body, &content); err != nil {
+		return "", err
+	}
+	content.Output.normalize()
+	normalized, err := json.Marshal(content)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(normalized)
+	return hex.EncodeToString(sum[:]), nil
 }
 
 func getResourceBody(ctx context.Context, target string, jwt string) (body []byte, status int, err error) {

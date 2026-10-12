@@ -64,7 +64,7 @@ type Config struct {
 	ProcessModelRepoUrl                  string   `json:"process_model_repo_url"` //the resource check skips a kind whose url is empty
 	FlowRepoUrl                          string   `json:"flow_repo_url"`
 	ImportRepoUrl                        string   `json:"import_repo_url"`
-	ResourceCheckCycle                   string   `json:"resource_check_cycle"` //empty disables the resource check
+	ResourceCheckCycle                   string   `json:"resource_check_cycle"` //empty, "0" or "off" disables the resource check
 	MarkAgeLimit                         Duration `json:"mark_age_limit"`
 	LogLevel                             string   `json:"log_level"`
 	OtelEndpoint                         string   `json:"otel_endpoint"`
@@ -238,6 +238,23 @@ func (this *Duration) UnmarshalJSON(bytes []byte) (err error) {
 		return err
 	}
 	return this.SetString(str)
+}
+
+// GetResourceCheckCycle parses resource_check_cycle; empty, "0" and "off" disable the resource check
+// (an empty environment variable is ignored, so "off" is the way to switch it off by environment)
+func (this Config) GetResourceCheckCycle() (cycle time.Duration, enabled bool, err error) {
+	value := strings.TrimSpace(this.ResourceCheckCycle)
+	if value == "" || strings.EqualFold(value, "off") {
+		return 0, false, nil
+	}
+	cycle, err = time.ParseDuration(value)
+	if err != nil {
+		return 0, false, err
+	}
+	if cycle < 0 {
+		return 0, false, fmt.Errorf("negative resource check cycle %v", value)
+	}
+	return cycle, cycle > 0, nil
 }
 
 func (this *Config) GetLogger() *slog.Logger {
